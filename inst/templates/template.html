@@ -1,0 +1,61 @@
+<!--
+Copyright (C) 2017 CannaData Solutions
+
+This file is part of CannaFrontdesk.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+  <title>Cannadata Front-Desk Web App</title>
+  {{ headContent() }} 
+  {{ shiny::bootstrapLib() }} 
+  {{ htmltools::htmlDependency("selectize", "0.11.2", c(href = "shared/selectize"), stylesheet = "css/selectize.bootstrap3.css", head = format(shiny::tagList(shiny::HTML("
+  <!--[if lt IE 9]>"),
+            shiny::tags$script(src = "shared/selectize/js/es5-shim.min.js"),
+            shiny::HTML("<![endif]-->"), shiny::tags$script(src = "shared/selectize/js/selectize.min.js")))) }} 
+  {{ rintrojs::introjsUI() }} 
+  {{ parsleyr::parsleyLib() }} 
+  {{ shinyCleave::cleaveLib() }} 
+  {{ htmltools::htmlDependency( "CannaFrontdesk", "0.0.1", system.file(package = "CannaFrontdesk", "www"), script = "script.js", stylesheet = "style.css", attachment = c("din_light.ttf", "din_medium.ttf") ) }} 
+  {{ parsleyr::parsleyrCSS() }} 
+  {{ shiny::includeScript(system.file(package = "CannaSelectize", "javascript", "CannaSelectize.js"))}} 
+  {{ htmltools::htmlDependency("font-awesome","4.7.0", c(href = "shared/font-awesome"), stylesheet = "css/font-awesome.min.css") }}
+</head>
+
+<body>
+
+  <!--static sidebar
+        <div id="sidebar">
+
+        </div>-->
+
+  <!--static top bar-->
+  {{ CannaFrontdesk:::navbarUI(clientName) }}
+
+  <!--main content javascript depends on names of modules FYI -->
+  <div id="content">
+    {{ shiny::navlistPanel(id = "tabset", well=FALSE, 
+        shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
+        shiny::tabPanel("patientInfo",CannaFrontdesk:::patientInfoUI("patient_info")), 
+        shiny::tabPanel("newPatient", CannaFrontdesk:::newPatientUI("new_patient")))
+    }}
+  </div>
+
+</body>
+
+</html>
