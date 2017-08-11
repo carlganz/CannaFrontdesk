@@ -434,8 +434,9 @@ input[readonly].parsley-error, select[readonly].parsley-error, textarea[readonly
   border-top: 1px solid #ddd;
 }
 
-.modal h1, .modal h2, .modal h3 {
+#shiny-modal h1, #shiny-modal h2, #shiny-modal h3 {
   text-align: center;
+  float: none;
 }
 
 .icon-bar .nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {
@@ -461,7 +462,7 @@ h1 {
   font-weight: bold;
 }
 
-.table-container h1 {
+.table-container h1, .form-horizontal h1 {
     font-family: DinMedium;
    /* font-size: 25px;*/
     text-align: center;
@@ -498,4 +499,8 @@ input[type=checkbox] {
 
 .images {
   overflow: auto;
+}
+
+#content .shiny-input-container:not(.shiny-input-container-inline) {
+  width: auto;
 }

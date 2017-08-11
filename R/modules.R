@@ -27,10 +27,6 @@ patientInfoUI <- function(id) {
                     div(class = "name-container",
                         uiOutput(ns("name"))
                         )),
-                # box(
-                #   h3("Drivers License"),
-                #   shiny::uiOutput(ns("id_image_out"))
-                # ),
                 box(tableTitle("Basic Info"),
                     DT::dataTableOutput(ns("info"))),
                 box(tableTitle("Preferences"),
@@ -75,7 +71,7 @@ patientInfoUI <- function(id) {
               ))
 }
 
-patientInfo <- function(input, output, session, pool, patientId, bucket, queue, trigger_queue, reload, trigger_new, trigger_returning, proxy, parent_session) {
+patientInfo <- function(input, output, session, pool, patientId, bucket, queue, trigger_queue, reload, trigger_new, trigger_returning, proxy, parent_session, reload_patient) {
   trigger_patient_info_returning <- reactiveVal(0)
   patient_info_returning <- reactive({
     req(patientId())
@@ -95,16 +91,16 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       showModal(modalDialog(
         easyClose = TRUE,
         tags$script(
-          "$('.modal-content').addClass('table-container');"
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        h2("Patient's medical card is expired!")
+        h1("Patient's medical card is expired!")
       ))
     } else if (patientId() %in% queue()$idpatient) {
       showModal(modalDialog(easyClose = TRUE, 
                             tags$script(
-                              "$('.modal-content').addClass('table-container');"
+                              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                             ),
-                            h2(
+                            h1(
         paste("Patient already in",
               if (queue()$status[patientId() == queue()$idpatient] == 2)
                 "store"
@@ -118,9 +114,9 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       showModal(
         modalDialog(easyClose = TRUE,
                     tags$script(
-                      "$('.modal-content').addClass('table-container');"
+                      "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                     ),
-                    h2("Patient added to queue."))
+                    h1("Patient added to queue."))
       )
       # updateNavlistPanel(parent_session, "tabset", "homepage")
     }
@@ -132,16 +128,16 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       showModal(modalDialog(
         easyClose = TRUE,
         tags$script(
-          "$('.modal-content').addClass('table-container');"
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        h2("Patient's medical card is expired!")
+        h1("Patient's medical card is expired!")
       ))
     } else if (patientId() %in% queue()$idpatient) {
       showModal(modalDialog(easyClose = TRUE,
                             tags$script(
-                              "$('.modal-content').addClass('table-container');"
+                              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                             ),
-                            h2(
+                            h1(
         paste("Patient already in",
               if (queue()$status[patientId() == queue()$idpatient])
                 "store"
@@ -154,9 +150,9 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       reload(reload() + 1)
       showModal(modalDialog(easyClose=TRUE,
                             tags$script(
-                              "$('.modal-content').addClass('table-container');"
+                              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                             ),
-                            h2("Patient has been let into store.")))
+                            h1("Patient has been let into store.")))
       # updateNavlistPanel(parent_session, "tabset", "homepage")
     }
   })
@@ -166,18 +162,18 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
     if (patientId() %in% queue()$idpatient) {
       showModal(modalDialog(easyClose=TRUE,
                             tags$script(
-                              "$('.modal-content').addClass('table-container');"
+                              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                             ),
-                            h2("Cannot remove patient while patient is in active transaction.")
+                            h1("Cannot remove patient while patient is in active transaction.")
                             ))
     } else {
       showModal(
         modalDialog(easyClose=TRUE,
                     tags$script(
-                      "$('.modal-content').addClass('table-container');"
+                      "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                     ),
-                    h2("Are you sure you want to remove patient?"),
-                    h2("Data cannot be recovered once removed!"),
+                    h1("Are you sure you want to remove patient?"),
+                    h1("Data cannot be recovered once removed!"),
                     footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
         )
       ) 
@@ -190,7 +186,8 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
     trigger_new(trigger_new() + 1)
     trigger_returning(trigger_returning() + 1)
     removeModal()
-    update_value(proxy, "")
+    # updateSelectizeInput(parent_session, "patient", selected = "")
+    reload_patient(list(selected = NULL))
   })
   
   observeEvent(input$edit_basic_info, {
@@ -200,7 +197,7 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
         "$('.modal-content').addClass('form-horizontal col-lg-12');
         $('.modal-body').css('height', '400px').css('font-size','110%');"
       ),
-      h2("Edit Basic Info"),
+      h1("Edit Basic Info"),
       # add parsley
       tags$form(id = session$ns("basic_info_form"),
                 div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
@@ -306,6 +303,15 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
           emailDeal=input$emailDeal
         )
         trigger_patient_info_returning(trigger_patient_info_returning() + 1)
+        
+        update_option(proxy, list(
+          value = patientId(),
+          label = paste0(input$name2, ", ", input$name, " (", input$californiaID, ")")
+        ))
+        
+        trigger_queue(trigger_queue() + 1)
+        reload(reload() + 1)
+        
         removeModal()
     
   })
@@ -316,7 +322,7 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       tags$script(
         "$('.modal-content').addClass('form-horizontal').css('width','110%').css('font-size','110%');"
       ),
-      h2("Edit Medical Info"),
+      h1("Edit Medical Info"),
       tags$form(id = session$ns("edit_medical_form"),
       input(session$ns("physician"), placeholder = "Physician", value = patient_info_returning()$physician, label_width = 4),
       input(session$ns("expirationDate"), placeholder = "Expiration Date", `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
@@ -369,7 +375,7 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
       tags$script(
         "$('.modal-content').addClass('form-horizontal');"
       ),
-      h2("Edit Preferences"),
+      h1("Edit Preferences"),
       # checkbox inputs
       tags$form(id = session$ns("preference_form"), class = "preference-edit", 
                 input(session$ns("recommender"), placeholder = "Referred By", label_width = 4, required = FALSE, value = patient_info_returning()$recommender),
@@ -432,6 +438,7 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
   observeEvent(input$edit_images, {
     showModal(modalDialog(easyClose=TRUE,tags$script("
                           $('.modal-content').addClass('form-horizontal');"),
+                          h1("Edit Images"),
                           div(
                           class = "file-input",
                           div(class = "form-group",
@@ -514,7 +521,6 @@ patientInfo <- function(input, output, session, pool, patientId, bucket, queue, 
     if (expired() <= 0) {
       # bad
       tagList(
-        # h2(expired()),
         h2("Expired!!!"),
         p(paste("medical card expired", abs(expired()), "days ago"))
       )
@@ -671,7 +677,7 @@ newPatientUI <- function(id) {
               DT::dataTableOutput(ns("info"))
             ),
             box(class = "images",
-                tableTitle("Images"),
+                h1("Images"),
                 div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
                     div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
                         h4("Photo ID"),
@@ -686,13 +692,14 @@ newPatientUI <- function(id) {
         div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
             div(class = "row",
                 div(class = "add-delete-btn-container",
-                    parsleyr::submit_form(ns("submit"), "Submit", formId = ns("newPatient"), class = "btn-info add-queue-btn"),
+                    parsleyr::submit_form(ns("submit"), "Submit", formId = ns("newPatient"), class = "btn btn-info add-queue-btn"),
                 tags$button(id = ns("remove"), "Delete Patient", class = "btn btn-info delete-btn action-button"))
             ),
             div(class = "form-horizontal container fluid col-md-12",
             div(class = "row",
 
               h1("Enter Medical Information"),
+              div(style = "margin-top:10%;",
               input(ns("physician"), placeholder = "Physician"),
               input(ns("date"), "tel", placeholder = "Expiration Date (YYYY/MM/DD)", label = "Expiration Date",
                     `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/"),
@@ -702,16 +709,16 @@ newPatientUI <- function(id) {
                 date: true, datePattern: ['Y', 'm', 'd']
                 })"
               )
-            ))
+            )))
             ),
             div(class = "form-horizontal container fluid col-md-12",div(class = "row",
-                                                                        h1("Upload Patient Images"),
+                                                                        h1("Upload Patient Images"),div(style = "margin-top:10%;",
                                                                         shiny::uiOutput(ns("imageInputs"), inline = TRUE)
-            )))))
+            ))))))
     )
 }
 
-newPatient <- function(input, output, session, pool, patientId, bucket, trigger_new, trigger_returning, proxy, parent_session) {
+newPatient <- function(input, output, session, pool, patientId, bucket, trigger_new, trigger_returning, proxy, parent_session, reload_patient) {
   trigger_patient_info_new <- reactiveVal(0)
   patient_info_new <- reactive({
     req(patientId())
@@ -726,7 +733,7 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
                             "$('.modal-content').addClass('form-horizontal col-lg-12');
                             $('.modal-body').css('height', '300px').css('font-size','110%');"
                           ),
-                          h2("Edit Basic Info"),
+                          h1("Edit Basic Info"),
                           # add parsley
                           tags$form(id = session$ns("basic_info_form"),
                                     div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
@@ -788,6 +795,11 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
       birthday=input$birthday
     )
     trigger_patient_info_new(trigger_patient_info_new() + 1)
+
+    update_option(proxy, list(
+      value = patientId(),
+      label = paste0(input$name2, ", ", input$name, " (", input$californiaID, ")")
+    ))
     removeModal()
   })
   
@@ -824,17 +836,17 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
       showModal(modalDialog(
         easyClose = TRUE,
         tags$script(
-          "$('.modal-content').addClass('table-container');"
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        h2("Patient has not finished signup form yet. Please wait...")
+        h1("Patient has not finished signup form yet. Please wait...")
       ))
     } else if (is.na(patient_info_new()$docuSigned) || patient_info_new()$docuSigned == 0) {
       showModal(modalDialog(
         easyClose = TRUE,
         tags$script(
-          "$('.modal-content').addClass('table-container');"
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        h2(
+        h1(
           "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
         )
       ))
@@ -868,10 +880,11 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
         }
       )
       
+      id <- patientId()
       # add patient
       u_f_new_patient(
         pool,
-        patientId(),
+        id,
         input$date,
         input$physician,
         photoS3,
@@ -880,7 +893,6 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
       )
       
       ### add to queue?
-      # update_value(proxy, selected = "")
       lapply(c("date", "physician", "recId"), function(x) {
         updateTextInput(session, x, value = "")
       })
@@ -888,20 +900,21 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
       trigger_files(trigger_files() + 1)
       trigger_new(trigger_new() + 1)
       trigger_returning(trigger_returning() + 1)
+      reload_patient(list(
+        selected = id
+      ))
       session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
       session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
       session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
       ### go to patient info page with new patient there
-      updateNavlistPanel(parent_session, "tabset", "patientInfo")
-      # update_value(proxy, patientId())
+      # updateNavlistPanel(parent_session, "tabset", "patientInfo")
       showModal(modalDialog(
         easyClose=TRUE,
         tags$script(
-          "$('.modal-content').addClass('table-container');"
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        "New patient has been added."
+        h1("New patient has been added")
       ))
-      # update_value(proxy, '')
     }
   })
   
@@ -911,10 +924,10 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
     showModal(
       modalDialog(easyClose=TRUE,
                   tags$script(
-                    "$('.modal-content').addClass('table-container');"
+                    "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                   ),
-                  h2("Are you sure you want to remove patient?"),
-                  h2("Data cannot be recovered once removed!"),
+                  h1("Are you sure you want to remove patient?"),
+                  h1("Data cannot be recovered once removed!"),
                   footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
       )
     )
@@ -926,7 +939,8 @@ newPatient <- function(input, output, session, pool, patientId, bucket, trigger_
     trigger_new(trigger_new() + 1)
     trigger_returning(trigger_returning() + 1)
     removeModal()
-    update_value(proxy, "")
+    # updateSelectizeInput(parent_session, "patient", selected = "")
+    reload_patient(list(selected = NULL))
   })
   
   output$name <- renderUI({
@@ -1134,11 +1148,11 @@ queue <- function(input, output, session, pool, proxy, trigger, reload, parent_s
         })
         observeEvent(input[[paste0("infoQ",i)]], {
           trigger_queue(trigger_queue() + 1)
-          update_value(proxy, queue()$idpatient[i])
+          updateSelectizeInput(parent_session, "patient", selected = queue()$idpatient[i])
         })
         observeEvent(input[[paste0("infoS",i)]], {
           trigger_queue(trigger_queue() + 1)
-          update_value(proxy, in_store()$idpatient[i])
+          updateSelectizeInput(parent_session, "patient", selected = in_store()$idpatient[i])
         })
       }))
     }
@@ -1148,10 +1162,10 @@ queue <- function(input, output, session, pool, proxy, trigger, reload, parent_s
   output$queue <- DT::renderDataTable({
     queue() %>% select_(~-idtransaction,~-idpatient) %>%
       mutate_(
-        letIn = ~HTML(as.character(tags$button(id = session$ns(paste0("let", row_number())), class = "btn btn-info let-in-btn index-btn action-button", "Let In"))),
-        remove = ~HTML(as.character(tags$button(id = session$ns(paste0("removeQ", row_number())), class = "btn btn-info remove-btn index-btn action-button", "Remove"))),
-        info = ~HTML(as.character(tags$button(id = session$ns(paste0("infoQ", row_number())), class = "btn btn-info let-in-btn index-btn action-button", "Info",
-                                              onclick = "$(\"a[data-value='patientInfo']\").trigger('click')"))),
+        letIn = ~vHTML(vBtn(id = session$ns(paste0("let", row_number())), class = "btn btn-info let-in-btn index-btn action-button", "Let In")),
+        remove = ~vHTML(vBtn(id = session$ns(paste0("removeQ", row_number())), class = "btn btn-info remove-btn index-btn action-button", "Remove")),
+        info = ~vHTML(vBtn(id = session$ns(paste0("infoQ", row_number())), class = "btn btn-info let-in-btn index-btn action-button", "Info",
+                                              onclick = "$(\"a[data-value='patientInfo']\").trigger('click')")),
         timeIn = ~ as.character(as.POSIXct(hms::as.hms(hms::as.hms(timeIn)-hms::hms(hour = 7))),"%I:%M %p")
       ) %>% 
       select_(Name=~name, `California ID`=~californiaID, `Arrival Time` = ~timeIn, ~letIn, ~info, ~remove)
@@ -1195,9 +1209,9 @@ queue <- function(input, output, session, pool, proxy, trigger, reload, parent_s
     in_store() %>% select_(~-idtransaction, ~-idpatient) %>% 
       mutate_(
         row = ~row_number(),
-        remove = ~HTML(as.character(tags$button(id = session$ns(paste0("removeS", row)), class = "btn btn-info remove-btn index-btn action-button", "Remove"))),
-        info = ~HTML(as.character(tags$button(id = session$ns(paste0("infoS", row)), class = "btn btn-info let-in-btn index-btn action-button", "Info", 
-                                              onclick = "$(\"a[data-value='patientInfo']\").trigger('click')"))),
+        remove = ~vHTML(vBtn(id = session$ns(paste0("removeS", row)), class = "btn btn-info remove-btn index-btn action-button", "Remove")),
+        info = ~vHTML(vBtn(id = session$ns(paste0("infoS", row)), class = "btn btn-info let-in-btn index-btn action-button", "Info", 
+                                              onclick = "$(\"a[data-value='patientInfo']\").trigger('click')")),
         timeIn = ~as.character(as.POSIXct(hms::as.hms(hms::as.hms(timeIn) - hms::hms(hour = 7))),"%I:%M %p")
       ) %>%
       select_(Name = ~name, `California ID`=~californiaID, `Arrival Time` = ~timeIn, ~info, ~remove)
@@ -1297,7 +1311,9 @@ navbarUI <- function(name = "Store Name") {
                      div(
                        class = "inner-addon search-icon",
                        icon("search",lib="glyphicon"),
-                       tags$select(id = "patient", class = "form-control search-box")
+                       # tags$select(id = "patient", class = "form-control search-box")
+                       selectizeInput("patient", NULL, NULL),
+                       tags$script("$('#patient').addClass('search-box');")
                      )
                    ),
                    div(class = "col-md-6",

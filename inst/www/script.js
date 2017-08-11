@@ -117,19 +117,6 @@ CannaFrontdesk = function() {
         pressed = true;
       };
     },
-    initiate_inputs: function() {
-      // only numbers
-      $("#patient").selectize({
-        valueField: 'value',
-        labelField: 'label',
-        searchField: 'label',
-        options: [
-          onChange = function(value) {
-            Shiny.onInputChange("returning_patient", value);
-          }
-        ]
-      });
-    },
     telephone_input: function() {
       var telephoneInputBinding = new Shiny.InputBinding();
       $.extend(telephoneInputBinding, {
@@ -237,22 +224,22 @@ CannaFrontdesk = function() {
       } else {
         $(".countdown-container").addClass("notexpired").removeClass("expired");
       }
+    },
+    unbind_dt: function(id) {
+      if ($('#' + id).find('table').length>0) {
+      Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
+    }
     }
   };
 }();
 
 $(document).ready(function() {
-  CannaFrontdesk.initiate_inputs();
   CannaFrontdesk.parsley_init();
   CannaFrontdesk.read_barcode();
   CannaFrontdesk.telephone_input();
   CannaFrontdesk.sidebar();
   CannaFrontdesk.icon_inputs();
-  Shiny.addCustomMessageHandler('unbind-dt', function(id) {
-    if ($('#' + id).find('table').length>0) {
-      Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
-    }
-  });
+  Shiny.addCustomMessageHandler('unbind-dt', CannaFrontdesk.unbind_dt);
   Shiny.addCustomMessageHandler("reset_file_input", CannaFrontdesk.reset_file_input);
   Shiny.addCustomMessageHandler("reset_parsley", CannaFrontdesk.reset_parsley);
   Shiny.addCustomMessageHandler("toggle_expiration", CannaFrontdesk.toggle_expiration);

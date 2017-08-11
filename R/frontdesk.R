@@ -13,7 +13,7 @@
 # GNU Affero General Public License for more details.
 #' Frontdesk Shiny Application
 #'
-#' @import shiny CannaQueries shinyCleave rintrojs RMySQL pool DT dplyr CannaModules CannaSelectize hms aws.s3
+#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms aws.s3
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na
 #' @inheritParams CannaSignup::signup
@@ -61,7 +61,7 @@ frontdesk <-
       options(shiny.maxRequestSize = 300 * 1024 ^ 2)
       # create pool on launch
       pool <- pool::dbPool(
-        RMySQL::MySQL(),
+        RMariaDB::MariaDB(),
         host = host,
         port = as.integer(port),
         user = user,
@@ -118,7 +118,7 @@ frontdesk <-
           NULL
         }
       }), bucket, reactive(queue()),
-      trigger, reload, trigger_new, trigger_returning, patient_proxy, session
+      trigger, reload, trigger_new, trigger_returning, patient_proxy, session, reload_patient
       )
       # needs to update outer selectize
       patient_info_new <- callModule(newPatient, "new_patient", pool, reactive({
@@ -127,7 +127,7 @@ frontdesk <-
         } else {
           NULL
         }
-      }), bucket, trigger_new, trigger_returning, patient_proxy, session)
+      }), bucket, trigger_new, trigger_returning, patient_proxy, session, reload_patient)
       
       trigger <- reactiveVal(0)
       reload <- reactiveVal(0)
@@ -145,8 +145,17 @@ frontdesk <-
       
       # server side selectize inputs
       patient_proxy <- selectizeProxy("patient")
+      reload_patient <- reactiveVal(NULL)
+      observeEvent(reload_patient(),{
+        req(reload_patient())
+        updateSelectizeInput(session, "patient", choices = select_patient(), 
+                             server = TRUE, 
+                             selected = reload_patient()$selected)
+      })
+      
       observe({
-        update_options(patient_proxy, select_patient())
+        updateSelectizeInput(session, "patient", choices = isolate(select_patient()), 
+                             server = TRUE)
       })
 
       # id scanner
@@ -161,9 +170,9 @@ frontdesk <-
           update_value(patient_proxy, returning_patients()$idpatient[grepl(input$read_barcode$californiaId,
                                                                            returning_patients()$name)])
         } else if (any(grepl(input$read_barcode$californiaId, new_patients()$name))) {
-          showModal(modalDialog(h2("New Patient!"),easyClose = TRUE,
+          showModal(modalDialog(h1("New Patient!"),easyClose = TRUE,
                                 tags$script(
-                                  "$('.modal-content').addClass('table-container');"
+                                  "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
                                 ),
                                 h2(
                                   paste(
@@ -176,9 +185,9 @@ frontdesk <-
           update_value(patient_proxy, new_patients()$idpatient[grepl(input$read_barcode$californiaId, new_patients()$name)])
         } else {
           showModal(modalDialog(easyClose = TRUE,
-            h2("New Patient!"),
+            h1("New Patient!"),
             tags$script(
-              "$('.modal-content').addClass('table-container');"
+              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
             ),
             h2(
               paste(
@@ -187,7 +196,7 @@ frontdesk <-
                 input$read_barcode$lastName
               )
             ),
-            footer = actionButton("add_new_patient", "Add New Patient")
+            footer = actionButton("add_new_patient", "Add New Patient", class = "btn btn-info add-queue-btn")
           ))
         }
       })
@@ -214,13 +223,17 @@ frontdesk <-
         )
         updateNavlistPanel(session, "tabset", "newPatient")
         trigger_new(trigger_new() + 1)
-        update_options(patient_proxy, select_patient())
-        update_value(patient_proxy, new_patients()$idpatient[grepl(input$read_barcode$californiaId, new_patients()$name)])
+        reload_patient(list(
+          selected = new_patients()$idpatient[grepl(input$read_barcode$californiaId, new_patients()$name)]
+        ))
+        # updateSelectizeInput(session, "patient", choices = select_patient(),
+        #                      selected = new_patients()$idpatient[grepl(input$read_barcode$californiaId, new_patients()$name)],
+        #                      server = TRUE)
         showModal(modalDialog(
           tags$script(
-            "$('.modal-content').addClass('table-container');"
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
-          h2(
+          h1(
           paste(
             "Sign in app is ready for",
             input$read_barcode$firstName,
