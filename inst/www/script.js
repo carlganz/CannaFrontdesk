@@ -57,6 +57,7 @@ CannaFrontdesk = function() {
           en: 'The year of birth is incorrect'
         }
       });
+      
     },
     read_barcode: function() {
       var pressed = false;
@@ -75,7 +76,7 @@ CannaFrontdesk = function() {
             if (chars.length >= 300) {
 
               var barcode = chars.join("");
-
+// need to redo to parse explicitely using regex
               var info = barcode.split("\n").slice(4, 18).map(function(e) {
                 return e.substring(4);
               });
@@ -185,6 +186,7 @@ CannaFrontdesk = function() {
       $("#sidebar").detach().prependTo("body");
       // append icons
       $("a[data-value='homepage']").html('<i class="fa fa-home fa-2x"></i><br>Home');
+      $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Patients');
       $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
       $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
       // add class
@@ -229,6 +231,9 @@ CannaFrontdesk = function() {
       if ($('#' + id).find('table').length>0) {
       Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
     }
+    },
+    change_tab: function(tab) {
+      $("a[data-value='" + tab + "']").trigger('click');
     }
   };
 }();

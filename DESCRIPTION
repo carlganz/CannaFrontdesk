@@ -8,9 +8,9 @@ Authors@R: c(
 Description: 'Shiny' application for managing patients at front desk.
 Depends: R (>= 3.2.2)
 Imports: shiny, CannaQueries, CannaModules, parsleyr, rintrojs, aws.s3,
-  pool, RMySQL, DT, dplyr, shinyCleave, tidyr, CannaSelectize, hms 
+  pool, RMariaDB, DT, dplyr, shinyCleave, tidyr, CannaSelectize, hms, c3
 Remotes: CannaData/CannaQueries, CannaData/CannaModules, CannaData/parsleyr, 
-  CannaData/shinyCleave, CannaData/CannaSelectize
+  CannaData/shinyCleave, CannaData/CannaSelectize, mrjoh3/c3, rstats-db/RMariaDB
 License: AGPL
 Encoding: UTF-8
 LazyData: true

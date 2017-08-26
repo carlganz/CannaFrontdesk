@@ -35,6 +35,9 @@ GNU Affero General Public License for more details.
   {{ parsleyr::parsleyrCSS() }} 
   {{ shiny::includeScript(system.file(package = "CannaSelectize", "javascript", "CannaSelectize.js"))}} 
   {{ htmltools::htmlDependency("font-awesome","4.7.0", c(href = "shared/font-awesome"), stylesheet = "css/font-awesome.min.css") }}
+  <link rel="icon" 
+      type="image/png" 
+      href="https://s3-us-west-2.amazonaws.com/cannadatacdn/CannaData_Logo.png">
 </head>
 
 <body>
@@ -51,6 +54,7 @@ GNU Affero General Public License for more details.
   <div id="content">
     {{ shiny::navlistPanel(id = "tabset", well=FALSE, 
         shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
+        shiny::tabPanel("allPatients", CannaFrontdesk:::allPatientsUI("all_patients")),
         shiny::tabPanel("patientInfo",CannaFrontdesk:::patientInfoUI("patient_info")), 
         shiny::tabPanel("newPatient", CannaFrontdesk:::newPatientUI("new_patient")))
     }}
