@@ -57,14 +57,30 @@ CannaFrontdesk = function() {
           en: 'The year of birth is incorrect'
         }
       });
-      
+
     },
     read_barcode: function() {
       var pressed = false;
       var chars = [];
       var asc = [];
+      var spec = {
+        "DBA": "expirationDate",
+        "DCS": "lastName",
+        "DAC": "firstName",
+        "DAD": "middleName",
+        "DBB": "birthday",
+        "DAG": "address1",
+        "DAH": "address2",
+        "DAI": "city",
+        "DAJ": "state",
+        "DAK": "zip",
+        "DAQ": "californiaId"
+      };
       window.onkeydown = function(e) {
         asc.push(e.which);
+        if (e.which === 74 | e.which === 106) {
+          console.log(e.which);
+        }
         if (e.which === 17) {
           chars.push(String.fromCharCode(10));
         } else if (e.which !== 16) {
@@ -76,36 +92,25 @@ CannaFrontdesk = function() {
             if (chars.length >= 300) {
 
               var barcode = chars.join("");
-// need to redo to parse explicitely using regex
-              var info = barcode.split("\n").slice(4, 18).map(function(e) {
-                return e.substring(4);
+              // need to redo to parse explicitely using regex
+              var info = {};
+              barcode.split("\n").map(function(row) {
+                if (spec[row.substring(1, 4)]) {
+                  info[spec[row.substring(1, 4)]] = row.substring(4);
+                }
               });
-              info.splice(6, 3);
-
               var today = new Date();
               var dd = today.getDate();
               var mm = today.getMonth() + 1; //January is 0!
               var yyyy = today.getFullYear();
-              if (parseInt(info[0].substring(4)) <= yyyy && parseInt(info[0].substring(0, 2)) <= mm && parseInt(info[0].substring(2, 4)) <= dd) {
+              if (parseInt(info.expirationDate.substring(4)) <= yyyy &&
+                parseInt(info.expirationDate.substring(0, 2)) <= mm &&
+                parseInt(info.expirationDate.substring(2, 4)) <= dd) {
                 alert("Expired ID");
               } else {
-
-                var barcode_info = {
-                  firstName: info[2],
-                  lastName: info[1],
-                  middleName: info[3],
-                  birthday: info[5],
-                  address: info[6],
-                  city: info[7],
-                  state: info[8],
-                  zip: info[9].substring(0, 5),
-                  californiaId: info[10],
-                  time: Date.now()
-                };
-                // console.log(asc)
-                //console.log(barcode_info);
+                info.time = Date.now();
                 // send value to server
-                Shiny.onInputChange("read_barcode", barcode_info);
+                Shiny.onInputChange("read_barcode", info);
               }
             }
             // reset
@@ -215,7 +220,7 @@ CannaFrontdesk = function() {
         $(this).attr('value', parseInt($(this).attr('value')) + 1);
         Shiny.onInputChange("new_patient-edit_basic_info", $(this).attr('value'));
       });
-      
+
     },
     reset_parsley: function(params) {
       $("#" + params.id).parsley().reset();
@@ -228,9 +233,9 @@ CannaFrontdesk = function() {
       }
     },
     unbind_dt: function(id) {
-      if ($('#' + id).find('table').length>0) {
-      Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
-    }
+      if ($('#' + id).find('table').length > 0) {
+        Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
+      }
     },
     change_tab: function(tab) {
       $("a[data-value='" + tab + "']").trigger('click');
