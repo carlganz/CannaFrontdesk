@@ -536,3 +536,7 @@ input[type=checkbox] {
 .add-delete-btn-container button {
   float: right;
 }
+
+.table-condensed {
+  color: black;
+}
