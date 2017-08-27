@@ -1066,10 +1066,16 @@ newPatientUI <- function(id) {
                           input(ns("physician"), placeholder = "Physician"),
                           input(
                             ns("date"),
-                            "tel",
+                            "text", `data-date-language` ="en", `data-date-week-start` =0,
+                            `data-min-date` = format(Sys.Date(), "%Y-%m-%d"),
+                            `data-max-date` = format(Sys.Date() + 366, "%Y-%m-%d"),
+                            `data-initial-date` = NA, `data-date-format` = "yyyy/mm/dd",
                             placeholder = "Expiration Date (YYYY/MM/DD)",
                             label = "Expiration Date",
                             `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/"
+                          ),
+                          tags$script(
+                            paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
                           ),
                           input(
                             ns("recId"),
@@ -1456,10 +1462,11 @@ newPatient <-
                 session$ns("photoIdPath"), NULL, width = "100%"
               ),
               tags$script(HTML(
-                '      $("#new_patient-photoIdPath").on("change", function(value) {
-        console.log($("#new_patient-imageInputs > div > div:nth-child(1) > div > div > div.input-group > input"))
-        if ($($(this).parents("div")[1]).find(".parsley-error").length>0) {
-          $("#new_patient-imageInputs > div > div:nth-child(1) > div > div > div.input-group > input").parsley().validate();
+                '$("#new_patient-photoIdPath").on("change", function(value) {
+        if ($(this).parents(\'.input-group\').find(\'.parsley-error\')) {
+    setTimeout(function() {
+          $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+}, 1)
         }
       });'
               )
@@ -1478,11 +1485,11 @@ newPatient <-
                 session$ns("medicalPath"), NULL, width = "100%"
               ),
               tags$script(HTML(
-                '      $("#new_patient-medicalPath").on("change", function(value) {
-        console.log(this);
-        if ($($(this).parents("div")[0]).find(".parsley-errors").length>0) {
-          console.log(this);
-          $(this).parsley().validate();
+                '$("#new_patient-medicalPath").on("change", function(value) {
+        if ($(this).parents(\'.input-group\').find(\'.parsley-error\')) {
+              setTimeout(function() {
+          $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+}, 1)
         }
       });'
               )
