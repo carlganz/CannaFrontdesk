@@ -35,6 +35,7 @@ GNU Affero General Public License for more details.
   {{ parsleyr::parsleyrCSS() }} 
   {{ shiny::includeScript(system.file(package = "CannaSelectize", "javascript", "CannaSelectize.js"))}} 
   {{ htmltools::htmlDependency("font-awesome","4.7.0", c(href = "shared/font-awesome"), stylesheet = "css/font-awesome.min.css") }}
+  {{ shiny:::datePickerDependency }}
   <link rel="icon" 
       type="image/png" 
       href="https://s3-us-west-2.amazonaws.com/cannadatacdn/CannaData_Logo.png">
