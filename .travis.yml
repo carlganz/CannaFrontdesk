@@ -3,3 +3,6 @@
 language: R
 sudo: false
 cache: packages
+
+# won't be able to suppress some warnings
+warnings_are_errors: false
