@@ -78,9 +78,6 @@ CannaFrontdesk = function() {
       };
       window.onkeydown = function(e) {
         asc.push(e.which);
-        if (e.which === 74 | e.which === 106) {
-          console.log(e.which);
-        }
         if (e.which === 17) {
           chars.push(String.fromCharCode(10));
         } else if (e.which !== 16) {
