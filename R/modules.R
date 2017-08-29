@@ -47,6 +47,7 @@ patientInfoUI <- function(id) {
               ),
               div(class = "col-sm-6",
                   h3("Product Types"),
+                  uiOutput(ns("no_type"), TRUE),
                   c3Output(ns("patient_type"))
               )
           )
@@ -964,7 +965,7 @@ patientInfo <-
     
     output$patient_type <- renderC3({
       req(patientId())
-      req(nrow(patient_sales())>0)
+      req(patient_sales()$profit)
       patient_sales() %>% 
         mutate_(type = ~tools::toTitleCase(type)) %>%
         spread_(~type, ~profit) %>%
@@ -988,6 +989,11 @@ patientInfo <-
             }"
           )
         ))
+    })
+    
+    output$no_type <- renderUI({
+      req(!isTruthy(patient_sales()$profit))
+      h3("No Data Available", style = "margin-top:15%")
     })
     
     callModule(CannaModules::patientHistory,
