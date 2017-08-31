@@ -824,9 +824,7 @@ patientInfo <-
         mutate_(
           emailDeal = ~ if_else(emailDeal == 1, "YES", "NO"),
           textDeal = ~ if_else(textDeal == 1, "YES", "NO"),
-          birthday = ~ paste0(birthday, " (", floor(as.numeric(
-            Sys.Date() - as.Date(birthday)
-          ) / 365), " years old)")
+          birthday = ~ paste0(birthday, " (", age, " years old)")
         ) %>%
         select_(
           # Name = ~ name,
