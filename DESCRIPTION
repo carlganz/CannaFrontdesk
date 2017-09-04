@@ -11,7 +11,7 @@ Imports: shiny, CannaQueries, CannaModules, parsleyr, rintrojs, aws.s3,
   pool, RMariaDB, DT, dplyr, shinyCleave, tidyr, CannaSelectize, hms, c3
 Remotes: CannaData/CannaQueries, CannaData/CannaModules, CannaData/parsleyr, 
   CannaData/shinyCleave, CannaData/CannaSelectize, mrjoh3/c3, rstats-db/RMariaDB,
-  rstudio/pool
+  rstudio/pool, tidyverse/hms
 License: AGPL
 Encoding: UTF-8
 LazyData: true
