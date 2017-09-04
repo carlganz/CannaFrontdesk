@@ -4,15 +4,14 @@
 \alias{frontdesk}
 \title{Frontdesk Shiny Application}
 \usage{
-frontdesk(clientName = Sys.getenv("CannaData_clientName"),
-  host = Sys.getenv("CannaData_host"),
-  port = as.integer(Sys.getenv("CannaData_port")),
-  user = Sys.getenv("CannaData_user"),
-  password = Sys.getenv("CannaData_password"),
-  base_url = Sys.getenv("CannaData_baseUrl"),
-  db = Sys.getenv("CannaData_db"),
-  bucket = Sys.getenv("CannaData_AWS_bucket"),
-  budtender = Sys.getenv("SHINYPROXY_USERNAME"))
+frontdesk(clientName = getOption("CannaData_clientName"),
+  host = getOption("CannaData_host"),
+  port = as.integer(getOption("CannaData_port")),
+  user = getOption("CannaData_user"),
+  password = getOption("CannaData_password"),
+  base_url = getOption("CannaData_baseUrl"), db = getOption("CannaData_db"),
+  bucket = getOption("CannaData_AWS_bucket"),
+  budtender = getOption("SHINYPROXY_USERNAME"))
 }
 \arguments{
 \item{clientName}{Name of dispensary}
