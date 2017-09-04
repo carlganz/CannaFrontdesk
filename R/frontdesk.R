@@ -23,15 +23,15 @@
 #'
 
 frontdesk <-
-  function(clientName = Sys.getenv("CannaData_clientName"),
-           host = Sys.getenv("CannaData_host"),
-           port = as.integer(Sys.getenv("CannaData_port")),
-           user = Sys.getenv("CannaData_user"),
-           password = Sys.getenv("CannaData_password"),
-           base_url = Sys.getenv("CannaData_baseUrl"),
-           db = Sys.getenv("CannaData_db"),
-           bucket = Sys.getenv("CannaData_AWS_bucket"),
-           budtender = Sys.getenv("SHINYPROXY_USERNAME")) {
+  function(clientName = getOption("CannaData_clientName"),
+           host = getOption("CannaData_host"),
+           port = as.integer(getOption("CannaData_port")),
+           user = getOption("CannaData_user"),
+           password = getOption("CannaData_password"),
+           base_url = getOption("CannaData_baseUrl"),
+           db = getOption("CannaData_db"),
+           bucket = getOption("CannaData_AWS_bucket"),
+           budtender = getOption("SHINYPROXY_USERNAME")) {
     ui <-
       shiny::htmlTemplate(
         filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
@@ -253,7 +253,7 @@ frontdesk <-
           ),
           input$read_barcode$address,
           input$read_barcode$city,
-          input$read_barcode$zip
+          substr(input$read_barcode$zip, 1, 5)
         )
         updateNavlistPanel(session, "tabset", "newPatient")
         trigger_new(trigger_new() + 1)
