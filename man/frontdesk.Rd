@@ -31,8 +31,6 @@ frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
 \item{scope}{scope}
 
 \item{connection_name}{connect name}
-
-\item{budtender}{Name of user}
 }
 \description{
 Frontdesk Shiny Application

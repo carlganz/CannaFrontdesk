@@ -18,7 +18,6 @@
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
 #' @param bucket Name of AWS bucket
-#' @param budtender Name of user
 #' @export
 #'
 
