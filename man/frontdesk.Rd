@@ -4,31 +4,33 @@
 \alias{frontdesk}
 \title{Frontdesk Shiny Application}
 \usage{
-frontdesk(clientName = getOption("CannaData_clientName"),
-  host = getOption("CannaData_host"),
-  port = as.integer(getOption("CannaData_port")),
-  user = getOption("CannaData_user"),
-  password = getOption("CannaData_password"),
-  base_url = getOption("CannaData_baseUrl"), db = getOption("CannaData_db"),
+frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
+  getOption("CannaData_host"), port = as.integer(getOption("CannaData_port")),
+  user = getOption("CannaData_user"), password =
+  getOption("CannaData_password"), db = getOption("CannaData_db")),
+  clientName = getOption("CannaData_clientName"),
+  base_url = getOption("CannaData_baseUrl"),
   bucket = getOption("CannaData_AWS_bucket"),
-  budtender = getOption("SHINYPROXY_USERNAME"))
+  auth_id = getOption("auth_id"), auth_secret = getOption("auth_secret"),
+  scope = "openid email",
+  connection_name = "Username-Password-Authentication")
 }
 \arguments{
+\item{pool}{pool connection}
+
 \item{clientName}{Name of dispensary}
-
-\item{host}{MySQL enpoint}
-
-\item{port}{MySQL port}
-
-\item{user}{MySQL user}
-
-\item{password}{MySQL password}
 
 \item{base_url}{Where Shiny Server is hosted}
 
-\item{db}{MySQL db}
-
 \item{bucket}{Name of AWS bucket}
+
+\item{auth_id}{Auth0 ID}
+
+\item{auth_secret}{Auth0 Secret}
+
+\item{scope}{scope}
+
+\item{connection_name}{connect name}
 
 \item{budtender}{Name of user}
 }

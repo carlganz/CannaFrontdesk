@@ -13,7 +13,7 @@
 # GNU Affero General Public License for more details.
 #' Frontdesk Shiny Application
 #'
-#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms aws.s3 c3
+#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms aws.s3 c3 jsonlite jose openssl httr base64enc
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
@@ -23,20 +23,115 @@
 #'
 
 frontdesk <-
-  function(clientName = getOption("CannaData_clientName"),
-           host = getOption("CannaData_host"),
-           port = as.integer(getOption("CannaData_port")),
-           user = getOption("CannaData_user"),
-           password = getOption("CannaData_password"),
+  function(pool = pool::dbPool(
+    RMariaDB::MariaDB(),
+    host = getOption("CannaData_host"),
+    port = as.integer(getOption("CannaData_port")),
+    user = getOption("CannaData_user"),
+    password = getOption("CannaData_password"),
+    db = getOption("CannaData_db")
+  ), clientName = getOption("CannaData_clientName"),
+           # host = getOption("CannaData_host"),
+           # port = as.integer(getOption("CannaData_port")),
+           # user = getOption("CannaData_user"),
+           # password = getOption("CannaData_password"),
            base_url = getOption("CannaData_baseUrl"),
-           db = getOption("CannaData_db"),
+           # db = getOption("CannaData_db"),
            bucket = getOption("CannaData_AWS_bucket"),
-           budtender = getOption("SHINYPROXY_USERNAME")) {
-    ui <-
-      shiny::htmlTemplate(
-        filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
-        clientName = clientName
+  auth_id = getOption("auth_id"),
+  auth_secret = getOption("auth_secret"),
+  scope = "openid email",
+  connection_name = "Username-Password-Authentication") {
+    ui <- APP_URL <- paste0(base_url, "frontdesk/")
+    
+    # the scope of this variable is ui, and server for a single session I believe
+    # so like global.R in that ui and server can access, but unlike global.R
+    # in that you don't share state across sessions me thinks
+    state <- ""
+    
+    access_token <- ""
+    
+    make_authorization_url <- function(req, APP_URL) {
+      url_template <- paste0("https://cannadata.auth0.com/authorize?response_type=code&scope=%s&",
+                             "state=%s&client_id=%s&redirect_uri=%s&connection=%s")
+      redirect_uri <- APP_URL
+      # save state in session global variable
+      state <<- paste0(sample(c(LETTERS, 0:9), 12, replace =TRUE), collapse = "")
+      sprintf(url_template,
+              utils::URLencode(scope, reserved = TRUE, repeated = TRUE),
+              utils::URLencode(base64enc::base64encode(charToRaw(state))),
+              utils::URLencode(auth_id, reserved = TRUE, repeated = TRUE),
+              utils::URLencode(redirect_uri, reserved = TRUE, repeated = TRUE),
+              utils::URLencode(connection_name, reserved = TRUE, repeated = TRUE)
       )
+    }
+    
+    ui <-
+      function(req) {
+        if (length(parseQueryString(req$QUERY_STRING)$code) == 0) {
+          authorization_url <- make_authorization_url(req, APP_URL)
+          return(tagList(
+            tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
+        } else {
+          params <- parseQueryString(req$QUERY_STRING)
+          
+          # this check may not be doing it's job but it seems to be
+          if (rawToChar(base64enc::base64decode(params$state)) != state) {
+            authorization_url <- make_authorization_url(req, APP_URL)
+            return(tagList(
+              tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
+          }
+          
+          resp <- tryCatch(httr::POST("https://cannadata.auth0.com/oauth/token",
+                                      body = list(
+                                        grant_type = "authorization_code",
+                                        client_id = auth_id,
+                                        client_secret = auth_secret,
+                                        code = params$code,
+                                        redirect_uri = APP_URL
+                                      ), httr::accept_json(),
+                                      encode = "json"), error = function(e) NULL)
+          
+          if (httr::http_error(resp)) {
+            authorization_url <- make_authorization_url(req, APP_URL)
+            return(tagList(
+              tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
+          }
+          
+          respObj <- jsonlite::fromJSON(rawToChar(resp$content))
+          
+          # verify access token
+          
+          if (!isTruthy(respObj$id_token)) {
+            authorization_url <- make_authorization_url(req, APP_URL)
+            return(tagList(
+              tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
+          }
+          
+          kid <- jsonlite::fromJSON(rawToChar(base64decode(strsplit(respObj$id_token, "\\.")[[1]][1])))$kid
+          
+          keys <- jsonlite::fromJSON("https://cannadata.auth0.com/.well-known/jwks.json")$keys
+          
+          # 64 characters to a row
+          key <- gsub("(.{64})", "\\1\n", keys[keys$kid == kid, ]$x5c)
+          publicKey <- openssl::read_cert(paste("-----BEGIN CERTIFICATE-----", key, "-----END CERTIFICATE-----", sep = "\n"))$pubkey
+          
+          user <- tryCatch(jose::jwt_decode_sig(respObj$id_token, publicKey), error = function(e) NULL)
+          
+          if (is.null(user)) {
+            authorization_url <- make_authorization_url(req, APP_URL)
+            return(tagList(
+              tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
+          }
+          
+          access_token <<- respObj$access_token
+          return(shiny::htmlTemplate(
+            filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
+            clientName = clientName
+          ))
+        }
+      }
+      
     #     shiny::bootstrapPage(div(
     #        htmltools::htmlDependency("selectize", "0.11.2", c(href = "shared/selectize"), stylesheet = "css/selectize.bootstrap3.css", head = format(shiny::tagList(shiny::HTML("
     # <!--[if lt IE 9]>"),
@@ -59,17 +154,18 @@ frontdesk <-
     #     ))
     
     server <- function(input, output, session) {
+      params <- parseQueryString(isolate(session$clientData$url_search))
+      
+      if (length(params$code) == 0) { 
+        return()
+      }
+      
+      user <- httr::GET(
+        httr::modify_url("https://cannadata.auth0.com/", path = "userinfo/",
+                         query = list(access_token = access_token))
+      )
       session$onSessionEnded(stopApp)
       options(shiny.maxRequestSize = 300 * 1024 ^ 2)
-      # create pool on launch
-      pool <- pool::dbPool(
-        RMariaDB::MariaDB(),
-        host = host,
-        port = as.integer(port),
-        user = user,
-        password = password,
-        db = db
-      )
       ## input names may change!!!
       # REACTIVES ---------------------------------------------------------------
       trigger_new <- reactiveVal(0)
