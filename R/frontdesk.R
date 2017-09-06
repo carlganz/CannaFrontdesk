@@ -41,7 +41,7 @@ frontdesk <-
   auth_secret = getOption("auth_secret"),
   scope = "openid email",
   connection_name = "Username-Password-Authentication") {
-    ui <- APP_URL <- paste0(base_url, "frontdesk/")
+    APP_URL <- paste0(base_url, "frontdesk/")
     
     # the scope of this variable is ui, and server for a single session I believe
     # so like global.R in that ui and server can access, but unlike global.R
