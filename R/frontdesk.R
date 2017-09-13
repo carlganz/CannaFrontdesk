@@ -41,6 +41,11 @@ frontdesk <-
   auth_secret = getOption("auth_secret"),
   scope = "openid email",
   connection_name = "Username-Password-Authentication") {
+    Sys.setenv("TWILIO_SID" = getOption("TWILIO_SID"),
+               "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"),
+               "AWS_ACCESS_KEY_ID"=getOption("AWS_ACCESS_KEY_ID"),
+               "AWS_SECRET_ACCESS_KEY"=getOption("AWS_SECRET_ACCESS_KEY"),
+               "AWS_DEFAULT_REGION" = getOption("AWS_DEFAULT_REGION"))
     APP_URL <- paste0(base_url, "frontdesk/")
     
     # the scope of this variable is ui, and server for a single session I believe
@@ -67,11 +72,11 @@ frontdesk <-
     
     ui <-
       function(req) {
-        if (length(parseQueryString(req$QUERY_STRING)$code) == 0) {
+        if (length(parseQueryString(req$QUERY_STRING)$code) == 0 && !interactive()) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
             tags$script(HTML(sprintf("location.replace(\"%s\");", authorization_url)))))
-        } else {
+        } else if (!interactive()) {
           params <- parseQueryString(req$QUERY_STRING)
           
           # this check may not be doing it's job but it seems to be
@@ -128,6 +133,11 @@ frontdesk <-
             filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
             clientName = clientName
           ))
+        } else {
+          return(shiny::htmlTemplate(
+            filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
+            clientName = clientName
+          ))
         }
       }
       
@@ -155,14 +165,27 @@ frontdesk <-
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
       
-      if (length(params$code) == 0) { 
+      if (length(params$code) == 0 && !interactive()) { 
         return()
       }
       
-      user <- httr::GET(
-        httr::modify_url("https://cannadata.auth0.com/", path = "userinfo/",
-                         query = list(access_token = access_token))
-      )
+      if (!interactive()) {
+        user <- jsonlite::fromJSON(rawToChar(httr::GET(
+          httr::modify_url("https://cannadata.auth0.com/", path = "userinfo/",
+                           query = list(access_token = access_token))
+        )$content))
+        
+      }
+      
+      output$user_name <- renderUI({
+        req(user)
+        tagList(
+          p(class = "navbar-text",
+            user$email
+          )
+        )
+      })
+    
       session$onSessionEnded(stopApp)
       options(shiny.maxRequestSize = 300 * 1024 ^ 2)
       ## input names may change!!!
