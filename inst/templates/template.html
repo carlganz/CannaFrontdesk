@@ -31,7 +31,7 @@ GNU Affero General Public License for more details.
   {{ rintrojs::introjsUI() }} 
   {{ parsleyr::parsleyLib() }} 
   {{ shinyCleave::cleaveLib() }} 
-  {{ htmltools::htmlDependency( "CannaFrontdesk", "0.0.1", system.file(package = "CannaFrontdesk", "www"), script = "script.js", stylesheet = "style.css", attachment = c("din_light.ttf", "din_medium.ttf") ) }} 
+  {{ htmltools::htmlDependency( "CannaFrontdesk", "0.0.1", system.file(package = "CannaFrontdesk", "www"), script = "script.js", stylesheet = "style.css", attachment = c("din_light.ttf", "din_medium.ttf")) }} 
   {{ parsleyr::parsleyrCSS() }} 
   {{ shiny::includeScript(system.file(package = "CannaSelectize", "javascript", "CannaSelectize.js"))}} 
   {{ htmltools::htmlDependency("font-awesome","4.7.0", c(href = "shared/font-awesome"), stylesheet = "css/font-awesome.min.css") }}
@@ -49,7 +49,29 @@ GNU Affero General Public License for more details.
         </div>-->
 
   <!--static top bar-->
-  {{ CannaFrontdesk:::navbarUI(clientName) }}
+  {{ CannaModules:::navbarUI(clientName, shiny::selectizeInput(
+                         "patient",
+                         NULL,
+                         NULL,
+                         options = list(maxOptions = 10,
+                                        loadThrottle = NA,
+                                        valueField = "idpatient",
+                                        searchField = c("firstName", "middleName", "lastName", "californiaID"),
+                                        placeholder = "Search",
+                                        render = I("{
+                                                   option: function(item, escape) {
+                                                   return '<div>' +
+                                                   '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
+                                                   '<ul>' +
+                                                   '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
+                                                   '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
+                                                   (item.expirationDate ? '<li><span>Expiration Date: ' + escape(item.expirationDate) + '</span></li>' : '') +
+                                                   '</ul>' +
+                                                   '</div>';
+                                                   }               
+}")
+                                        )
+                       ), c(Inventory = "inventory", Connect = "connect", `Cash Register` = "POS")) }}
 
   <!--main content javascript depends on names of modules FYI -->
   <div id="content">

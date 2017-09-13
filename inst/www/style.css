@@ -53,7 +53,7 @@ div#sidebar {
 
 div#content {
     background:#061726; 
-    padding: 150px 30px 0px 210px;
+    padding: 135px 30px 0px 210px;
 }
 
 .navbar-default {
@@ -539,4 +539,16 @@ input[type=checkbox] {
 
 .table-condensed {
   color: black;
+}
+
+.navbar-right .dropdown-menu {
+    border-radius: 5px;
+    width: 200px;
+    text-align: center;
+    top: 85px;
+    background-color: #F4F4F4;
+}
+
+.navbar-right .dropdown-toggle {
+  background-color: inherit !important;
 }

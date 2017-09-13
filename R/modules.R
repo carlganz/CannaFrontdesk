@@ -1067,7 +1067,7 @@ newPatientUI <- function(id) {
                         h1("Enter Medical Information"),
                         div(
                           style = "margin-top:10%;",
-                          input(ns("physician"), placeholder = "Physician"),
+                          input(ns("physician"), placeholder = "Physician", label_width = 4),
                           input(
                             ns("date"),
                             "text", `data-date-language` ="en", `data-date-week-start` =0,
@@ -1076,7 +1076,7 @@ newPatientUI <- function(id) {
                             `data-initial-date` = NA, `data-date-format` = "yyyy/mm/dd",
                             placeholder = "Expiration Date (YYYY/MM/DD)",
                             label = "Expiration Date",
-                            `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/"
+                            `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/", label_width = 4
                           ),
                           tags$script(
                             paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
@@ -1085,7 +1085,7 @@ newPatientUI <- function(id) {
                             ns("recId"),
                             "tel",
                             placeholder = "Medical Card #",
-                            `data-parsley-type` = "integer"
+                            `data-parsley-type` = "integer", label_width = 4
                           ),
                           tags$script(
                             paste0(
@@ -1457,7 +1457,7 @@ newPatient <-
           class = "form-group",
           tags$label(
             `for` = session$ns("photoIdPath"),
-            class = "control-label control-label-left col-sm-3",
+            class = "control-label control-label-left col-sm-4",
             "Photo ID",
             span(class = "req", "*")
           ),
@@ -1480,7 +1480,7 @@ newPatient <-
           class = "form-group",
           tags$label(
             `for` = session$ns("photoIdPath"),
-            class = "control-label control-label-left col-sm-3",
+            class = "control-label control-label-left col-sm-4",
             "Medical Card",
             span(class = "req", "*")
           ),
@@ -2019,51 +2019,69 @@ box <- function(...) {
   div(class = "row", div(class = "table-container", ...))
 }
 
-navbarUI <- function(name = "Store Name") {
-  tagList(div(
-    id = "header",
-    tags$nav(class = "navbar navbar-default navbar-static-top navbar-style",
-             div(class = "container nav-container",
-                 div(
-                   class = "row",
-                   div(
-                     class = "col-md-6",
-                     div(
-                       class = "inner-addon search-icon",
-                       icon("search", lib = "glyphicon"),
-                       # tags$select(id = "patient", class = "form-control search-box")
-                       selectizeInput(
-                         "patient",
-                         NULL,
-                         NULL,
-                         options = list(maxOptions = 10,
-                                        loadThrottle = NA,
-                                        valueField = "idpatient",
-                                        searchField = c("firstName", "middleName", "lastName", "californiaID"),
-                                        placeholder = "Search",
-                                        render = I("{
-                                    option: function(item, escape) {
-                                      return '<div>' +
-               '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
-            '<ul>' +
-                '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
-                '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
-                (item.expirationDate ? '<li><span>Expiration Date: ' + escape(item.expirationDate) + '</span></li>' : '') +
-            '</ul>' +
-        '</div>';
-                                    }               
-                                  }")
-                                        )
-                       ),
-                       tags$script("$('#patient').addClass('search-box');")
-                     )
-                   ),
-                   div(class = "col-md-6",
-                       tags$p(class = "navbar-text navbar-right",
-                              name))
-                 )))
-  ))
-}
+# navbarUI <- function(name = "Store Name") {
+#   tagList(div(
+#     id = "header",
+#     tags$nav(class = "navbar navbar-default navbar-static-top navbar-style",
+#              div(class = "container nav-container", style = "margin-left: 0;margin-right:0;width:100%",
+#                  div(
+#                    class = "row",
+#                    div(class = "col-sm-3", 
+#                        tags$p(class = "navbar-text",
+#                               name)),
+#                    div(
+#                      class = "col-md-6",
+#                      div(
+#                        class = "inner-addon search-icon",
+#                        icon("search", lib = "glyphicon"),
+#                        # tags$select(id = "patient", class = "form-control search-box")
+#                        selectizeInput(
+#                          "patient",
+#                          NULL,
+#                          NULL,
+#                          options = list(maxOptions = 10,
+#                                         loadThrottle = NA,
+#                                         valueField = "idpatient",
+#                                         searchField = c("firstName", "middleName", "lastName", "californiaID"),
+#                                         placeholder = "Search",
+#                                         render = I("{
+#                                                    option: function(item, escape) {
+#                                                    return '<div>' +
+#                                                    '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
+#                                                    '<ul>' +
+#                                                    '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
+#                                                    '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
+#                                                    (item.expirationDate ? '<li><span>Expiration Date: ' + escape(item.expirationDate) + '</span></li>' : '') +
+#                                                    '</ul>' +
+#                                                    '</div>';
+#                                                    }               
+# }")
+#                                         )
+#                        ),
+#                        tags$script("$('#patient').addClass('search-box');")
+#                      )
+#                    ),
+#                    div(class = "col-md-3",
+#                        tags$ul(class = "nav navbar-nav navbar-right", style = "margin-right:15px;",
+#                          uiOutput("user_name"),
+#                          tags$li(class = "dropdown",
+#                           tags$a(href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown", role = "button",
+#                                  `aria-haspopup` = "true", `aria-expanded` = "false", tagList(tags$p("Other Apps", class = "navbar-text"
+#                                                                                                      ,tags$span(class = "caret")))
+#                                         ),
+#                           tags$ul(
+#                             class = "dropdown-menu",
+#                             tags$li(tags$a(href = "../inventory/", "Inventory")),
+#                             tags$li(tags$a(href = "../connect/", "Connect")),
+#                             tags$li(tags$a(href = "../pos/", "Cash Register")),
+#                             tags$li(role = "separator", class = "divider"),
+#                             tags$li(tags$a(href = "https://cannadata.auth0.com/v2/logout", "Logout"))
+#                           )
+#                          )
+#                        )
+#                      ))))
+#     ))
+#   }
 
 tableTitle <- function(title, icon = "pencil") {
   div(class = "table-title-and-icon", h1(title), icon(icon, "fa-2x table-icons"))

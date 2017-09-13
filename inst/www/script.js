@@ -180,7 +180,7 @@ CannaFrontdesk = function() {
     },
     sidebar: function() {
       // make shiny navlist the sidebar
-      $(".nav").parent().attr("id", "sidebar");
+      $("#content .nav").parent().attr("id", "sidebar");
       // remove bs classes
       $("#sidebar").removeClass("col-sm-4");
       $("#content").find(".col-sm-8").removeClass("col-sm-8");
@@ -192,8 +192,8 @@ CannaFrontdesk = function() {
       $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
       $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
       // add class
-      $(".nav").wrapAll("<div class = 'icon-bar'/>");
-      $(".nav").addClass("sidebar-icon-bar");
+      $("#sidebar .nav").wrapAll("<div class = 'icon-bar'/>");
+      $("#sidebar .nav").addClass("sidebar-icon-bar");
     },
     // hard coded NS from Shiny Modules
     icon_inputs: function() {
