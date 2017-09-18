@@ -58,6 +58,11 @@ GNU Affero General Public License for more details.
                                         valueField = "idpatient",
                                         searchField = c("firstName", "middleName", "lastName", "californiaID"),
                                         placeholder = "Search",
+                                        onInitialize = I("
+                                        function() {
+                                        $($('#patient').parents('div')[0]).find('input[type=\"text\"]').css('width', '90%');
+                                        }
+                                        "),
                                         render = I("{
                                                    option: function(item, escape) {
                                                    return '<div>' +

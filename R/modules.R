@@ -1369,12 +1369,13 @@ newPatient <-
         trigger_new(trigger_new() + 1)
         trigger_returning(trigger_returning() + 1)
         trigger_patients(trigger_patients() + 1)
-        reload_patient(list(selected = id))
+        # reload_patient(list(selected = id))
         session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
         session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
         session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
         ### go to patient info page with new patient there
-        # updateNavlistPanel(parent_session, "tabset", "patientInfo")
+        updateNavlistPanel(parent_session, "tabset", "patientInfo")
+        reload_patient(list(selected = id))
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
@@ -1632,7 +1633,7 @@ queue <-
       n <- max(c(nrow(queue()), nrow(in_store())))
       if (length(obsList) < n) {
         obsList <<-
-          c(obsList, lapply(seq_len(n - length(obsList)), function(i) {
+          c(obsList, lapply(seq_len(n - length(obsList))+length(obsList), function(i) {
             observeEvent(input[[paste0("let", i)]], {
               u_f_let_in(pool, queue()$idtransaction[i])
               trigger_queue(trigger_queue() + 1)
@@ -1901,7 +1902,7 @@ allPatients <-
                                     "Average Spent", #"Points",
                                     ""),
     options = list(
-      dom = 't',
+      dom = 'tp',
       columnDefs = list(list(
         targets = 0:6,
         className = "dt-center"
@@ -2014,74 +2015,6 @@ input <-
       )
     )
   }
-
-box <- function(...) {
-  div(class = "row", div(class = "table-container", ...))
-}
-
-# navbarUI <- function(name = "Store Name") {
-#   tagList(div(
-#     id = "header",
-#     tags$nav(class = "navbar navbar-default navbar-static-top navbar-style",
-#              div(class = "container nav-container", style = "margin-left: 0;margin-right:0;width:100%",
-#                  div(
-#                    class = "row",
-#                    div(class = "col-sm-3", 
-#                        tags$p(class = "navbar-text",
-#                               name)),
-#                    div(
-#                      class = "col-md-6",
-#                      div(
-#                        class = "inner-addon search-icon",
-#                        icon("search", lib = "glyphicon"),
-#                        # tags$select(id = "patient", class = "form-control search-box")
-#                        selectizeInput(
-#                          "patient",
-#                          NULL,
-#                          NULL,
-#                          options = list(maxOptions = 10,
-#                                         loadThrottle = NA,
-#                                         valueField = "idpatient",
-#                                         searchField = c("firstName", "middleName", "lastName", "californiaID"),
-#                                         placeholder = "Search",
-#                                         render = I("{
-#                                                    option: function(item, escape) {
-#                                                    return '<div>' +
-#                                                    '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
-#                                                    '<ul>' +
-#                                                    '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
-#                                                    '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
-#                                                    (item.expirationDate ? '<li><span>Expiration Date: ' + escape(item.expirationDate) + '</span></li>' : '') +
-#                                                    '</ul>' +
-#                                                    '</div>';
-#                                                    }               
-# }")
-#                                         )
-#                        ),
-#                        tags$script("$('#patient').addClass('search-box');")
-#                      )
-#                    ),
-#                    div(class = "col-md-3",
-#                        tags$ul(class = "nav navbar-nav navbar-right", style = "margin-right:15px;",
-#                          uiOutput("user_name"),
-#                          tags$li(class = "dropdown",
-#                           tags$a(href = "#", class = "dropdown-toggle", `data-toggle` = "dropdown", role = "button",
-#                                  `aria-haspopup` = "true", `aria-expanded` = "false", tagList(tags$p("Other Apps", class = "navbar-text"
-#                                                                                                      ,tags$span(class = "caret")))
-#                                         ),
-#                           tags$ul(
-#                             class = "dropdown-menu",
-#                             tags$li(tags$a(href = "../inventory/", "Inventory")),
-#                             tags$li(tags$a(href = "../connect/", "Connect")),
-#                             tags$li(tags$a(href = "../pos/", "Cash Register")),
-#                             tags$li(role = "separator", class = "divider"),
-#                             tags$li(tags$a(href = "https://cannadata.auth0.com/v2/logout", "Logout"))
-#                           )
-#                          )
-#                        )
-#                      ))))
-#     ))
-#   }
 
 tableTitle <- function(title, icon = "pencil") {
   div(class = "table-title-and-icon", h1(title), icon(icon, "fa-2x table-icons"))

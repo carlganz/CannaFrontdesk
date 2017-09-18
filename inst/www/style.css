@@ -395,7 +395,7 @@ td {
 }
 
 .dt-row thead {
-  visibility: hidden;
+  display: none;
 }
 
 .dt-rowname {
@@ -551,4 +551,20 @@ input[type=checkbox] {
 
 .navbar-right .dropdown-toggle {
   background-color: inherit !important;
+}
+
+#content .paginate_button {
+  color: white !important;
+}
+
+#content .current.paginate_button {
+  color: inherit !important;
+}
+
+.product-image {
+  max-height: 7vh;
+}
+
+.btn-file {
+  max-width: 10vh;
 }
