@@ -288,8 +288,8 @@ patientInfo <-
                 placeholder = "ID Expiration",
                 label = "ID EXP",
                 label_width = 4,
-                `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
-                value = gsub("-", "/", patient_info_returning()$californiaIDexpiration),
+                `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
+                value = format(as.Date(patient_info_returning()$californiaIDexpiration), "%m/%d/%Y"),
                 input_width = 8,
                 required = FALSE
               ),
@@ -299,8 +299,8 @@ patientInfo <-
                 label = "DOB",
                 label_width = 4,
                 `data-parsley-year` = I(""),
-                `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
-                value = gsub("-", "/", patient_info_returning()$birthday),
+                `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
+                value = format(as.Date(patient_info_returning()$birthday), "%m/%d/%Y"),
                 input_width = 8
               ),
               input(
@@ -326,6 +326,15 @@ patientInfo <-
     })'
       )
               ),
+      tags$script(
+        paste0(
+          'var cleave = new Cleave("#',
+          session$ns("californiaIDexpiration"),
+          '", {
+                  date: true, datePattern: ["m","d", "Y"]
+    })'
+        )
+      ),
       tags$label("Text Deal", class = "control-label control-label-left col-sm-4"),
       tags$div(class = "checkbox checkbox-icons col-sm-7",
                tags$li(
@@ -390,7 +399,7 @@ patientInfo <-
             'var cleaveDOB = new Cleave("#',
             session$ns("birthday"),
             '", {
-            date: true, datePattern: ["Y","m","d"]
+            date: true, datePattern: ["m","d", "Y"]
     })'
       )
         ),
@@ -427,7 +436,7 @@ patientInfo <-
         input$email,
         input$birthday
       )
-      
+
       # phone and zip are legit
       # zip
       req(nchar(input$zip) == 5,!is.na(as.integer(input$zip)))
@@ -442,10 +451,8 @@ patientInfo <-
       req(is_californiaId(input$californiaID))
       
       req(nchar(input$state) == 2)
-      
       # make sure date is date
-      req(grepl("^[0-9]{4}/[0-9]{2}/[0-9]{2}$", input$birthday))
-      
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$birthday))
       u_f_edit_info(
         pool,
         patientId(),
@@ -453,7 +460,7 @@ patientInfo <-
         last = input$name2,
         address = input$address,
         californiaId = input$californiaID,
-        californiaIDexpiration = if (isTruthy(input$californiaIDexpiration)) input$californiaIDexpiration else NA,
+        californiaIDexpiration = if (isTruthy(input$californiaIDexpiration)) input$californiaIDexpiration else NA_character_,
         city = input$city,
         zip = input$zip,
         state = input$state,
@@ -501,8 +508,8 @@ patientInfo <-
             input(
               session$ns("expirationDate"),
               placeholder = "Expiration Date",
-              `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
-              value = gsub("-", "/", patient_info_returning()$expirationDate),
+              `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
+              value = format(as.Date(patient_info_returning()$expirationDate), "%m/%d/%Y"),
               label_width = 4
             ),
             tags$script(
@@ -510,7 +517,7 @@ patientInfo <-
                 'var cleaveExp = new Cleave("#',
                 session$ns("expirationDate"),
                 '", {
-                date: true, datePattern: ["Y","m","d"]
+                date: true, datePattern: ["m","d", "Y"]
     })'
       )
             ),
@@ -547,7 +554,7 @@ patientInfo <-
           input$recId)
       
       # validate date
-      req(grepl("^[0-9]{4}/[0-9]{2}/[0-9]{2}$",
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$",
                 input$expirationDate))
       
       # validate recId
@@ -873,8 +880,9 @@ patientInfo <-
         mutate_(
           emailDeal = ~ if_else(emailDeal == 1, "YES", "NO"),
           textDeal = ~ if_else(textDeal == 1, "YES", "NO"),
-          birthday = ~ paste0(birthday, " (", age, " years old)"),
-          recommender = ~ if_else(recommender=="", NA_character_, recommender)
+          birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)"),
+          recommender = ~ if_else(recommender=="", NA_character_, recommender),
+          californiaIDexpiration = ~format(as.Date(californiaIDexpiration), "%m/%d/%Y")
         ) %>%
         select_(
           # Name = ~ name,
@@ -912,7 +920,7 @@ patientInfo <-
       )
     
     output$preference <- DT::renderDataTable({
-      info <- patient_info_returning() %>% print
+      info <- patient_info_returning()
       data.frame(
         check.names = FALSE,
         Strain = paste0(c("Indica", "Sativa", "Hybrid")[which(c(info$indica ==
@@ -936,7 +944,7 @@ patientInfo <-
         ))],
         collapse = "/")
       ) %>% t() %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
-                                                                                         "N/A")) %>% print
+                                                                                         "N/A"))
       
     }, options = list(dom = 't', columnDefs = list(
       list(
@@ -961,6 +969,7 @@ patientInfo <-
     output$recommendation <- DT::renderDataTable({
       patient_info_returning() %>%
         mutate_(
+          expirationDate = ~ format(as.Date(expirationDate), "%m/%d/%Y"),
           medicalCondition = ~if_else(medicalCondition == "", NA_character_, medicalCondition)
         ) %>%
         select_(
@@ -1140,12 +1149,12 @@ newPatientUI <- function(id) {
                           input(
                             ns("date"),
                             "text", `data-date-language` ="en", `data-date-week-start` =0,
-                            `data-min-date` = format(Sys.Date(), "%Y-%m-%d"),
-                            `data-max-date` = format(Sys.Date() + 366, "%Y-%m-%d"),
-                            `data-initial-date` = NA, `data-date-format` = "yyyy/mm/dd",
-                            placeholder = "Expiration Date (YYYY/MM/DD)",
+                            `data-min-date` = format(Sys.Date(), "%m-%d-%Y"),
+                            `data-max-date` = format(Sys.Date() + 366, "%m-%d-%Y"),
+                            `data-initial-date` = NA, `data-date-format` = "mm/dd/yyyy",
+                            placeholder = "Expiration Date (MM/DD/YYYY)",
                             label = "Expiration Date",
-                            `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/", label_width = 4
+                            `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
                           ),
                           tags$script(
                             paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
@@ -1161,7 +1170,7 @@ newPatientUI <- function(id) {
                               "var expDate=new Cleave('#",
                               ns("date"),
                               "', {
-                              date: true, datePattern: ['Y', 'm', 'd']
+                              date: true, datePattern: ['m', 'd', 'Y']
 })"
               )
                           )
@@ -1243,9 +1252,18 @@ newPatient <-
                 label = "DOB",
                 label_width = 4,
                 `data-parsley-year` = I(""),
-                `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
-                value = gsub("-", "/", patient_info_new()$birthday),
+                `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
+                value = format(as.Date(patient_info_new()$birthday), "%m/%d/%Y"),
                 input_width = 8
+              ),
+              tags$script(
+                paste0(
+                  'var cleaveDOB = new Cleave("#',
+                  session$ns("birthday"),
+                  '", {
+            date: true, datePattern: ["m","d", "Y"]
+    })'
+                )
               )
             ),
             div(
@@ -1318,7 +1336,7 @@ newPatient <-
       req(nchar(input$state) == 2)
       
       # make sure date is date
-      req(grepl("^[0-9]{4}/[0-9]{2}/[0-9]{2}$", input$birthday))
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$birthday))
       
       u_f_edit_info_new(
         pool,
@@ -1358,7 +1376,7 @@ newPatient <-
       )
       
       # validate date
-      req(grepl("^[0-9]{4}/[0-9]{2}/[0-9]{2}$", input$date))
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$date))
       
       # validate recId
       # req(nchar(input$recId) == 15,!is.na(as.numeric(input$recId)))
@@ -1497,6 +1515,7 @@ newPatient <-
     
     output$info <- DT::renderDataTable({
       patient_info_new() %>%
+        mutate_(birthday = ~ format(as.Date(birthday), "%m/%d/%Y")) %>%
         select_(
           #Name = ~name,
           DOB = ~ birthday,

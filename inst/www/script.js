@@ -47,7 +47,7 @@ CannaFrontdesk = function() {
         requirementType: 'string',
         validateString: function(value, requirement) {
           var year = new Date().getFullYear();
-          var age = year - parseInt(value.substring(0, 4));
+          var age = year - parseInt(value.substring(6));
           if (age > 125 || age < 0) {
             return false;
           }
