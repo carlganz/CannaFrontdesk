@@ -1952,6 +1952,8 @@ allPatients <-
     output$patients <- DT::renderDataTable({
       patients() %>%
         mutate_(info = ~row_number(),
+                expirationDate = ~ format(as.Date(expirationDate), "%m/%d/%Y"),
+                lastTransaction = ~format(as.Date(lastTransaction), "%m/%d/%Y"),
         age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
           ) %>% 
         select_(Name = ~name, `ID #`=~californiaID, 
@@ -2008,7 +2010,8 @@ allPatients <-
     
     output$incomplete <- DT::renderDataTable({
       new_patients() %>%
-        mutate_(index = ~row_number()) %>%
+        mutate_(index = ~row_number(),
+                addDate = ~format(as.Date(addDate), "%m/%d/%Y")) %>%
         select_(~name, ~californiaID, ~addDate, ~index)
     }, colnames = c("Name", "ID #", "Add Date", ""),
     options = list(
