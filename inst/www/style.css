@@ -401,6 +401,7 @@ td {
 .dt-rowname {
   font-family: DinMedium;
   font-weight: bold;
+  float: left;
 }
 
 .dataTables_wrapper {
