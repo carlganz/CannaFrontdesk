@@ -438,6 +438,7 @@ input[readonly].parsley-error, select[readonly].parsley-error, textarea[readonly
 #shiny-modal h1, #shiny-modal h2, #shiny-modal h3 {
   text-align: center;
   float: none;
+  margin-bottom: 15px;
 }
 
 .icon-bar .nav-pills>li.active>a, .nav-pills>li.active>a:focus, .nav-pills>li.active>a:hover {
@@ -465,7 +466,7 @@ h1 {
 
 .table-container h1, .form-horizontal h1 {
     font-family: DinMedium;
-   /* font-size: 25px;*/
+    font-size: 25px;
     text-align: center;
     color: white;
     padding: 0px;
@@ -562,9 +563,95 @@ input[type=checkbox] {
 }
 
 .product-image {
-  max-height: 7vh;
+  max-height: 8vh;
+  max-width: 25vh;
 }
 
 .btn-file {
   max-width: 10vh;
+}
+
+.checkbox-icons {
+  margin: 2.5px auto;
+}
+
+.checkbox-icons li {
+  border: 1.5px solid white;
+  border-radius: 10px;
+  margin: 0 5px;
+}
+
+.checkbox-icons i {
+  max-height: 19vh;
+  max-width: 19vh;
+  margin: 0 auto;
+}
+
+.checkbox {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-self: flex-start;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  -webkit-box-pack: start;
+  -ms-flex-pack: start;
+  -ms-flex-item-align: start;
+  margin: 1.5vh;
+}
+
+.checkbox li {
+  display: -webkit-inline-box;
+  display: -ms-inline-flexbox;
+  display: inline-flex;
+  flex-direction: row;
+  flex: 1;
+  align-content: center;
+  /*margin-bottom: 15px;*/
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  -webkit-box-flex: 1;
+  -ms-flex: 1;
+  -ms-flex-line-pack: center;
+}
+
+.deal-type {
+  max-width: 22vh;
+  margin: 5px;
+}
+
+.edit-basic-info .selected {
+  color: #99cc33;
+  border-color: #99cc33 !important;
+}
+
+.edit-pref-info .selected {
+  background-color: white;
+}
+
+.strain-type {
+  max-width: 22vh;
+  margin: 5px;
+}
+
+.checkbox-icons img {
+  max-height: 14vh;
+  max-width: 14vh;
+  margin: 0 auto;
+}
+
+.logout-btn {
+  border-top: 1px solid grey;
+}
+
+.btn {
+  max-width: 20vh;
+}
+
+#frontdesk-queue th {
+  
 }

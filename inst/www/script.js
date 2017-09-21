@@ -217,7 +217,6 @@ CannaFrontdesk = function() {
         $(this).attr('value', parseInt($(this).attr('value')) + 1);
         Shiny.onInputChange("new_patient-edit_basic_info", $(this).attr('value'));
       });
-
     },
     reset_parsley: function(params) {
       $("#" + params.id).parsley().reset();
@@ -229,13 +228,47 @@ CannaFrontdesk = function() {
         $(".countdown-container").addClass("notexpired").removeClass("expired");
       }
     },
-    unbind_dt: function(id) {
-      if ($('#' + id).find('table').length > 0) {
-        Shiny.unbindAll($('#' + id).find('table').DataTable().table().node());
-      }
-    },
     change_tab: function(tab) {
       $("a[data-value='" + tab + "']").trigger('click');
+    },
+    button: function(it, input) {
+      Shiny.onInputChange(input, {row: parseInt($(it).attr("row")), time: Date.now()});
+    },
+    enable_buttons: function() {
+      // init
+      $(".checkbox-icons li").each(function(i, val) {
+        if ($(val).attr("value") === "true") {
+          Shiny.onInputChange($(this).addClass("selected").attr("alt"), true);
+        } else {
+          Shiny.onInputChange($(this).removeClass("selected").attr("alt"), false);
+        }
+      });
+      // input changes
+      $(".checkbox-icons li").on("click", function() {
+        if ($(this).attr("value") === "true") {
+          Shiny.onInputChange($(this).removeClass("selected").attr("value", "false").attr("alt"), false);
+        } else {
+          Shiny.onInputChange($(this).addClass("selected").attr("value", "true").attr("alt"), true);
+        }
+      });
+    },
+    enable_icons: function() {
+      // init
+      $(".checkbox-icons li").each(function(i, val) {
+        if ($(val).children("img").attr("value") === "true") {
+          Shiny.onInputChange($(this).addClass("selected").children("img").attr("id").toLowerCase(), true);
+        } else {
+          Shiny.onInputChange($(this).removeClass("selected").children("img").attr("id").toLowerCase(), false);
+        }
+      });
+      // input changes
+      $(".checkbox-icons li").on("click", function() {
+        if ($(this).children("img").attr("value") === "true") {
+          Shiny.onInputChange($(this).removeClass("selected").children("img").attr("value", "false").attr("id").toLowerCase(), false);
+        } else {
+          Shiny.onInputChange($(this).addClass("selected").children("img").attr("value", "true").attr("id").toLowerCase(), true);
+        }
+      });
     }
   };
 }();
@@ -246,7 +279,6 @@ $(document).ready(function() {
   CannaFrontdesk.telephone_input();
   CannaFrontdesk.sidebar();
   CannaFrontdesk.icon_inputs();
-  Shiny.addCustomMessageHandler('unbind-dt', CannaFrontdesk.unbind_dt);
   Shiny.addCustomMessageHandler("reset_file_input", CannaFrontdesk.reset_file_input);
   Shiny.addCustomMessageHandler("reset_parsley", CannaFrontdesk.reset_parsley);
   Shiny.addCustomMessageHandler("toggle_expiration", CannaFrontdesk.toggle_expiration);

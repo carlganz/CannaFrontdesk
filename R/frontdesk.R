@@ -186,7 +186,9 @@ frontdesk <-
         )
       })
     
-      session$onSessionEnded(stopApp)
+      if (interactive()) {
+        session$onSessionEnded(stopApp)
+      }
       options(shiny.maxRequestSize = 300 * 1024 ^ 2)
       ## input names may change!!!
       # REACTIVES ---------------------------------------------------------------
@@ -206,8 +208,8 @@ frontdesk <-
           pool,
           reactive({
             if (isTruthy(input$patient) &&
-                isTRUE(patients()$verified[patients()$idpatient == input$patient] == 3)) {
-              input$patient
+                isTRUE(patients()$verified[patients()$idpatient == as.numeric(input$patient)] == 3)) {
+              as.numeric(input$patient)
             } else {
               NULL
             }
@@ -230,8 +232,8 @@ frontdesk <-
           "new_patient",
           pool,
           reactive({
-            if (isTruthy(input$patient) && isTRUE(patients()$verified[patients()$idpatient == input$patient] %in% c(1,2))) {
-              input$patient
+            if (isTruthy(input$patient) && isTRUE(patients()$verified[patients()$idpatient == as.numeric(input$patient)] %in% c(1,2))) {
+              as.numeric(input$patient)
             } else {
               NULL
             }
@@ -255,7 +257,7 @@ frontdesk <-
           patient_proxy,
           trigger,
           reload,
-          session,
+          reload_patient,
           trigger_patients
         )
       trigger_patients <- reactiveVal(0)
@@ -263,14 +265,14 @@ frontdesk <-
         callModule(allPatients,
                    "all_patients",
                    pool,
-                   session,
+                   reload_patient,
                    trigger_patients)
       
       # OBSERVES ---------------------------------------------------------------
       
       observeEvent(input$patient, {
         req(input$patient)
-        if (patients()$verified[patients()$idpatient == input$patient] == 3)
+        if (patients()$verified[patients()$idpatient == as.numeric(input$patient)] == 3)
           updateNavlistPanel(session, "tabset", "patientInfo")
         else
           updateNavlistPanel(session, "tabset", "newPatient")
@@ -281,10 +283,16 @@ frontdesk <-
       reload_patient <- reactiveVal(NULL)
       observeEvent(reload_patient(), {
         req(reload_patient())
+        # check for new patients anytime we update selectize
+        # not needed for now unless we determine it is needed
+        # trigger_new(trigger_new() + 1)
         updateSelectizeInput(
           session,
           "patient",
-          choices = patients(),
+          choices = bind_rows(
+            patients()[patients()$idpatient == reload_patient()$selected,],
+            patients()[!(patients()$idpatient == reload_patient()$selected),]
+          ),
           server = TRUE,
           selected = reload_patient()$selected
         )
@@ -297,18 +305,10 @@ frontdesk <-
                              server = TRUE)
       })
       
-      observe({invalidateLater(10000)
-        req(!isTruthy(input$patient))
-        trigger_new(isolate(trigger_new())+1)
-        updateSelectizeInput(session,
-                             "patient",
-                             choices = isolate(patients()),
-                             server = TRUE)
-      })
-      
       # id scanner
       observeEvent(input$read_barcode, {
         req(input$read_barcode)
+        updateSelectizeInput(session, "patient", choices = patients())
         # PDF417
         if (any(input$read_barcode$californiaId %in% patients()$californiaID)) {
           status <-
@@ -359,6 +359,7 @@ frontdesk <-
         i_f_new_patient(
           pool,
           input$read_barcode$californiaId,
+          input$read_barcode$expirationDate,
           input$read_barcode$firstName,
           input$read_barcode$lastName,
           input$read_barcode$middleName,

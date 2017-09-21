@@ -34,22 +34,10 @@ patientInfoUI <- function(id) {
           DT::dataTableOutput(ns("info"))),
       box(tableTitle("Preferences"),
           DT::dataTableOutput(ns("preference"))),
-      box(h1("Patient Data"),style = "overflow:hidden",
-          div(style = "margin-top:8%",
-              div(class = "col-sm-6",
-                  h3("Patient Points"),
-                  c3Output(ns("patient_points")),
-                  tags$script(
-                    paste0(
-                      '$("#', ns("patient_points"),'").css("zoom", "1.6").css("zoom","160%").css("-moz-transform","scale(1.6,1.6)").css("margin-top","-5%");'
-                    )
-                  )
-              ),
-              div(class = "col-sm-6",
-                  h3("Product Types"),
+      box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
+          div(style = "margin-top:35px",
                   uiOutput(ns("no_type"), TRUE),
                   c3Output(ns("patient_type"))
-              )
           )
       )
     ),
@@ -99,6 +87,11 @@ patientInfoUI <- function(id) {
                   )))
             )
           ),
+      box(h1("Reward Points"),style = "overflow:hidden",
+          div(style = "margin-top:8%",
+              c3Output(ns("patient_points"))
+          )
+      ),
           box(h1("Patient History"),
               CannaModules::patientHistoryUI(ns("frontdesk")))
       )
@@ -244,8 +237,7 @@ patientInfo <-
       trigger_returning(trigger_returning() + 1)
       trigger_patients(trigger_patients() + 1)
       removeModal()
-      # updateSelectizeInput(parent_session, "patient", selected = "")
-      reload_patient(list(selected = NULL))
+      reload_patient(list(selected = NULL, time = Sys.time()))
     })
     
     observeEvent(input$edit_basic_info, {
@@ -253,9 +245,11 @@ patientInfo <-
         modalDialog(
           size = "l",
           easyClose = TRUE,
+          class = "edit-basic-info",
           tags$script(
-            "$('.modal-content').addClass('form-horizontal col-lg-12');
-            $('.modal-body').css('height', '400px').css('font-size','110%');"
+            "$('.modal-lg').css('width', '85%');
+            $('.modal-content').addClass('form-horizontal col-lg-12');
+            $('.modal-body').css('overflow-y', '-webkit-paged-y');"
           ),
           h1("Edit Basic Info"),
           # add parsley
@@ -280,13 +274,24 @@ patientInfo <-
               input(
                 session$ns("californiaID"),
                 type = "tel",
-                placeholder = "California ID",
-                label = "CA ID",
+                placeholder = "ID #",
+                label = "ID #",
                 label_width = 4,
                 maxlength = 8,
                 `data-parsley-californiaid` = I(""),
                 value = patient_info_returning()$californiaID,
                 input_width = 8
+              ),
+              input(
+                session$ns("californiaIDexpiration"),
+                # type = "date",
+                placeholder = "ID Expiration",
+                label = "ID EXP",
+                label_width = 4,
+                `data-parsley-pattern` = "/^\\d{4}[\\/\\-](0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])$/",
+                value = gsub("-", "/", patient_info_returning()$californiaIDexpiration),
+                input_width = 8,
+                required = FALSE
               ),
               input(
                 session$ns("birthday"),
@@ -321,22 +326,14 @@ patientInfo <-
     })'
       )
               ),
-      div(
-        class = "controls form-group",
-        style = "text-align: right;",
-        tags$label(
-          class = "checkbox col-sm-4",
-          `for` = session$ns("textDeal"),
-          "Text Deals"
-        ),
-        tags$input(
-          type = "checkbox",
-          id = session$ns("textDeal"),
-          value = session$ns("textDeal"),
-          name = session$ns("textDeal"),
-          class = "col-sm-7"
-        )
-      )
+      tags$label("Text Deal", class = "control-label control-label-left col-sm-4"),
+      tags$div(class = "checkbox checkbox-icons col-sm-7",
+               tags$li(
+                 icon("mobile", "deal-type fa-2x"),
+                 value = tolower(as.character(as.logical(patient_info_returning()$textDeal))),
+                 class = if (patient_info_returning()$textDeal) "selected",
+                 alt = session$ns("textDeal")
+               ))
                 ),
       div(
         class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
@@ -373,42 +370,21 @@ patientInfo <-
           value = patient_info_returning()$zip
         ),
         input(
+          session$ns("recommender"),
+          placeholder = "Referrer",
+          label_width = 4,
+          value= patient_info_returning()$recommender,
+          required = FALSE
+        ),
+        input(
           session$ns("email"),
           placeholder = "Email",
           label_width = 4,
           `data-parsley-type` = "email",
           value = patient_info_returning()$email
         ),
-        div(
-          class = "controls form-group",
-          style = "text-align: right;",
-          tags$label(
-            class = "checkbox col-sm-4",
-            `for` = session$ns("emailDeal"),
-            "Email Deals"
-          ),
-          tags$input(
-            type = "checkbox",
-            id = session$ns("emailDeal"),
-            value = session$ns("emailDeal"),
-            name = session$ns("emailDeal"),
-            class = "col-sm-7"
-          )
-        ),
-        if (patient_info_returning()$emailDeal == 1) {
-          tags$script(paste0(
-            '$("#',
-            session$ns("emailDeal"),
-            '").prop("checked",true)'
-          ))
-        },
-        if (patient_info_returning()$textDeal == 1) {
-          tags$script(paste0(
-            '$("#',
-            session$ns("textDeal"),
-            '").prop("checked",true)'
-          ))
-        },
+        tags$script(
+          HTML("CannaFrontdesk.enable_buttons()")),
         tags$script(
           paste0(
             'var cleaveDOB = new Cleave("#',
@@ -417,9 +393,16 @@ patientInfo <-
             date: true, datePattern: ["Y","m","d"]
     })'
       )
-        )
-          )
         ),
+      tags$label("Email Deal", class = "control-label control-label-left col-sm-4"),
+      tags$div(class = "col-sm-7 checkbox checkbox-icons",
+               tags$li(
+                 icon("envelope-o", "deal-type fa-2x"),
+                 value = tolower(as.character(as.logical(patient_info_returning()$emailDeal))),
+                 class = if (patient_info_returning()$emailDeal) "selected",
+                 alt = session$ns("emailDeal")
+               )
+      ))),
       footer = parsleyr::submit_form(
         session$ns("submit_info_edit"),
         "Submit",
@@ -470,6 +453,7 @@ patientInfo <-
         last = input$name2,
         address = input$address,
         californiaId = input$californiaID,
+        californiaIDexpiration = if (isTruthy(input$californiaIDexpiration)) input$californiaIDexpiration else NA,
         city = input$city,
         zip = input$zip,
         state = input$state,
@@ -477,13 +461,17 @@ patientInfo <-
         phone = phone,
         birthday = input$birthday,
         textDeal = input$textDeal,
-        emailDeal = input$emailDeal
+        emailDeal = input$emailDeal,
+        recommender = if (isTruthy(input$recommender)) input$recommender else NA
       )
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
       
-      update_option(proxy, list(
-        value = patientId(),
-        label = paste0(input$name2, ", ", input$name, " (", input$californiaID, ")")
+      update_option(proxy, value = patientId(), list(
+        firstName = input$name, lastName = input$name2, middleName = patient_info_returning()$middleName,
+        californiaID = input$californiaID, idpatient = patientId(),
+        addDate = patient_info_returning()$addDate, 
+        verified = 3, expirationDate = patient_info_returning()$expirationDate,
+        label = paste0(input$name, ", ", input$name2, " (", input$californiaID, ")")
       ))
       
       trigger_queue(trigger_queue() + 1)
@@ -576,99 +564,159 @@ patientInfo <-
       
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
       trigger_patients(trigger_patients() + 1)
+      update_option(proxy, value = patientId(), list(
+        firstName = patient_info_returning()$firstName, lastName = patient_info_returning()$lastName, 
+        middleName = patient_info_returning()$middleName,
+        californiaID = patient_info_returning()$californiaID, idpatient = patientId(),
+        addDate = patient_info_returning()$addDate, 
+        verified = 3, expirationDate = input$expirationDate,
+        label = paste0(patient_info_returning()$firstName, ", ", patient_info_returning()$lastName, 
+                       " (", patient_info_returning()$californiaID, ")")
+      ))
+      
       removeModal()
     })
     
     observeEvent(input$edit_preferences_info, {
       showModal(
         modalDialog(
-          easyClose = TRUE,
+          easyClose = TRUE, size = "l",
+          class = "edit-pref-info",
           tags$script("$('.modal-content').addClass('form-horizontal');"),
           h1("Edit Preferences"),
           # checkbox inputs
           tags$form(
             id = session$ns("preference_form"),
             class = "preference-edit",
-            input(
-              session$ns("recommender"),
-              placeholder = "Referred By",
-              label_width = 4,
-              required = FALSE,
-              value = patient_info_returning()$recommender
-            ),
             h3("Strain Type"),
-            div(
-              tags$label(`for` = session$ns("indica"), "Indica"),
-              tags$input(
-                id = session$ns("indica"),
-                type = "checkbox",
-                value = session$ns("indica"),
-                name = session$ns("indica")
-              )
-            ),
-            add_check("indica", patient_info_returning()),
-            div(
-              tags$label(`for` = session$ns("sativa"), "Sativa"),
-              tags$input(
-                id = session$ns("sativa"),
-                type = "checkbox",
-                value = session$ns("sativa"),
-                name = session$ns("sativa")
-              )
-            ),
-            add_check("sativa", patient_info_returning()),
-            div(
-              tags$label(`for` = session$ns("hybrid"), "Hybrid"),
-              tags$input(
-                id = session$ns("hybrid"),
-                type = "checkbox",
-                value = session$ns("hybrid"),
-                name = session$ns("hybrid")
-              )
-            ),
-            add_check("hybrid", patient_info_returning()),
+            tags$div(class = "checkbox checkbox-icons",
+                     tags$li(
+                       tags$img(
+                         src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/hybrid.svg",
+                         alt = "Hybrid",
+                         id = session$ns("hybrid"),
+                         class = "strain-type",
+                         value = tolower(as.character(as.logical(patient_info_returning()$hybrid)))
+                       )
+                     ),
+                     tags$li(
+                       
+                       tags$img(
+                         src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/sativa.svg",
+                         alt = "Sativa",
+                         id = session$ns("sativa"),
+                         class = "strain-type",
+                         value = tolower(as.character(as.logical(patient_info_returning()$sativa)))
+                       )
+                       
+                     ),
+                     tags$li(
+                       tags$img(
+                         src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/indica.svg",
+                         alt = "Indica",
+                         id = session$ns("indica"),
+                         class = "strain-type",
+                         value = tolower(as.character(as.logical(patient_info_returning()$indica)))
+                       )
+                     )),
             h3("Product Type"),
-            div(
-              tags$label(`for` = session$ns("flower"), "Flower"),
-              tags$input(
-                id = session$ns("flower"),
-                type = "checkbox",
-                value = session$ns("flower"),
-                name = session$ns("flower")
+            tags$div(
+              class = "checkbox checkbox-icons",
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/flower.svg",
+                  alt = "Flower",
+                  id = session$ns("flower"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$flower)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/concentrate.svg",
+                  alt = "Concentrate",
+                  id = session$ns("concentrate"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$concentrate)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/edible.svg",
+                  alt = "Edible",
+                  id = session$ns("edible"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$edible)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/beverage.svg",
+                  alt = "Beverage",
+                  id = session$ns("beverage"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$beverage)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/joint.svg",
+                  alt = "Joint",
+                  id = session$ns("joint"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$joint)))
+                )
               )
             ),
-            add_check("flower", patient_info_returning()),
-            div(
-              tags$label(`for` = session$ns("concentrate"), "Concentrate"),
-              tags$input(
-                id = session$ns("concentrate"),
-                type = "checkbox",
-                value = session$ns("concentrate"),
-                name = session$ns("concentrate")
-              )
-            ),
-            add_check("concentrate", patient_info_returning()),
-            div(
-              tags$label(`for` = session$ns("edible"), "Edible"),
-              tags$input(
-                id = session$ns("edible"),
-                type = "checkbox",
-                value = session$ns("edible"),
-                name = session$ns("edible")
-              )
-            ),
-            add_check("edible", patient_info_returning()),
-            div(
-              tags$label(`for` = session$ns("other"), "Other"),
-              tags$input(
-                id = session$ns("other"),
-                type = "checkbox",
-                value = session$ns("other"),
-                name = session$ns("other")
+            tags$div(
+              class = "checkbox checkbox-icons",
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/soap.svg",
+                  alt = "Soap",
+                  id = session$ns("soap"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$soap)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/vaporizer.svg",
+                  alt = "Vaporizer",
+                  id = session$ns("vaporizer"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$vaporizer)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/tincture.svg",
+                  alt = "Tincture",
+                  id = session$ns("tincture"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$tincture)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/ointment.svg",
+                  alt = "Ointment",
+                  id = session$ns("ointment"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$ointment)))
+                )
+              ),
+              tags$li(
+                tags$img(
+                  src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/paraphernalia.svg",
+                  alt = "Paraphernalia",
+                  id = session$ns("paraphernalia"),
+                  class = "product-type",
+                  value = tolower(as.character(as.logical(patient_info_returning()$paraphernalia)))
+                )
               )
             )
-          ),
-          add_check("other", patient_info_returning()),
+          ), tags$script(HTML("CannaFrontdesk.enable_icons();")),
           footer = parsleyr::submit_form(
             session$ns("submit_preference_edit"),
             "Submit",
@@ -690,12 +738,13 @@ patientInfo <-
         input$flower,
         input$concentrate,
         input$edible,
-        input$other,
-        if (isTruthy(input$recommender)) {
-          input$recommender
-        } else {
-          ""
-        }
+        input$beverage,
+        input$joint, 
+        input$ointment, 
+        input$tincture, 
+        input$paraphernalia, 
+        input$soap,
+        input$vaporizer
       )
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
       removeModal()
@@ -800,7 +849,7 @@ patientInfo <-
           )
         )
       } else {
-        h1("Please select a returning")
+        h1("Please select patient")
       }
     })
     
@@ -824,23 +873,26 @@ patientInfo <-
         mutate_(
           emailDeal = ~ if_else(emailDeal == 1, "YES", "NO"),
           textDeal = ~ if_else(textDeal == 1, "YES", "NO"),
-          birthday = ~ paste0(birthday, " (", age, " years old)")
+          birthday = ~ paste0(birthday, " (", age, " years old)"),
+          recommender = ~ if_else(recommender=="", NA_character_, recommender)
         ) %>%
         select_(
           # Name = ~ name,
-          `California ID` = ~ californiaID,
           DOB = ~ birthday,
           Address = ~ address,
           City = ~ city,
           Zip = ~ zip,
+          `ID #` = ~ californiaID,
+          `ID Expiration` = ~ californiaIDexpiration,
           Email = ~ email,
           `Deals by Email` = ~ emailDeal,
           Phone = ~ phone,
-          `Deals by Text` = ~ textDeal
-        ) %>%
+          `Deals by Text` = ~ textDeal,
+          `Referred By` = ~recommender
+        ) %>% 
         t() %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
                                                                                      "N/A")),
-      options = list(dom = 't', columnDefs = list(
+      options = list(dom = 't', pageLength = 11, columnDefs = list(
         list(
           targets = 0,
           render = JS(
@@ -849,44 +901,61 @@ patientInfo <-
   }"
           )
           ),
-        list(targets = 1, className = "dt-left")
+        list(targets = 1, className = "dt-left", render = JS(
+          "function(data, type, row, meta) {
+            return row[0] === 'Email' ? '<span style = \"word-break: break-all;\" />' + data + '</span>' : data;
+  }"
+        ))
           )),
       rownames = TRUE,
       class = "table dt-row", selection = 'none'
       )
     
     output$preference <- DT::renderDataTable({
-      info <- patient_info_returning()
+      info <- patient_info_returning() %>% print
       data.frame(
         check.names = FALSE,
         Strain = paste0(c("Indica", "Sativa", "Hybrid")[which(c(info$indica ==
-                                                                  1, info$sativa == 1, info$hybrid == 1))], collapse = ", "),
+                                                                  1, info$sativa == 1, info$hybrid == 1))], collapse = "/"),
         Product = paste0(c(
-          "Flower", "Concentrate", "Edible", "Other"
+          "Flower", "Concentrate", "Edible", "Beverage", "Joint", "Ointment", "Tincture", "Paraphernalia", "Soap", "Vaporizer"
         )[which(c(
           info$flower == 1,
           info$concentrate ==
             1,
           info$edible ==
             1,
-          info$other ==
-            1
+          info$beverage ==
+            1,
+          info$joint == 1,
+          info$ointment == 1,
+          info$tincture == 1,
+          info$paraphernalia == 1,
+          info$soap == 1,
+          info$vaporizer == 1
         ))],
-        collapse = ", "),
-        `Referred By` = if_else(info$recommender=="", NA_character_, info$recommender)
+        collapse = "/")
       ) %>% t() %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
-                                                                                         "N/A"))
+                                                                                         "N/A")) %>% print
       
     }, options = list(dom = 't', columnDefs = list(
       list(
         targets = 0,
         render = JS(
           "function(data, type, row, meta) {
-          return '<span class = \\'dt-rowname\\'>' + data + ':<\\span>';
+          return '<span class = \\'dt-rowname\\' style = \\'line-height: 8vh\\'>' + data + ':<\\span>';
   }"
         )
         ),
-      list(targets = 1, className = "dt-left")
+      list(targets = 1, className = "dt-left",
+           render = JS(
+             'function(data, type, row, meta) {
+             return meta.row === 2 ? data : data.split("/").map(function(value) {
+             return "<img class=\\"product-image\\" src = \\"https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/" + value.toLowerCase() + ".svg\\">";
+             }).join("");
+  }'
+        )
+           )
         )), rownames = TRUE, class = "table dt-row", selection = 'none')
     
     output$recommendation <- DT::renderDataTable({
@@ -991,7 +1060,7 @@ patientInfo <-
     
     output$no_type <- renderUI({
       req(!isTruthy(patient_sales()$profit))
-      h3("No Data Available", style = "margin-top:15%")
+      h3("No Data Available")
     })
     
     callModule(CannaModules::patientHistory,
@@ -1064,9 +1133,9 @@ newPatientUI <- function(id) {
                       div(
                         class = "row",
                         
-                        h1("Enter Medical Information"),
+                        h1("Enter Info"),
                         div(
-                          style = "margin-top:10%;",
+                          style = "margin-top:12%;",
                           input(ns("physician"), placeholder = "Physician", label_width = 4),
                           input(
                             ns("date"),
@@ -1100,8 +1169,8 @@ newPatientUI <- function(id) {
                           )),
               div(class = "form-horizontal container fluid col-md-12", div(
                 class = "row",
-                h1("Upload Patient Images"),
-                div(style = "margin-top:10%;",
+                h1("Upload Images"),
+                div(style = "margin-top:12%;",
                     shiny::uiOutput(ns("imageInputs"), inline = TRUE))
               ))
                         )
@@ -1160,8 +1229,8 @@ newPatient <-
               input(
                 session$ns("californiaID"),
                 type = "tel",
-                placeholder = "California ID",
-                label = "CA ID",
+                placeholder = "ID #",
+                label = "ID #",
                 label_width = 4,
                 maxlength = 8,
                 `data-parsley-californiaid` = I(""),
@@ -1265,10 +1334,14 @@ newPatient <-
       )
       trigger_patient_info_new(trigger_patient_info_new() + 1)
       trigger_patients(trigger_patients() + 1)
-      update_option(proxy, list(
-        value = patientId(),
-        label = paste0(input$name2, ", ", input$name, " (", input$californiaID, ")")
+      update_option(proxy, value = patientId(), list(
+        firstName = input$name, lastName = input$name2, middleName = patient_info_new()$middleName,
+        californiaID = input$californiaID, idpatient = patientId(),
+        addDate = patient_info_new()$addDate, 
+        verified = patient_info_new()$verified, expirationDate = NA,
+        label = paste0(input$name, ", ", input$name2, " (", input$californiaID, ")")
       ))
+
       removeModal()
     })
     
@@ -1375,7 +1448,7 @@ newPatient <-
         session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
         ### go to patient info page with new patient there
         updateNavlistPanel(parent_session, "tabset", "patientInfo")
-        reload_patient(list(selected = id))
+        reload_patient(list(selected = id, time = Sys.time()))
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
@@ -1407,8 +1480,7 @@ newPatient <-
       trigger_returning(trigger_returning() + 1)
       trigger_patients(trigger_patients() + 1)
       removeModal()
-      # updateSelectizeInput(parent_session, "patient", selected = "")
-      reload_patient(list(selected = NULL))
+      reload_patient(list(selected = NULL, time = Sys.time()))
     })
     
     output$name <- renderUI({
@@ -1418,7 +1490,7 @@ newPatient <-
           patient_info_new()$lastName
         ))
       } else {
-        h1("Please select a new patient")
+        h1("Please select new patient")
       }
       
     })
@@ -1427,12 +1499,13 @@ newPatient <-
       patient_info_new() %>%
         select_(
           #Name = ~name,
-          `California ID` = ~ californiaID,
           DOB = ~ birthday,
           Address = ~ address,
           City = ~ city,
           Zip = ~ zip,
-          State = ~ state
+          State = ~ state,
+          `ID #` = ~ californiaID,
+          `ID Expiration` = ~ californiaIDexpiration
         ) %>%
         t()  %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
                                                                                       "N/A"))
@@ -1468,7 +1541,7 @@ newPatient <-
               ),
               tags$script(HTML(
                 '$("#new_patient-photoIdPath").on("change", function(value) {
-        if ($(this).parents(\'.input-group\').find(\'.parsley-error\')) {
+        if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
     setTimeout(function() {
           $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
 }, 1)
@@ -1491,7 +1564,7 @@ newPatient <-
               ),
               tags$script(HTML(
                 '$("#new_patient-medicalPath").on("change", function(value) {
-        if ($(this).parents(\'.input-group\').find(\'.parsley-error\')) {
+        if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
               setTimeout(function() {
           $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
 }, 1)
@@ -1587,13 +1660,11 @@ queue <-
            proxy,
            trigger,
            reload,
-           parent_session,
+           reload_patient,
            trigger_patients) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
-      session$sendCustomMessage("unbind-dt", session$ns("queue"))
-      session$sendCustomMessage("unbind-dt", session$ns("store"))
       trigger()
       trigger_queue()
       q_f_queue(pool)
@@ -1616,8 +1687,6 @@ queue <-
     store_proxy <- DT::dataTableProxy(session$ns("store"), session)
     
     # observeEvent(reload(), {
-    #   session$sendCustomMessage("unbind-dt", session$ns("queue"))
-    #   session$sendCustomMessage("unbind-dt", session$ns("store"))
     #   DT::replaceData(queue_proxy,
     #                   queue() %>% select_( ~ -idtransaction, ~ -idpatient))
     #   DT::replaceData(
@@ -1627,77 +1696,63 @@ queue <-
     # })
     
     # take patient from queue and let in store
-    obsList <- list()
+    observeEvent(input$let, {
+      u_f_let_in(pool, queue()$idtransaction[input$let$row])
+      trigger_queue(trigger_queue() + 1)
+      # DT::replaceData(queue_proxy,
+      #                 queue() %>% select_(~ -idtransaction, ~ -idpatient))
+      # DT::replaceData(store_proxy,
+      #                 in_store() %>% select_(~ -idtransaction, ~ -idpatient))
+    })
     
-    observeEvent(queue_store(), {
-      n <- max(c(nrow(queue()), nrow(in_store())))
-      if (length(obsList) < n) {
-        obsList <<-
-          c(obsList, lapply(seq_len(n - length(obsList))+length(obsList), function(i) {
-            observeEvent(input[[paste0("let", i)]], {
-              u_f_let_in(pool, queue()$idtransaction[i])
-              trigger_queue(trigger_queue() + 1)
-              session$sendCustomMessage("unbind-dt", session$ns("queue"))
-              session$sendCustomMessage("unbind-dt", session$ns("store"))
-              DT::replaceData(queue_proxy,
-                              queue() %>% select_(~ -idtransaction, ~ -idpatient))
-              DT::replaceData(store_proxy,
-                              in_store() %>% select_(~ -idtransaction, ~ -idpatient))
-            })
-            observeEvent(input[[paste0("removeQ", i)]], {
-              d_f_queue(pool, queue()$idtransaction[i])
-              trigger_queue(trigger_queue() + 1)
-              trigger_patients(trigger_patients() + 1)
-              reload(reload() + 1)
-              session$sendCustomMessage("unbind-dt", session$ns("queue"))
-              session$sendCustomMessage("unbind-dt", session$ns("store"))
-              DT::replaceData(queue_proxy,
-                              queue() %>% select_(~ -idtransaction, ~ -idpatient))
-              DT::replaceData(store_proxy,
-                              in_store() %>% select_(~ -idtransaction, ~ -idpatient))
-            })
-            observeEvent(input[[paste0("removeS", i)]], {
-              ### need to clear cart or give warning modal with an are you sure option
-              showModal(modalDialog(
-                easyClose = TRUE,
-                tags$script(
-                  "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-                ),
-                h1("Warning!"),
-                h2(
-                  "Cancelling active transaction will remove items from cart!"
-                ),
-                footer = tags$button(
-                  id = session$ns(paste0("remove", i)),
-                  "End Transaction",
-                  class = "btn btn-info delete-btn action-button"
-                )
-              ))
-            })
-            observeEvent(input[[paste0("remove", i)]], {
-              d_f_queue(pool, in_store()$idtransaction[i])
-              trigger_queue(trigger_queue() + 1)
-              trigger_patients(trigger_patients() + 1)
-              reload(reload() + 1)
-              session$sendCustomMessage("unbind-dt", session$ns("queue"))
-              session$sendCustomMessage("unbind-dt", session$ns("store"))
-              DT::replaceData(queue_proxy,
-                              queue() %>% select_(~ -idtransaction, ~ -idpatient))
-              DT::replaceData(store_proxy,
-                              in_store() %>% select_(~ -idtransaction, ~ -idpatient))
-              removeModal()
-            })
-            observeEvent(input[[paste0("infoQ", i)]], {
-              # trigger_queue(trigger_queue() + 1)
-              updateSelectizeInput(parent_session, "patient", selected = queue()$idpatient[i])
-            })
-            observeEvent(input[[paste0("infoS", i)]], {
-              # trigger_queue(trigger_queue() + 1)
-              updateSelectizeInput(parent_session, "patient", selected = in_store()$idpatient[i])
-            })
-          }))
-      }
-      
+    observeEvent(input$removeQ, {
+      d_f_queue(pool, queue()$idtransaction[input$removeQ$row])
+      trigger_queue(trigger_queue() + 1)
+      trigger_patients(trigger_patients() + 1)
+      reload(reload() + 1)
+      # DT::replaceData(queue_proxy,
+      #                 queue() %>% select_(~ -idtransaction, ~ -idpatient))
+      # DT::replaceData(store_proxy,
+      #                 in_store() %>% select_(~ -idtransaction, ~ -idpatient))
+    })
+    
+    observeEvent(input$removeS, {
+      ### need to clear cart or give warning modal with an are you sure option
+      showModal(modalDialog(
+        easyClose = TRUE,
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        h1("Warning!"),
+        h2(
+          "Cancelling active transaction will remove items from cart!"
+        ),
+        footer = tags$button(
+          id = session$ns("remove_store"),
+          "End Transaction",
+          class = "btn btn-info delete-btn action-button"
+        )
+      ))
+    })
+    
+    observeEvent(input$remove_store, {
+      d_f_queue(pool, in_store()$idtransaction[input$removeS$row])
+      trigger_queue(trigger_queue() + 1)
+      trigger_patients(trigger_patients() + 1)
+      reload(reload() + 1)
+      # DT::replaceData(queue_proxy,
+      #                 queue() %>% select_(~ -idtransaction, ~ -idpatient))
+      # DT::replaceData(store_proxy,
+      #                 in_store() %>% select_(~ -idtransaction, ~ -idpatient))
+      removeModal()
+    })
+
+    observeEvent(input$infoQ, {
+      reload_patient(list(selected = queue()$idpatient[input$infoQ$row], time = Sys.time()))
+    })
+    
+    observeEvent(input$infoS, {
+      reload_patient(list(selected = in_store()$idpatient[input$infoS$row], time = Sys.time()))
     })
     
     output$queue <- DT::renderDataTable({
@@ -1712,22 +1767,16 @@ queue <-
         ) %>%
         select_(
           Name =  ~ name,
-          `California ID` =  ~ californiaID,
-          `Arrival Time` = ~ timeIn,
+          `ID #` =  ~ californiaID,
+          `Time` = ~ timeIn,
           ~ letIn,
           ~ info,
           ~ remove
         )
     }, rownames = TRUE, width = "100%", options = list(
       dom = 't',
-      #autoWidth = TRUE,
-      preDrawCallback = JS(
-        'function() {
-        Shiny.unbindAll(this.api().table().node());}'
-      ),
       drawCallback = JS(
         'function() {
-        Shiny.bindAll(this.api().table().node());
         $(".even").removeClass("even").addClass("odd");
   } '
 ),
@@ -1742,18 +1791,17 @@ columnDefs = list(
   list(targets = 1,
        width = "20%"),
   list(targets = 2,
-       width = "10%"),
+       width = "12%"),
   list(targets = 3,
-       width = "10%"),
+       width = "14%"),
   list(targets = 4:6,
        width = "18%"),
   list(targets = 4,
        render = JS(
          paste0(
            'function(data, type, row, meta) {
-           return "<button id = \'',
-           session$ns("let"),
-           '" + data + "\' class = \'btn btn-info let-in-btn index-btn action-button\'>Let In</button>";
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+           session$ns("let"),'\\")\'>Let In</button>";
            }'
 )
          )),
@@ -1761,24 +1809,22 @@ list(targets = 5,
      render = JS(
        paste0(
          'function(data, type, row, meta) {
-         return "<button id = \'',
-         session$ns("infoQ"),
-         '" + data + "\' class = \'btn btn-info let-in-btn index-btn action-button\' onclick = \'CannaFrontdesk.change_tab(\\"patientInfo\\")\'>Info</button>";
-  }'
-)
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+         session$ns("infoQ"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
+           }'
+       )
        )),
 list(targets = 6,
      render = JS(
        paste0(
          'function(data, type, row, meta) {
-         return "<button id = \'',
-         session$ns("removeQ"),
-         '" + data + "\' class = \'btn btn-info remove-btn index-btn action-button\'>Remove</button>";
-  }'
-)
+           return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+         session$ns("removeQ"),'\\")\'>Remove</button>";
+           }'
+       )
        ))
      )
-    ), colnames = c("Name", "California ID", "Arrival Time", "", "", ""),
+    ), colnames = c("Name", "ID #", "Time", "", "", ""),
 selection = 'none')
     
     output$store <- DT::renderDataTable({
@@ -1792,20 +1838,15 @@ selection = 'none')
         ) %>%
         select_(
           Name = ~ name,
-          `California ID` =  ~ californiaID,
-          `Arrival Time` = ~ timeIn,
+          `ID #` =  ~ californiaID,
+          `Time` = ~ timeIn,
           ~ info,
           ~ remove
         )
     }, rownames = TRUE, options = list(
       dom = 't',
-      preDrawCallback = JS(
-        'function() {
-        Shiny.unbindAll(this.api().table().node());}'
-      ),
       drawCallback = JS(
         'function() {
-        Shiny.bindAll(this.api().table().node());
         $(".even").removeClass("even").addClass("odd");} '
       ),
       columnDefs = list(
@@ -1819,25 +1860,27 @@ selection = 'none')
         list(targets = 1,
              width = "20%"),
         list(targets = 2,
-             width = "10%"),
+             width = "12%"),
         list(targets = 3,
-             width = "10%"),
+             width = "14%"),
         list(targets = 4:5,
              width = "27%"),
         list(targets = 4,
              render = JS(paste0(
-               'function(data, type,row,meta) {
-                return "<button id=\'',session$ns("infoS"),'" + data + "\' class = \'btn btn-info let-in-btn index-btn action-button\' onclick = \'CannaFrontdesk.change_tab(\\"patientInfo\\")\'>Info</button>";
-               }'
+               'function(data, type, row, meta) {
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+               session$ns("infoS"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
+           }'
              ))),
         list(targets = 5,
              render = JS(paste0(
-               'function(data,type,row,meta) {
-               return "<button id=\'',session$ns("removeS"),'" + data + "\' class = \'btn btn-info remove-btn index-btn action-button \'>Remove</button>";
-               }'
+               'function(data, type, row, meta) {
+           return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+               session$ns("removeS"),'\\")\'>Remove</button>";
+           }'
              )))
       )
-      ), colnames = c("Name", "California ID", "Arrival Time", "", ""),
+      ), colnames = c("Name", "ID #", "Time", "", ""),
     selection = 'none')
     
     
@@ -1849,12 +1892,16 @@ allPatientsUI <- function(id) {
   
   tagList(div(
     class = "content",
+    box(
+      h1("Incomplete Patients"),
+      DT::dataTableOutput(ns("incomplete"))
+    )),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(
           h1("All Patients"),
           DT::dataTableOutput(ns("patients"))
         ))
-  ))
+  )
 }
 
 allPatients <-
@@ -1862,7 +1909,7 @@ allPatients <-
            output,
            session,
            pool,
-           parent_session,
+           reload_patient,
            trigger_patients) {
     
     patients <- reactive({
@@ -1870,41 +1917,33 @@ allPatients <-
       q_f_patients(pool)
     })
     
-    # take patient from queue and let in store
-    obsList <- list()
+    new_patients <- reactive({
+      trigger_patients()
+      q_f_new_patients(pool)
+    })
     
-    observeEvent(patients(), {
-      n <- nrow(patients())
-      if (length(obsList) < n) {
-        obsList <<-
-          c(obsList, lapply(seq_len(n - length(obsList)), function(i) {
-            observeEvent(input[[paste0("info", i)]], {
-              # trigger_queue(trigger_queue() + 1)
-              updateSelectizeInput(parent_session, "patient", selected = patients()$idpatient[i])
-            })
-          }))
-      }
-      
+    observeEvent(input$info, {
+      reload_patient(list(selected = patients()$idpatient[input$info$row], time = Sys.time()))
+    })
+    
+    observeEvent(input$complete, {
+      reload_patient(list(selected = new_patients()$idpatient[input$complete$row], time = Sys.time()))
     })
     
     output$patients <- DT::renderDataTable({
-      session$sendCustomMessage("unbind-dt", session$ns("patients"))
       patients() %>%
         mutate_(info = ~row_number(),
-                avgSpent = ~ round(avgSpent),
         age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
           ) %>% 
-        select_(Name = ~name, `California ID`=~californiaID, 
+        select_(Name = ~name, `ID #`=~californiaID, 
                 Age = ~age, `Expiration Date` =~expirationDate,`Last Transaction` = ~lastTransaction, 
-                `Average Spent` = ~avgSpent, #Points = ~points, 
                 ~info)
-    }, colnames = c("Name", "California ID", "Age", "Expiration Date", "Last Transaction", 
-                                    "Average Spent", #"Points",
+    }, colnames = c("Name", "ID #", "Age", "Expiration Date", "Last Transaction", 
                                     ""),
     options = list(
       dom = 'tp',
       columnDefs = list(list(
-        targets = 0:6,
+        targets = 0:5,
         className = "dt-center"
       ),
       list(
@@ -1929,44 +1968,69 @@ allPatients <-
       ),
       list(
         targets = 5,
-        width = "7%",
-        render = JS(
-          'function(data, type, row, meta) {
-            return data ? "$" + data.toString() : data;
-          }'
-        )
-      ),
-      # list(
-      #   targets = 6,
-      #   width = "5%"
-      # ),
-      list(
-        targets = 6,
         width = "8%",
         orderable = FALSE,
         render = JS(
           paste0(
             'function(data, type, row, meta) {
-         return "<button id = \'',
-            session$ns("info"),
-            '" + data + "\' class = \'btn btn-info let-in-btn index-btn action-button\' onclick =\'CannaFrontdesk.change_tab(\\"patientInfo\\")\'>Info</button>";
-  }'
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+            session$ns("info"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
+           }'
           )
         )
       )
       ),
-      preDrawCallback = JS(
-        'function() {
-        Shiny.unbindAll(this.api().table().node());}'
-      ),
       drawCallback = JS(
         'function() {
-        Shiny.bindAll(this.api().table().node());
         $(".even").removeClass("even").addClass("odd");} '
       )
       ),
     selection = 'none', rownames = FALSE)
     
+    output$incomplete <- DT::renderDataTable({
+      new_patients() %>%
+        mutate_(index = ~row_number()) %>%
+        select_(~name, ~californiaID, ~addDate, ~index)
+    }, colnames = c("Name", "ID #", "Add Date", ""),
+    options = list(
+      pageLength = 5,
+      dom = 'tp',
+      columnDefs = list(list(
+        targets = 0:3,
+        className = "dt-center"
+      ),
+      list(
+        targets = 0,
+        width = "15%"
+      ),
+      list(
+        targets = 1,
+        width = "10%"
+      ),
+      list(
+        targets = 2,
+        width = "10%"
+      ),
+      list(
+        targets = 3,
+        width = "10%",
+        orderable = FALSE,
+        render = JS(
+          paste0(
+            'function(data, type, row, meta) {
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+            session$ns("complete"),'\\");CannaFrontdesk.change_tab(\\"newPatient\\");\'>Complete Profile</button>";
+           }'
+          )
+        )
+      )
+      ),
+      drawCallback = JS(
+        'function() {
+        $(".even").removeClass("even").addClass("odd");} '
+      )
+    ),
+    selection = 'none', rownames = FALSE)
     
     return(patients)
   }
