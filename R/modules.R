@@ -911,7 +911,7 @@ patientInfo <-
           ),
         list(targets = 1, className = "dt-left", render = JS(
           "function(data, type, row, meta) {
-            return row[0] === 'Email' ? '<span style = \"word-break: break-all;\" />' + data + '</span>' : data;
+            return row[0] === 'Email' ? '<span style = \"word-break: break-all;\" />' + data + '</span>' : row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
   }"
         ))
           )),
@@ -1515,7 +1515,7 @@ newPatient <-
     
     output$info <- DT::renderDataTable({
       patient_info_new() %>%
-        mutate_(birthday = ~ format(as.Date(birthday), "%m/%d/%Y")) %>%
+        mutate_(birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)")) %>%
         select_(
           #Name = ~name,
           DOB = ~ birthday,
@@ -1537,7 +1537,11 @@ newPatient <-
   }"
     )
         ),
-    list(targets = 1, className = "dt-left")
+    list(targets = 1, className = "dt-left", render = JS(
+      "function(data, type, row, meta) {
+        return row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
+      }"
+    ))
         )), colnames = "", class = "table dt-row",
     rownames = TRUE, selection = "none", server = TRUE)
     
@@ -1977,7 +1981,12 @@ allPatients <-
       ),
       list(
         targets = 2,
-        width = "3%"
+        width = "3%",
+        render = JS(
+          'function(data, type, row, meta) {
+            return data < 21 ? "<span style = \'color:red\'/>" + data + "</span>" : data;
+          }'
+        )
       ),
       list(
         targets = 3,
