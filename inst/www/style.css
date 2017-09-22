@@ -568,7 +568,7 @@ input[type=checkbox] {
   max-width: 25vh;
 }
 
-.btn-file {
+.btn.btn-file {
   max-width: 10vh;
 }
 
@@ -651,8 +651,4 @@ input[type=checkbox] {
 
 .btn {
   max-width: 20vh;
-}
-
-#frontdesk-queue th {
-  
 }
