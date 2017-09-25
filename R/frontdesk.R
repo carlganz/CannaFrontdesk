@@ -221,7 +221,6 @@ frontdesk <-
           trigger_new,
           trigger_returning,
           patient_proxy,
-          session,
           reload_patient,
           trigger_patients
         )
@@ -242,7 +241,6 @@ frontdesk <-
           trigger_new,
           trigger_returning,
           patient_proxy,
-          session,
           reload_patient,
           trigger_patients
         )
@@ -327,11 +325,9 @@ frontdesk <-
                 )
               )
             ))
-            updateNavlistPanel(session, "tabset", "newPatient")
             reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
                                 time = Sys.time()))
           } else if (status == 3) {
-            updateNavlistPanel(session, "tabset", "patientInfo")
             reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
                                 time = Sys.time()))
           }
@@ -373,7 +369,7 @@ frontdesk <-
           input$read_barcode$city,
           substr(input$read_barcode$zip, 1, 5)
         )
-        updateNavlistPanel(session, "tabset", "newPatient")
+        
         trigger_new(trigger_new() + 1)
         reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID], time = Sys.time()))
 

@@ -112,7 +112,6 @@ patientInfo <-
            trigger_new,
            trigger_returning,
            proxy,
-           parent_session,
            reload_patient,
            trigger_patients) {
     trigger_patient_info_returning <- reactiveVal(0)
@@ -1199,7 +1198,6 @@ newPatient <-
            trigger_new,
            trigger_returning,
            proxy,
-           parent_session,
            reload_patient,
            trigger_patients) {
     trigger_patient_info_new <- reactiveVal(0)
@@ -1467,7 +1465,6 @@ newPatient <-
         session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
         session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
         ### go to patient info page with new patient there
-        updateNavlistPanel(parent_session, "tabset", "patientInfo")
         reload_patient(list(selected = id, time = Sys.time()))
         showModal(modalDialog(
           easyClose = TRUE,
