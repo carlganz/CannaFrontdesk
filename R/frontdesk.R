@@ -308,7 +308,6 @@ frontdesk <-
       # id scanner
       observeEvent(input$read_barcode, {
         req(input$read_barcode)
-        updateSelectizeInput(session, "patient", choices = patients())
         # PDF417
         if (any(input$read_barcode$californiaId %in% patients()$californiaID)) {
           status <-
@@ -329,10 +328,12 @@ frontdesk <-
               )
             ))
             updateNavlistPanel(session, "tabset", "newPatient")
-            update_value(patient_proxy, patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID])
+            reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
+                                time = Sys.time()))
           } else if (status == 3) {
             updateNavlistPanel(session, "tabset", "patientInfo")
-            update_value(patient_proxy, patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID])
+            reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
+                                time = Sys.time()))
           }
         } else {
           showModal(modalDialog(
@@ -359,24 +360,22 @@ frontdesk <-
         i_f_new_patient(
           pool,
           input$read_barcode$californiaId,
-          input$read_barcode$expirationDate,
+          paste0(substr(input$read_barcode$expirationDate,1,2), "/",
+                 substr(input$read_barcode$expirationDate,3,4),"/",
+                 substr(input$read_barcode$expirationDate,5,8)),
           input$read_barcode$firstName,
           input$read_barcode$lastName,
           input$read_barcode$middleName,
-          paste0(
-            substr(input$read_barcode$birthday, 5, 8),
-            "/",
-            substr(input$read_barcode$birthday, 1, 2),
-            "/",
-            substr(input$read_barcode$birthday, 3, 4)
-          ),
+          paste0(substr(input$read_barcode$birthday,1,2), "/",
+                 substr(input$read_barcode$birthday,3,4),"/",
+                 substr(input$read_barcode$birthday,5,8)),
           input$read_barcode$address,
           input$read_barcode$city,
           substr(input$read_barcode$zip, 1, 5)
         )
         updateNavlistPanel(session, "tabset", "newPatient")
         trigger_new(trigger_new() + 1)
-        reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID]))
+        reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID], time = Sys.time()))
 
         showModal(modalDialog(
           tags$script(

@@ -25,7 +25,7 @@ patientInfoUI <- function(id) {
         )),
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-      div(class = "row",
+      div(
           div(class = "name-container",
               uiOutput(ns(
                 "name"
@@ -53,7 +53,8 @@ patientInfoUI <- function(id) {
               id = ns("remove"),
               "Delete Patient",
               class = "btn btn-info delete-btn action-button",
-              style = "width:30%;"
+              style = "width:30%;",
+              formnovalidate = NA
             ),
             tags$button(
               id = ns("let_in"),
@@ -1093,7 +1094,7 @@ newPatientUI <- function(id) {
                 class = "form",
                 div(
                   class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  div(class = "row",
+                  div(
                       div(class = "name-container",
                           uiOutput(ns(
                             "name"
@@ -1128,7 +1129,9 @@ newPatientUI <- function(id) {
                     class = "row",
                     div(
                       class = "add-delete-btn-container",
-                      tags$button(id = ns("remove"), "Delete Patient", class = "btn btn-info delete-btn action-button", style = "width:30%"),
+                      tags$button(id = ns("remove"), "Delete Patient", 
+                                  class = "btn btn-info delete-btn action-button", 
+                                  style = "width:30%", formnovalidate = NA),
                       parsleyr::submit_form(
                         ns("submit"),
                         "Submit",
@@ -1460,7 +1463,6 @@ newPatient <-
         trigger_new(trigger_new() + 1)
         trigger_returning(trigger_returning() + 1)
         trigger_patients(trigger_patients() + 1)
-        # reload_patient(list(selected = id))
         session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
         session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
         session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
@@ -1515,7 +1517,8 @@ newPatient <-
     
     output$info <- DT::renderDataTable({
       patient_info_new() %>%
-        mutate_(birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)")) %>%
+        mutate_(birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)"),
+                californiaIDexpiration= ~ format(as.Date(californiaIDexpiration), "%m/%d/%Y")) %>%
         select_(
           #Name = ~name,
           DOB = ~ birthday,
@@ -1915,6 +1918,7 @@ allPatientsUI <- function(id) {
   
   tagList(div(
     class = "content",
+    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
     box(
       h1("Incomplete Patients"),
       DT::dataTableOutput(ns("incomplete"))
@@ -1924,7 +1928,7 @@ allPatientsUI <- function(id) {
           h1("All Patients"),
           DT::dataTableOutput(ns("patients"))
         ))
-  )
+  ))
 }
 
 allPatients <-
