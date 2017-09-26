@@ -82,7 +82,7 @@ patientInfoUI <- function(id) {
                   h3("Photo ID"),
                   uiOutput(ns("id_image_out"))),
               div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  h3("Medical Card"),
+                  h3("Rec"),
                   uiOutput(ns(
                     "recommendation_image_out"
                   )))
@@ -507,7 +507,7 @@ patientInfo <-
             ),
             input(
               session$ns("expirationDate"),
-              placeholder = "Expiration Date",
+              placeholder = "Exp Date",
               `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
               value = format(as.Date(patient_info_returning()$expirationDate), "%m/%d/%Y"),
               label_width = 4
@@ -781,7 +781,7 @@ patientInfo <-
             tags$label(
               `for` = session$ns("photoIdPath"),
               class = "control-label control-label-left col-sm-3",
-              "Medical Card",
+              "Rec",
               span(class = "req", "*")
             ),
             div(class = "col-sm-9",
@@ -891,7 +891,7 @@ patientInfo <-
           City = ~ city,
           Zip = ~ zip,
           `ID #` = ~ californiaID,
-          `ID Expiration` = ~ californiaIDexpiration,
+          `ID Exp` = ~ californiaIDexpiration,
           Email = ~ email,
           `Deals by Email` = ~ emailDeal,
           Phone = ~ phone,
@@ -973,9 +973,9 @@ patientInfo <-
           medicalCondition = ~if_else(medicalCondition == "", NA_character_, medicalCondition)
         ) %>%
         select_(
-          `Expiration Date` = ~ expirationDate,
+          `Exp Date` = ~ expirationDate,
           Physician = ~ physician,
-          `Medical Card ID #` = ~ recId,
+          `Rec ID #` = ~ recId,
           `Medical Condtion` = ~ medicalCondition
         ) %>%
         t() %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
@@ -1008,7 +1008,8 @@ patientInfo <-
           width = "100%"
         )
       } else {
-        tags$img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1000px-No_image_available.svg.png",
+        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/none.svg",
+                 class = "no-image",
                  height = "100%",
                  width = "100%")
       }
@@ -1028,7 +1029,8 @@ patientInfo <-
           width = "100%"
         )
       } else {
-        tags$img(src = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/1000px-No_image_available.svg.png",
+        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/none.svg",
+                 class = "no-image",
                  height = "100%",
                  width = "100%")
       }
@@ -1112,7 +1114,7 @@ newPatientUI <- function(id) {
                       ),
                       div(
                         class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                        h4("Medical Card"),
+                        h4("Rec"),
                         shiny::imageOutput(
                           ns("new_medical_image"),
                           inline = T,
@@ -1154,8 +1156,8 @@ newPatientUI <- function(id) {
                             `data-min-date` = format(Sys.Date(), "%m-%d-%Y"),
                             `data-max-date` = format(Sys.Date() + 366, "%m-%d-%Y"),
                             `data-initial-date` = NA, `data-date-format` = "mm/dd/yyyy",
-                            placeholder = "Expiration Date (MM/DD/YYYY)",
-                            label = "Expiration Date",
+                            placeholder = "Exp Date (MM/DD/YYYY)",
+                            label = "Exp Date",
                             `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
                           ),
                           tags$script(
@@ -1164,7 +1166,7 @@ newPatientUI <- function(id) {
                           input(
                             ns("recId"),
                             "tel",
-                            placeholder = "Medical Card #",
+                            placeholder = "Rec #",
                             `data-parsley-type` = "integer", label_width = 4
                           ),
                           tags$script(
@@ -1578,7 +1580,7 @@ newPatient <-
           tags$label(
             `for` = session$ns("photoIdPath"),
             class = "control-label control-label-left col-sm-4",
-            "Medical Card",
+            "Rec",
             span(class = "req", "*")
           ),
           div(class = "col-sm-7",
@@ -1626,10 +1628,11 @@ newPatient <-
         )
       } else {
         list(
-          src = system.file(package = "CannaFrontdesk", "www", "noimage.png"),
+          src = system.file(package = "CannaFrontdesk", "www", "none.svg"),
           width = "100%",
           height = "100%",
-          alt = "Placeholder"
+          alt = "Placeholder",
+          class = "no-image"
         )
       }
     }, deleteFile = FALSE)
@@ -1645,10 +1648,11 @@ newPatient <-
         )
       } else {
         list(
-          src = system.file(package = "CannaFrontdesk", "www", "noimage.png"),
+          src = system.file(package = "CannaFrontdesk", "www", "none.svg"),
           width = "100%",
           height = "100%",
-          alt = "Placeholder"
+          alt = "Placeholder",
+          class = "no-image"
         )
       }
     }, deleteFile = FALSE)
@@ -1962,9 +1966,9 @@ allPatients <-
         age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
           ) %>% 
         select_(Name = ~name, `ID #`=~californiaID, 
-                Age = ~age, `Expiration Date` =~expirationDate,`Last Transaction` = ~lastTransaction, 
+                Age = ~age, `Exp Date` =~expirationDate,`Last Transaction` = ~lastTransaction, 
                 ~info)
-    }, colnames = c("Name", "ID #", "Age", "Expiration Date", "Last Transaction", 
+    }, colnames = c("Name", "ID #", "Age", "Exp Date", "Last Transaction", 
                                     ""),
     options = list(
       dom = 'tp',
