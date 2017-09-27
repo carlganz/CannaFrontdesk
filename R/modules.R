@@ -1008,7 +1008,7 @@ patientInfo <-
           width = "100%"
         )
       } else {
-        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/none.svg",
+        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/noneLight.svg",
                  class = "no-image",
                  height = "100%",
                  width = "100%")
@@ -1029,7 +1029,7 @@ patientInfo <-
           width = "100%"
         )
       } else {
-        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/none.svg",
+        tags$img(src = "https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/noneLight.svg",
                  class = "no-image",
                  height = "100%",
                  width = "100%")
@@ -1628,7 +1628,7 @@ newPatient <-
         )
       } else {
         list(
-          src = system.file(package = "CannaFrontdesk", "www", "none.svg"),
+          src = system.file(package = "CannaFrontdesk", "www", "noneLight.svg"),
           width = "100%",
           height = "100%",
           alt = "Placeholder",
@@ -1648,7 +1648,7 @@ newPatient <-
         )
       } else {
         list(
-          src = system.file(package = "CannaFrontdesk", "www", "none.svg"),
+          src = system.file(package = "CannaFrontdesk", "www", "noneLight.svg"),
           width = "100%",
           height = "100%",
           alt = "Placeholder",
