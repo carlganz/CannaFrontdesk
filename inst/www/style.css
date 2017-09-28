@@ -468,7 +468,7 @@ h1 {
 .table-container h1, .form-horizontal h1 {
     font-family: DinMedium;
     font-size: 25px;
-    text-align: center;
+    text-align: left;
     color: white;
     padding: 0px;
     float: left;
@@ -651,4 +651,12 @@ input[type=checkbox] {
 
 .btn {
   max-width: 20vh;
+}
+
+.input-container label {
+  text-align: left !important;
+}
+
+.table-container h4 {
+  text-align: center;
 }

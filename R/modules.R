@@ -79,10 +79,10 @@ patientInfoUI <- function(id) {
             div(
               class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
               div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  h3("Photo ID"),
+                  h4("Photo ID"),
                   uiOutput(ns("id_image_out"))),
               div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  h3("Rec"),
+                  h4("Rec"),
                   uiOutput(ns(
                     "recommendation_image_out"
                   )))
@@ -1071,7 +1071,7 @@ patientInfo <-
     
     output$no_type <- renderUI({
       req(!isTruthy(patient_sales()$profit))
-      h3("No Data Available")
+      h4("No Data Available")
     })
     
     callModule(CannaModules::patientHistory,
@@ -1146,9 +1146,8 @@ newPatientUI <- function(id) {
                       div(
                         class = "row",
                         
-                        h1("Enter Info"),
-                        div(
-                          style = "margin-top:12%;",
+                        h1("Enter Info", style = "width:100%;margin-bottom:15px;"),
+                        div(class = "input-container",
                           input(ns("physician"), placeholder = "Physician", label_width = 4),
                           input(
                             ns("date"),
@@ -1182,8 +1181,8 @@ newPatientUI <- function(id) {
                           )),
               div(class = "form-horizontal container fluid col-md-12", div(
                 class = "row",
-                h1("Upload Images"),
-                div(style = "margin-top:12%;",
+                h1("Upload Images", style = "width:100%;margin-bottom:15px"),
+                div(class = "input-container",
                     shiny::uiOutput(ns("imageInputs"), inline = TRUE))
               ))
                         )
@@ -1526,7 +1525,7 @@ newPatient <-
           Zip = ~ zip,
           State = ~ state,
           `ID #` = ~ californiaID,
-          `ID Expiration` = ~ californiaIDexpiration
+          `ID Exp` = ~ californiaIDexpiration
         ) %>%
         t()  %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
                                                                                       "N/A"))
