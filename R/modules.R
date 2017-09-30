@@ -958,9 +958,9 @@ patientInfo <-
       list(targets = 1, className = "dt-left",
            render = JS(
              'function(data, type, row, meta) {
-             return meta.row === 2 ? data : data.split("/").map(function(value) {
+             return meta.row === 2 ? data : data ? data.split("/").map(function(value) {
              return "<img class=\\"product-image\\" src = \\"https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/" + value.toLowerCase() + ".svg\\">";
-             }).join("");
+             }).join("") : data;
   }'
         )
            )
