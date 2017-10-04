@@ -134,12 +134,12 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient's medical card is expired!")
         ))
       } else if (patientId() %in% queue()$idpatient) {
         showModal(modalDialog(
-          easyClose = TRUE,
+          easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
@@ -160,7 +160,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient added to queue.")
         ))
       }
@@ -173,7 +173,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient's medical card is expired!")
         ))
       } else if (patientId() %in% queue()$idpatient) {
@@ -181,7 +181,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1(paste(
             "Patient already in",
             if (queue()$status[patientId() == queue()$idpatient])
@@ -199,7 +199,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient has been let into store.")
         ))
       }
@@ -212,7 +212,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1(
             "Cannot remove patient while patient is in active transaction."
           )
@@ -222,7 +222,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Are you sure you want to remove patient?"),
           h1("Data cannot be recovered once removed!"),
           footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
@@ -250,7 +250,7 @@ patientInfo <-
             "$('.modal-lg').css('width', '85%');
             $('.modal-content').addClass('form-horizontal col-lg-12');
             $('.modal-body').css('overflow-y', '-webkit-paged-y');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Edit Basic Info"),
           # add parsley
           tags$form(
@@ -495,7 +495,7 @@ patientInfo <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('form-horizontal').css('width','110%').css('font-size','110%');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Edit Medical Info"),
           tags$form(
             id = session$ns("edit_medical_form"),
@@ -590,7 +590,7 @@ patientInfo <-
           easyClose = TRUE, size = "l",
           class = "edit-pref-info",
           tags$script("$('.modal-content').addClass('form-horizontal');"),
-          h1("Edit Preferences"),
+          h1("Edit Preferences"), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           # checkbox inputs
           tags$form(
             id = session$ns("preference_form"),
@@ -762,7 +762,7 @@ patientInfo <-
         easyClose = TRUE,
         tags$script("
                     $('.modal-content').addClass('form-horizontal');"),
-        h1("Edit Images"),
+        h1("Edit Images"), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         div(
           class = "file-input",
           div(
@@ -1216,7 +1216,7 @@ newPatient <-
           tags$script(
             "$('.modal-content').addClass('form-horizontal col-lg-12');
             $('.modal-body').css('height', '300px').css('font-size','110%');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Edit Basic Info"),
           # add parsley
           tags$form(
@@ -1399,13 +1399,13 @@ newPatient <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient has not finished signup form yet. Please wait...")
         ))
       } else if (is.na(patient_info_new()$docuSigned) ||
                  patient_info_new()$docuSigned == 0) {
         showModal(modalDialog(
-          easyClose = TRUE,
+          easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
@@ -1471,7 +1471,7 @@ newPatient <-
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("New patient has been added")
         ))
       }
@@ -1484,7 +1484,7 @@ newPatient <-
         easyClose = TRUE,
         tags$script(
           "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-        ),
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         h1("Are you sure you want to remove patient?"),
         h1("Data cannot be recovered once removed!"),
         footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
@@ -1748,7 +1748,7 @@ queue <-
         easyClose = TRUE,
         tags$script(
           "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-        ),
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         h1("Warning!"),
         h2(
           "Cancelling active transaction will remove items from cart!"

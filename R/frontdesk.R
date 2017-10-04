@@ -313,6 +313,7 @@ frontdesk <-
           if (status %in% 1:2) {
             showModal(modalDialog(
               h1("New Patient!"),
+              tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
               easyClose = TRUE,
               tags$script(
                 "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
@@ -334,6 +335,7 @@ frontdesk <-
         } else {
           showModal(modalDialog(
             easyClose = TRUE,
+            tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
             h1("New Patient!"),
             tags$script(
               "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
@@ -377,6 +379,7 @@ frontdesk <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
+          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1(
             paste(
               "Sign in app is ready for",

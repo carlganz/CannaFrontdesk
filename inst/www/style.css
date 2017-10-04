@@ -660,3 +660,9 @@ input[type=checkbox] {
 .table-container h4 {
   text-align: center;
 }
+
+.close-modal {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
