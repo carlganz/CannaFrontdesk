@@ -26,18 +26,18 @@ patientInfoUI <- function(id) {
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
       div(
-          div(class = "name-container",
-              uiOutput(ns(
-                "name"
-              )))),
+        div(class = "name-container",
+            uiOutput(ns(
+              "name"
+            )))),
       box(tableTitle("Basic Info"),
           DT::dataTableOutput(ns("info"))),
       box(tableTitle("Preferences"),
           DT::dataTableOutput(ns("preference"))),
       box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
           div(style = "margin-top:35px",
-                  uiOutput(ns("no_type"), TRUE),
-                  c3Output(ns("patient_type"))
+              uiOutput(ns("no_type"), TRUE),
+              c3Output(ns("patient_type"))
           )
       )
     ),
@@ -73,30 +73,30 @@ patientInfoUI <- function(id) {
       ),
       box(tableTitle("Medical Info"),
           DT::dataTableOutput(ns("recommendation"))),
-          box(
-            class = "images",
-            tableTitle("Images"),
-            div(
-              class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-              div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  h4("Photo ID"),
-                  uiOutput(ns("id_image_out"))),
-              div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-                  h4("Rec"),
-                  uiOutput(ns(
-                    "recommendation_image_out"
-                  )))
-            )
-          ),
+      box(
+        class = "images",
+        tableTitle("Images"),
+        div(
+          class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+          div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+              h4("Photo ID"),
+              uiOutput(ns("id_image_out"))),
+          div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+              h4("Rec"),
+              uiOutput(ns(
+                "recommendation_image_out"
+              )))
+        )
+      ),
       box(h1("Reward Points"),style = "overflow:hidden",
           div(style = "margin-top:8%",
               c3Output(ns("patient_points"))
           )
       ),
-          box(h1("Patient History"),
-              CannaModules::patientHistoryUI(ns("frontdesk")))
-      )
-    ))
+      box(h1("Patient History"),
+          CannaModules::patientHistoryUI(ns("frontdesk")))
+    )
+  ))
 }
 
 patientInfo <-
@@ -331,10 +331,10 @@ patientInfo <-
           'var cleave = new Cleave("#',
           session$ns("californiaIDexpiration"),
           '", {
-                  date: true, datePattern: ["m","d", "Y"]
+          date: true, datePattern: ["m","d", "Y"]
     })'
         )
-      ),
+              ),
       tags$label("Text Deal", class = "control-label control-label-left col-sm-4"),
       tags$div(class = "checkbox checkbox-icons col-sm-7",
                tags$li(
@@ -343,7 +343,7 @@ patientInfo <-
                  class = if (patient_info_returning()$textDeal) "selected",
                  alt = session$ns("textDeal")
                ))
-                ),
+            ),
       div(
         class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
         input(
@@ -419,8 +419,8 @@ patientInfo <-
         formId = session$ns("basic_info_form")
       )
       )
-    )
-    })
+      )
+          })
     
     observeEvent(input$submit_info_edit, {
       req(
@@ -436,7 +436,7 @@ patientInfo <-
         input$email,
         input$birthday
       )
-
+      
       # phone and zip are legit
       # zip
       req(nchar(input$zip) == 5,!is.na(as.integer(input$zip)))
@@ -906,15 +906,15 @@ patientInfo <-
           render = JS(
             "function(data, type, row, meta) {
             return '<span class = \\'dt-rowname\\'>' + data + ':<\\span>';
-  }"
+    }"
           )
           ),
         list(targets = 1, className = "dt-left", render = JS(
           "function(data, type, row, meta) {
-            return row[0] === 'Email' ? '<span style = \"word-break: break-all;\" />' + data + '</span>' : row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
+          return row[0] === 'Email' ? '<span style = \"word-break: break-all;\" />' + data + '</span>' : row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
   }"
         ))
-          )),
+        )),
       rownames = TRUE,
       class = "table dt-row", selection = 'none'
       )
@@ -952,7 +952,7 @@ patientInfo <-
         render = JS(
           "function(data, type, row, meta) {
           return '<span class = \\'dt-rowname\\' style = \\'line-height: 8vh\\'>' + data + ':<\\span>';
-  }"
+          }"
         )
         ),
       list(targets = 1, className = "dt-left",
@@ -961,10 +961,10 @@ patientInfo <-
              return meta.row === 2 ? data : data ? data.split("/").map(function(value) {
              return "<img class=\\"product-image\\" src = \\"https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/" + value.toLowerCase() + ".svg\\">";
              }).join("") : data;
-  }'
+             }'
         )
-           )
-        )), rownames = TRUE, class = "table dt-row", selection = 'none')
+      )
+    )), rownames = TRUE, class = "table dt-row", selection = 'none')
     
     output$recommendation <- DT::renderDataTable({
       patient_info_returning() %>%
@@ -986,7 +986,7 @@ patientInfo <-
         render = JS(
           "function(data, type, row, meta) {
           return '<span class = \\'dt-rowname\\'>' + data + ':<\\span>';
-  }"
+          }"
         )
         ),
       list(targets = 1, className = "dt-left")
@@ -1049,7 +1049,7 @@ patientInfo <-
         spread_(~type, ~profit) %>%
         select_(~contains("Flower"), ~contains("Concentrate"),~contains("Edible"),~contains("Other")) %>% 
         summarise_all(function(x) {x[!is.na(x)][1]}) %>% c3() %>%
-      c3_pie(format=DT::JS("function(value,ratio,id) {return '$' + value;}"))
+        c3_pie(format=DT::JS("function(value,ratio,id) {return '$' + value;}"))
       
     })
     
@@ -1064,9 +1064,9 @@ patientInfo <-
           format = DT::JS(
             "function(value, ratio) {
             return value;
-            }"
+    }"
           )
-        ))
+          ))
     })
     
     output$no_type <- renderUI({
@@ -1084,7 +1084,7 @@ patientInfo <-
     
     return(reactive(patient_info_returning()))
     
-  }
+    }
 
 newPatientUI <- function(id) {
   ns <- NS(id)
@@ -1096,10 +1096,10 @@ newPatientUI <- function(id) {
                 div(
                   class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
                   div(
-                      div(class = "name-container",
-                          uiOutput(ns(
-                            "name"
-                          )))),
+                    div(class = "name-container",
+                        uiOutput(ns(
+                          "name"
+                        )))),
                   box(tableTitle("Basic Info"),
                       DT::dataTableOutput(ns("info"))),
                   box(
@@ -1148,37 +1148,37 @@ newPatientUI <- function(id) {
                         
                         h1("Enter Info", style = "width:100%;margin-bottom:15px;"),
                         div(class = "input-container",
-                          input(ns("physician"), placeholder = "Physician", label_width = 4),
-                          input(
-                            ns("date"),
-                            "text", `data-date-language` ="en", `data-date-week-start` =0,
-                            `data-min-date` = format(Sys.Date(), "%m-%d-%Y"),
-                            `data-max-date` = format(Sys.Date() + 366, "%m-%d-%Y"),
-                            `data-initial-date` = NA, `data-date-format` = "mm/dd/yyyy",
-                            placeholder = "Exp Date (MM/DD/YYYY)",
-                            label = "Exp Date",
-                            `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
-                          ),
-                          tags$script(
-                            paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
-                          ),
-                          input(
-                            ns("recId"),
-                            "tel",
-                            placeholder = "Rec #",
-                            `data-parsley-type` = "integer", label_width = 4
-                          ),
-                          tags$script(
-                            paste0(
-                              "var expDate=new Cleave('#",
+                            input(ns("physician"), placeholder = "Physician", label_width = 4),
+                            input(
                               ns("date"),
-                              "', {
-                              date: true, datePattern: ['m', 'd', 'Y']
+                              "text", `data-date-language` ="en", `data-date-week-start` =0,
+                              `data-min-date` = format(Sys.Date(), "%m-%d-%Y"),
+                              `data-max-date` = format(Sys.Date() + 366, "%m-%d-%Y"),
+                              `data-initial-date` = NA, `data-date-format` = "mm/dd/yyyy",
+                              placeholder = "Exp Date (MM/DD/YYYY)",
+                              label = "Exp Date",
+                              `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
+                            ),
+                            tags$script(
+                              paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
+                            ),
+                            input(
+                              ns("recId"),
+                              "tel",
+                              placeholder = "Rec #",
+                              `data-parsley-type` = "integer", label_width = 4
+                            ),
+                            tags$script(
+                              paste0(
+                                "var expDate=new Cleave('#",
+                                ns("date"),
+                                "', {
+                                date: true, datePattern: ['m', 'd', 'Y']
 })"
               )
-                          )
                             )
-                          )),
+                              )
+                            )),
               div(class = "form-horizontal container fluid col-md-12", div(
                 class = "row",
                 h1("Upload Images", style = "width:100%;margin-bottom:15px"),
@@ -1263,11 +1263,11 @@ newPatient <-
                   'var cleaveDOB = new Cleave("#',
                   session$ns("birthday"),
                   '", {
-            date: true, datePattern: ["m","d", "Y"]
+                  date: true, datePattern: ["m","d", "Y"]
     })'
                 )
               )
-            ),
+                ),
             div(
               class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
               input(
@@ -1303,15 +1303,15 @@ newPatient <-
                 value = patient_info_new()$zip
               )
             )
-          ),
+              ),
           footer = parsleyr::submit_form(
             session$ns("submit_info_edit"),
             "Submit",
             class = "btn btn-info add-queue-btn action-button",
             formId = session$ns("basic_info_form")
           )
-          )
-      )
+        )
+    )
       
     })
     
@@ -1361,7 +1361,7 @@ newPatient <-
         verified = patient_info_new()$verified, expirationDate = NA,
         label = paste0(input$name, ", ", input$name2, " (", input$californiaID, ")")
       ))
-
+      
       removeModal()
     })
     
@@ -1540,10 +1540,10 @@ newPatient <-
         ),
     list(targets = 1, className = "dt-left", render = JS(
       "function(data, type, row, meta) {
-        return row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
-      }"
+      return row[0] === 'DOB' ? parseInt(data.substring(12, 15)) < 21 ? '<span style = \"color:red\"/>' + data + '</span>' : data : data;
+  }"
     ))
-        )), colnames = "", class = "table dt-row",
+      )), colnames = "", class = "table dt-row",
     rownames = TRUE, selection = "none", server = TRUE)
     
     trigger_files <- reactiveVal(0)
@@ -1565,15 +1565,15 @@ newPatient <-
               ),
               tags$script(HTML(
                 '$("#new_patient-photoIdPath").on("change", function(value) {
-        if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
-    setTimeout(function() {
-          $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
-}, 1)
-        }
-      });'
+                if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
+                setTimeout(function() {
+                $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+                }, 1)
+                }
+                });'
               )
-              )
-        )),
+                )
+                )),
         div(
           class = "form-group",
           tags$label(
@@ -1588,33 +1588,33 @@ newPatient <-
               ),
               tags$script(HTML(
                 '$("#new_patient-medicalPath").on("change", function(value) {
-        if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
-              setTimeout(function() {
-          $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
-}, 1)
-        }
-      });'
+                if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
+                setTimeout(function() {
+                $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+                }, 1)
+                }
+                });'
+              )
+                )
+                ),
+          tags$script(
+            paste0(
+              "$('#",
+              session$ns("photoIdPath"),
+              "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
+              //   $('#",
+              session$ns("photoIdPath"),
+              "').attr('','');\n",
+              "$('#",
+              session$ns("medicalPath"),
+              "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
+              //  $('#",
+              session$ns("medicalPath"),
+              "').attr('','');"
               )
               )
-        ),
-        tags$script(
-          paste0(
-            "$('#",
-            session$ns("photoIdPath"),
-            "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
-            //   $('#",
-            session$ns("photoIdPath"),
-            "').attr('','');\n",
-            "$('#",
-            session$ns("medicalPath"),
-            "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
-            //  $('#",
-            session$ns("medicalPath"),
-            "').attr('','');"
-            )
-            )
-      )))
-    })
+                )))
+                })
     
     output$new_id_image <- renderImage({
       trigger_files()
@@ -1658,7 +1658,7 @@ newPatient <-
     
     return(reactive(patient_info_new()))
     
-  }
+    }
 
 queueUI <- function(id) {
   ns <- NS(id)
@@ -1691,6 +1691,7 @@ queue <-
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
+      invalidateLater(5000)
       trigger()
       trigger_queue()
       q_f_queue(pool)
@@ -1709,8 +1710,8 @@ queue <-
         select_( ~ -status)
     })
     
-    queue_proxy <- DT::dataTableProxy(session$ns("queue"), session)
-    store_proxy <- DT::dataTableProxy(session$ns("store"), session)
+    queue_proxy <- DT::dataTableProxy("queue", session, deferUntilFlush = FALSE)
+    store_proxy <- DT::dataTableProxy("store", session, deferUntilFlush = FALSE)
     
     # observeEvent(reload(), {
     #   DT::replaceData(queue_proxy,
@@ -1772,7 +1773,7 @@ queue <-
       #                 in_store() %>% select_(~ -idtransaction, ~ -idpatient))
       removeModal()
     })
-
+    
     observeEvent(input$infoQ, {
       reload_patient(list(selected = queue()$idpatient[input$infoQ$row], time = Sys.time()))
     })
@@ -1781,8 +1782,30 @@ queue <-
       reload_patient(list(selected = in_store()$idpatient[input$infoS$row], time = Sys.time()))
     })
     
+    observe({
+      req(queue())
+      dataTableAjax(session, queue() %>% select_( ~ -idtransaction,  ~ -idpatient) %>%
+                      mutate_(
+                        letIn = ~ row_number(),
+                        remove = ~ row_number(),
+                        info = ~ row_number(),
+                        timeIn = ~ as.character(as.POSIXct(
+                          hms::as.hms(hms::as.hms(timeIn))
+                        ), "%I:%M %p")
+                      ) %>%
+                      select_(
+                        Name =  ~ name,
+                        `ID #` =  ~ californiaID,
+                        `Time` = ~ timeIn,
+                        ~ letIn,
+                        ~ info,
+                        ~ remove
+                      ), rownames = TRUE, outputId = "queue")
+      reloadData(queue_proxy, resetPaging = FALSE)
+    })
+    
     output$queue <- DT::renderDataTable({
-      queue() %>% select_( ~ -idtransaction,  ~ -idpatient) %>%
+      isolate(queue()) %>% select_( ~ -idtransaction,  ~ -idpatient) %>%
         mutate_(
           letIn = ~ row_number(),
           remove = ~ row_number(),
@@ -1799,7 +1822,7 @@ queue <-
           ~ info,
           ~ remove
         )
-    }, rownames = TRUE, width = "100%", options = list(
+    }, rownames = TRUE, width = "100%", server = TRUE, options = list(
       dom = 't',
       drawCallback = JS(
         'function() {
@@ -1828,33 +1851,54 @@ columnDefs = list(
            'function(data, type, row, meta) {
            return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
            session$ns("let"),'\\")\'>Let In</button>";
-           }'
+  }'
 )
          )),
 list(targets = 5,
      render = JS(
        paste0(
          'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+         return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
          session$ns("infoQ"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
-           }'
+      }'
        )
        )),
 list(targets = 6,
      render = JS(
        paste0(
          'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+         return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
          session$ns("removeQ"),'\\")\'>Remove</button>";
-           }'
+  }'
        )
        ))
      )
-    ), colnames = c("Name", "ID #", "Time", "", "", ""),
+       ), colnames = c("Name", "ID #", "Time", "", "", ""),
 selection = 'none')
     
+    
+    observe({
+      req(in_store())
+      dataTableAjax(session, in_store() %>% select_( ~ -idtransaction, ~ -idpatient) %>%
+                    mutate_(
+                      remove = ~ row_number(),
+                      info = ~ row_number(),
+                      timeIn = ~ as.character(as.POSIXct(
+                        hms::as.hms(hms::as.hms(timeIn))
+                      ), "%I:%M %p")
+                    ) %>%
+                    select_(
+                      Name = ~ name,
+                      `ID #` =  ~ californiaID,
+                      `Time` = ~ timeIn,
+                      ~ info,
+                      ~ remove
+                    ), rownames = TRUE, outputId = "store")
+      reloadData(store_proxy, resetPaging = FALSE)
+    })
+    
     output$store <- DT::renderDataTable({
-      in_store() %>% select_( ~ -idtransaction, ~ -idpatient) %>%
+      isolate(in_store()) %>% select_( ~ -idtransaction, ~ -idpatient) %>%
         mutate_(
           remove = ~ row_number(),
           info = ~ row_number(),
@@ -1869,7 +1913,7 @@ selection = 'none')
           ~ info,
           ~ remove
         )
-    }, rownames = TRUE, options = list(
+    }, rownames = TRUE, server = TRUE, options = list(
       dom = 't',
       drawCallback = JS(
         'function() {
@@ -1894,24 +1938,24 @@ selection = 'none')
         list(targets = 4,
              render = JS(paste0(
                'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+               return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
                session$ns("infoS"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
-           }'
+  }'
              ))),
         list(targets = 5,
              render = JS(paste0(
                'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+               return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
                session$ns("removeS"),'\\")\'>Remove</button>";
-           }'
+         }'
              )))
-      )
-      ), colnames = c("Name", "ID #", "Time", "", ""),
+             )
+    ), colnames = c("Name", "ID #", "Time", "", ""),
     selection = 'none')
     
     
     return(queue_store)
-    }
+         }
 
 allPatientsUI <- function(id) {
   ns <- NS(id)
@@ -1919,10 +1963,10 @@ allPatientsUI <- function(id) {
   tagList(div(
     class = "content",
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-    box(
-      h1("Incomplete Patients"),
-      DT::dataTableOutput(ns("incomplete"))
-    )),
+        box(
+          h1("Incomplete Patients"),
+          DT::dataTableOutput(ns("incomplete"))
+        )),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(
           h1("All Patients"),
@@ -1962,13 +2006,13 @@ allPatients <-
         mutate_(info = ~row_number(),
                 expirationDate = ~ format(as.Date(expirationDate), "%m/%d/%Y"),
                 lastTransaction = ~format(as.Date(lastTransaction), "%m/%d/%Y"),
-        age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
-          ) %>% 
+                age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
+        ) %>% 
         select_(Name = ~name, `ID #`=~californiaID, 
                 Age = ~age, `Exp Date` =~expirationDate,`Last Transaction` = ~lastTransaction, 
                 ~info)
     }, colnames = c("Name", "ID #", "Age", "Exp Date", "Last Transaction", 
-                                    ""),
+                    ""),
     options = list(
       dom = 'tp',
       columnDefs = list(list(
@@ -1988,10 +2032,10 @@ allPatients <-
         width = "3%",
         render = JS(
           'function(data, type, row, meta) {
-            return data < 21 ? "<span style = \'color:red\'/>" + data + "</span>" : data;
-          }'
+          return data < 21 ? "<span style = \'color:red\'/>" + data + "</span>" : data;
+  }'
         )
-      ),
+        ),
       list(
         targets = 3,
         width = "7%"
@@ -2007,13 +2051,13 @@ allPatients <-
         render = JS(
           paste0(
             'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+            return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
             session$ns("info"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
-           }'
+  }'
+          )
           )
         )
-      )
-      ),
+        ),
       drawCallback = JS(
         'function() {
         $(".even").removeClass("even").addClass("odd");} '
@@ -2053,18 +2097,18 @@ allPatients <-
         render = JS(
           paste0(
             'function(data, type, row, meta) {
-           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+            return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
             session$ns("complete"),'\\");CannaFrontdesk.change_tab(\\"newPatient\\");\'>Complete Profile</button>";
-           }'
+  }'
+          )
           )
         )
-      )
-      ),
+        ),
       drawCallback = JS(
         'function() {
         $(".even").removeClass("even").addClass("odd");} '
       )
-    ),
+      ),
     selection = 'none', rownames = FALSE)
     
     return(patients)
