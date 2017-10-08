@@ -3,3 +3,4 @@
 TODO\.md$
 ^\.travis\.yml$
 ^LICENSE$
+^deploy\.sh$
