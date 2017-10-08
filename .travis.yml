@@ -4,6 +4,8 @@ language: R
 sudo: false
 cache: packages
 
+r_packages: miniUI
+
 before_install:
   - git clone https://github.com/zint/zint.git ../zint
   - cd ../zint
