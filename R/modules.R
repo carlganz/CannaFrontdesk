@@ -1005,6 +1005,7 @@ patientInfo <-
             patient_info_returning()$photoPath
           ),
           height = "100%",
+          class = "hoverZoomLink",
           width = "100%"
         )
       } else {
@@ -1026,6 +1027,7 @@ patientInfo <-
             patient_info_returning()$medicalPath
           ),
           height = "100%",
+          class = "hoverZoomLink",
           width = "100%"
         )
       } else {
@@ -1623,6 +1625,7 @@ newPatient <-
           src = input$photoIdPath$datapath,
           width = "100%",
           height = "100%",
+          class = "hoverZoomLink",
           alt = "New Patient Driver's License"
         )
       } else {
@@ -1643,6 +1646,7 @@ newPatient <-
           src = input$medicalPath$datapath,
           width = "100%",
           height = "100%",
+          class = "hoverZoomLink",
           alt = "New Patient doctor's recommendation"
         )
       } else {
