@@ -47,7 +47,7 @@ frontdesk <-
                "AWS_SECRET_ACCESS_KEY"=getOption("AWS_SECRET_ACCESS_KEY"),
                "AWS_DEFAULT_REGION" = getOption("AWS_DEFAULT_REGION"))
     APP_URL <- paste0(base_url, "frontdesk/")
-    
+    access_token <- ""
     make_authorization_url <- function(req, APP_URL) {
       url_template <- paste0("https://cannadata.auth0.com/authorize?response_type=code&scope=%s&",
                              "state=%s&client_id=%s&redirect_uri=%s&connection=%s")
@@ -144,7 +144,7 @@ frontdesk <-
     document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
 };setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
-        
+        access_token <<- respObj$access_token
         return(shiny::htmlTemplate(
           filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
           clientName = clientName
@@ -186,20 +186,10 @@ frontdesk <-
       }
       
       if (!interactive()) {
-        access_token <- fromJSON(rawToChar(httr::POST("https://cannadata.auth0.com/oauth/token",
-                                                               body = list(
-                                                                 grant_type = "authorization_code",
-                                                                 client_id = auth_id,
-                                                                 client_secret = auth_secret,
-                                                                 code = params$code,
-                                                                 redirect_uri = APP_URL
-                                                               ), httr::accept_json(), 
-                                                               encode = "json")))$access_token
         user <- jsonlite::fromJSON(rawToChar(httr::GET(
           httr::modify_url("https://cannadata.auth0.com/", path = "userinfo/",
                            query = list(access_token = access_token))
         )$content))
-        
       }
       
       output$user_name <- renderUI({
