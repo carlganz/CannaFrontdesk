@@ -68,24 +68,18 @@ frontdesk <-
       if (length(parseQueryString(req$QUERY_STRING)$code) == 0 && !interactive()) {
         authorization_url <- make_authorization_url(req, APP_URL)
         return(tagList(
-          tags$script(HTML(sprintf("function setCookie(cname, cvalue, exdays) {
-                                   var d = new Date();
-                                   d.setTime(d.getTime() + (exdays*24*60*60*1000));
-                                   var expires = \"expires=\"+ d.toUTCString();
-                                   document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
-      };setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
+          tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
+                                   document.cookie = cname + \"=\" + cvalue + \";path=/\";
+      };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
       } else if (!interactive()) {
         params <- parseQueryString(req$QUERY_STRING)
         
         if (!isTRUE(rawToChar(base64enc::base64decode(params$state)) == plumber:::parseCookies(req$HTTP_COOKIE)$cannadata_token)) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
-            tags$script(HTML(sprintf("function setCookie(cname, cvalue, exdays) {
-                                     var d = new Date();
-                                     d.setTime(d.getTime() + (exdays*24*60*60*1000));
-                                     var expires = \"expires=\"+ d.toUTCString();
-                                     document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
-        };setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
+            tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
+                                     document.cookie = cname + \"=\" + cvalue + \";path=/\";
+        };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         
         resp <- tryCatch(httr::POST("https://cannadata.auth0.com/oauth/token",
@@ -101,12 +95,9 @@ frontdesk <-
         if (httr::http_error(resp)) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
-            tags$script(HTML(sprintf("function setCookie(cname, cvalue, exdays) {
-                                     var d = new Date();
-                                     d.setTime(d.getTime() + (exdays*24*60*60*1000));
-                                     var expires = \"expires=\"+ d.toUTCString();
+            tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
                                      document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
-        };setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
+        };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         
         respObj <- jsonlite::fromJSON(rawToChar(resp$content))
@@ -116,12 +107,9 @@ frontdesk <-
         if (!isTruthy(respObj$id_token)) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
-            tags$script(HTML(sprintf("function setCookie(cname, cvalue, exdays) {
-                                     var d = new Date();
-                                     d.setTime(d.getTime() + (exdays*24*60*60*1000));
-                                     var expires = \"expires=\"+ d.toUTCString();
-                                     document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
-        };setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
+            tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
+                                     document.cookie = cname + \"=\" + cvalue + \";path=/\";
+        };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         
         kid <- jsonlite::fromJSON(rawToChar(base64decode(strsplit(respObj$id_token, "\\.")[[1]][1])))$kid
@@ -137,12 +125,9 @@ frontdesk <-
         if (is.null(user)) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
-            tags$script(HTML(sprintf("function setCookie(cname, cvalue, exdays) {
-    var d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    var expires = \"expires=\"+ d.toUTCString();
+            tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
     document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
-};setCookie(\"cannadata_token\",\"%s\", 1);location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
+};setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         access_token <<- respObj$access_token
         return(shiny::htmlTemplate(
