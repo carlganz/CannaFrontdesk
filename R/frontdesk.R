@@ -64,7 +64,7 @@ frontdesk <-
       ), state = state)
     }
     
-    uiFunc <- function(req) {
+    ui <- function(req) {
       if (length(parseQueryString(req$QUERY_STRING)$code) == 0 && !interactive()) {
         authorization_url <- make_authorization_url(req, APP_URL)
         return(tagList(
