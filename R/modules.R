@@ -1417,16 +1417,18 @@ newPatient <-
         ))
       } else {
         # upload images to S3
+        id <- patientId()
+        
         medicalS3 <-
           paste0(
-            paste("medical", input$new_patient, Sys.Date(), sep = "_"),
+            paste("medical", id, Sys.Date(), sep = "_"),
             ".",
             tools::file_ext(input$medicalPath$datapath)
           )
         
         photoS3 <-
           paste0(
-            paste("photo", input$new_patient, Sys.Date(), sep = "_"),
+            paste("photo", id, Sys.Date(), sep = "_"),
             ".",
             tools::file_ext(input$photoIdPath$datapath)
           )
@@ -1445,7 +1447,6 @@ newPatient <-
           }
         )
         
-        id <- patientId()
         # add patient
         u_f_new_patient(pool,
                         id,
