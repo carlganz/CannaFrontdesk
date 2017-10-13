@@ -443,9 +443,13 @@ patientInfo <-
       
       # phone
       # convert to number
-      phone <- as.numeric(gsub(" ", "", input$phone))
+      phone <- as.numeric(gsub("[ ()]", "", input$phone))
       # remove leading 1?
-      req(!is.na(phone) && nchar(phone) %in% 10:11)
+      req(nchar(phone) %in% 10:11,!is.na(phone))
+      
+      if (substr(phone, 1, 1) == "1") {
+        phone <- substr(phone, 2, nchar(phone))
+      }
       
       # ID # is legit
       req(is_californiaId(input$californiaID))
