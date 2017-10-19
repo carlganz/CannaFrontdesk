@@ -11,8 +11,10 @@ frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
   clientName = getOption("CannaData_clientName"),
   base_url = getOption("CannaData_baseUrl"),
   bucket = getOption("CannaData_AWS_bucket"),
+  gcp_json = getOption("CannaData_google_json"),
   auth_id = getOption("auth_id"), auth_secret = getOption("auth_secret"),
-  scope = "openid email",
+  scope = "openid email", twilio_sid = getOption("TWILIO_SID"),
+  twilio_token = getOption("TWILIO_TOKEN"),
   connection_name = "Username-Password-Authentication")
 }
 \arguments{

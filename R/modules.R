@@ -32,6 +32,9 @@ patientInfoUI <- function(id) {
             )))),
       box(tableTitle("Basic Info"),
           DT::dataTableOutput(ns("info"))),
+      box(tableTitle("Notes"),
+          uiOutput(ns("notes"))
+          ),
       box(tableTitle("Preferences"),
           DT::dataTableOutput(ns("preference"))),
       box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
@@ -923,6 +926,34 @@ patientInfo <-
       class = "table dt-row", selection = 'none'
       )
     
+    output$notes <- renderUI({
+      tags$textarea(if_else(is.na(patient_info_returning()$comment), "", patient_info_returning()$comment), readonly = TRUE, rows = 3,
+                    style = "width: 100%; border-radius: 5px;color:black", placeholder = "No notes recorded")
+    })
+    
+    observeEvent(input$edit_notes, {
+      req(patientId())
+      showModal(
+        modalDialog(
+          easyClose = TRUE,
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          h1("Edit Notes"),
+          span(class = "text-modal-wrapper",
+          textAreaInput(session$ns("edit_note"), NULL, rows = 3, value = if_else(is.na(patient_info_returning()$comment), "", patient_info_returning()$comment))
+        ), footer = actionButton(session$ns("submit_note"), "Submit", class = "btn btn-info add-queue-btn")
+        )
+      )
+    })
+    
+    observeEvent(input$submit_note, {
+      req(patientId())
+      u_f_note(pool, patientId(), input$edit_note)
+      trigger_patient_info_returning(trigger_patient_info_returning() + 1)
+      removeModal()
+    })
+    
     output$preference <- DT::renderDataTable({
       info <- patient_info_returning()
       data.frame(
@@ -1052,7 +1083,7 @@ patientInfo <-
       req(patient_sales()$profit)
       patient_sales() %>% 
         mutate_(type = ~tools::toTitleCase(type)) %>%
-        spread_(~type, ~profit) %>%
+        spread_("type", "profit") %>%
         select_(~contains("Flower"), ~contains("Concentrate"),~contains("Edible"),~contains("Other")) %>% 
         summarise_all(function(x) {x[!is.na(x)][1]}) %>% c3() %>%
         c3_pie(format=DT::JS("function(value,ratio,id) {return '$' + value;}"))
@@ -1473,7 +1504,7 @@ newPatient <-
         session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
         session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
         ### go to patient info page with new patient there
-        reload_patient(list(selected = id, time = Sys.time()))
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
@@ -1675,6 +1706,9 @@ queueUI <- function(id) {
   tagList(div(
     class = "content",
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+        box(h1("Online Sales"),
+        DT::dataTableOutput(ns("online")))),
+    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(h1("Queue"),
             DT::dataTableOutput(ns(
               "queue"
@@ -1696,7 +1730,9 @@ queue <-
            trigger,
            reload,
            reload_patient,
-           trigger_patients) {
+           trigger_patients,
+           trigger_online,
+           online) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
@@ -1721,15 +1757,8 @@ queue <-
     
     queue_proxy <- DT::dataTableProxy("queue", session, deferUntilFlush = FALSE)
     store_proxy <- DT::dataTableProxy("store", session, deferUntilFlush = FALSE)
-    
-    # observeEvent(reload(), {
-    #   DT::replaceData(queue_proxy,
-    #                   queue() %>% select_( ~ -idtransaction, ~ -idpatient))
-    #   DT::replaceData(
-    #     store_proxy,
-    #     in_store() %>% select_( ~ -idtransaction, ~ -idpatient)
-    #   )
-    # })
+    online_proxy <- DT::dataTableProxy("online", session, deferUntilFlush = FALSE)
+
     
     # take patient from queue and let in store
     observeEvent(input$let, {
@@ -1784,12 +1813,84 @@ queue <-
     })
     
     observeEvent(input$infoQ, {
-      reload_patient(list(selected = queue()$idpatient[input$infoQ$row], time = Sys.time()))
+      reload_patient(list(selected = queue()$idpatient[input$infoQ$row], time = Sys.time(), type = "patient"))
     })
     
     observeEvent(input$infoS, {
-      reload_patient(list(selected = in_store()$idpatient[input$infoS$row], time = Sys.time()))
+      reload_patient(list(selected = in_store()$idpatient[input$infoS$row], time = Sys.time(), type = "patient"))
     })
+    
+    observeEvent(input$onlineSale, {
+      reload_patient(list(selected = online()$idtransaction[input$onlineSale$row], time = Sys.time(), type = "transaction"))
+    })
+    
+    observe({
+      req(queue())
+      dataTableAjax(session, online() %>% select_(~-idtransaction, ~-email) %>% 
+                      mutate_(index = ~row_number(),
+                              timeIn = ~as.character(as.POSIXct(
+                                hms::as.hms(timeIn)
+                              ), "%I:%M %p")) %>% 
+                      select_(Name = ~name, Phone = ~phone, Status = ~status, Time = ~timeIn, Total = ~revenue, ` ` = ~index), rownames = TRUE, outputId = "online")
+      reloadData(online_proxy, resetPaging = FALSE)
+    })
+    
+    output$online <- DT::renderDataTable({
+      isolate(online()) %>% select_(~-idtransaction, ~-email) %>% 
+        mutate_(index = ~row_number(),
+                timeIn = ~as.character(as.POSIXct(
+                  hms::as.hms(hms::as.hms(timeIn))
+                ), "%I:%M %p")) %>% 
+        select_(Name = ~name, Phone = ~phone, Status = ~status, Time = ~timeIn, Total = ~revenue, ` ` = ~index)
+    }, rownames = TRUE, width = "100%", server = TRUE, 
+    selection = "none", options = list(
+      dom = 't',
+      drawCallback = JS(
+        'function() {
+        $(".even").removeClass("even").addClass("odd");
+  } '
+      ), columnDefs = list(
+        list(
+          targets = 0:6, className = "dt-center", orderable = FALSE
+        ),
+        list(
+          targets = 0, width = "2.5%"
+        ),
+        list(
+          targets = 1, width = "15%"
+        ),
+        list(
+          targets = 2, width = "15%"
+        ),
+        list(
+          targets = 3, width = "100px",
+          render = JS(
+            "function(data, type, row, meta) {
+              return data === 5 ? '<span =class \"unconfirmed\">Unconfirmed</span>' : '<span =class \"confirmed\">Confirmed</span>'; 
+            }"
+          )
+        ),
+        list(
+          targets = 4, width = "14%"
+        ),
+        list(
+          targets = 5, width = "10%", render = JS(
+            "function(data, type, row, meta) {
+              return '$' + data;
+            }"
+          )
+        ),
+        list(
+          targets = 6, width = "", render = JS(
+            paste0(
+              'function(data, type, row, meta) {
+           return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+              session$ns("onlineSale"),'\\")\'>Process</button>";
+  }'
+            )
+          )
+        )
+      )))
     
     observe({
       req(queue())
@@ -2003,11 +2104,11 @@ allPatients <-
     })
     
     observeEvent(input$info, {
-      reload_patient(list(selected = patients()$idpatient[input$info$row], time = Sys.time()))
+      reload_patient(list(selected = patients()$idpatient[input$info$row], time = Sys.time(), type = "patient"))
     })
     
     observeEvent(input$complete, {
-      reload_patient(list(selected = new_patients()$idpatient[input$complete$row], time = Sys.time()))
+      reload_patient(list(selected = new_patients()$idpatient[input$complete$row], time = Sys.time(), type = "patient"))
     })
     
     output$patients <- DT::renderDataTable({
@@ -2122,6 +2223,394 @@ allPatients <-
     
     return(patients)
   }
+
+onlineOrdersUI <- function(id) {
+  ns <- NS(id)
+  
+  tagList(div(class = "content",
+              tags$form(
+                id = ns("onlineSale"),
+                class = "form",
+                div(
+                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                  div(
+                    div(class = "name-container",
+                        uiOutput(ns(
+                          "name"
+                        )))),
+                  box(h1("Patient Info", style = "width:100%"),
+                      DT::dataTableOutput(ns("patient_info")))
+                ),
+                div(
+                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                  div(
+                    class = "row",
+                    div(
+                      class = "add-delete-btn-container",
+                      tags$button(id = ns("cancel"), "Cancel", 
+                                  class = "btn btn-info delete-btn action-button", 
+                                  style = "width:25%", formnovalidate = NA),
+                      parsleyr::submit_form(
+                        ns("submit"),
+                        "Confirm",
+                        formId = ns("onlineSale"),
+                        class = "btn btn-info add-queue-btn",
+                        style = "width:25%"
+                      ),
+                      tags$button(id = ns("print"), "Labels",
+                                  class = "btn btn-info add-queue-btn action-button",
+                                  style = "width: 25%", formnovalidate = NA)
+                    )
+                  ),
+                  box(h1("Order Info", style = "width:100%"),
+                      DT::dataTableOutput(ns("order_info")))
+                ),
+                div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+                    box(
+                    h1("Cart", style = "width:100%"),
+                    DT::dataTableOutput(ns("cart"))
+                    ))
+              )))
+}
+
+onlineOrder <- function(input, output, session, pool, transactionId, order_info, trigger, reload_select, patients, printers, base_url) {
+  
+  trigger_order_info <- reactiveVal(0)
+  sales <- reactive({
+    req(transactionId())
+    trigger_order_info()
+    q_f_online_sale(pool, transactionId())
+  })
+  
+  observe({
+    status <- order_info()$status[1]
+    req(status)
+    if (status == 5) {
+      updateActionButton(session, "submit", label = "Confirm")
+    } else {
+      updateActionButton(session, "submit", label = "Link")
+    }
+  })
+  
+  output$name <- renderUI({
+    if (isTruthy(order_info()$name)) {
+      h1(order_info()$name[1])
+    } else {
+      h1("Select an online order")
+    }
+  })
+  
+  output$patient_info <- DT::renderDataTable({
+    req(order_info())
+    order_info() %>% 
+      select_(Name = ~name, Phone = ~phone, Email = ~email) %>% slice(1) %>%
+      t()
+  }, rownames = TRUE, class = "table dt-row", selection = 'none', 
+  options = list(dom = "t", columnDefs = list(
+    list(
+      targets = 0,
+      render = JS(
+        "function(data, type, row, meta) {
+            return '<span class = \\'dt-rowname\\'>' + data + ':<\\span>';
+    }"
+      )
+    )
+  )))
+  
+  output$order_info <- DT::renderDataTable({
+    req(order_info())
+    data.frame(
+      Time = as.character(as.POSIXct(
+        hms::as.hms(order_info()$timeIn[1])
+      ), "%I:%M %p"),
+      Status = order_info()$status[1],
+      Total = order_info()$revenue[1]
+    ) %>% t()
+  }, rownames = TRUE, class = "table dt-row", selection = 'none',
+  options = list(dom = "t", columnDefs = list(
+    list(
+      targets = 0,
+      render = JS(
+        "function(data, type, row, meta) {
+            return '<span class = \\'dt-rowname\\'>' + data + ':<\\span>';
+    }"
+      )
+    ),
+    list(targets = 1,
+         render = JS(
+           "function(data, type, row, meta) {
+console.log(data)
+            return row[0] === 'Status' ? (parseInt(data) === 5 ? '<span =class \"unconfirmed\">Unconfirmed</span>' : '<span =class \"confirmed\">Confirmed</span>') : 
+              row[0] === 'Total' ? '$' + data : data;
+           }"
+         ))
+  )))
+  
+  output$cart <- DT::renderDataTable({
+    sales() %>% mutate_(index = ~row_number()) %>%
+      select_(~index, ~product, ~type, ~quantity, ~revenue)
+  }, rownames = FALSE, colnames = c('', 'Product', 'Type', 'Quantity', 'Price'), 
+  selection = "none", options = list(dom = "t",
+                                      columnDefs = list(list(
+                                        targets = 0:4, className = "dt-center"
+                                      ),
+                                      list(
+                                        targets = 0, orderable = FALSE,
+                                        width = "2.5%",
+                                        render = JS(
+                                          "function(data, type, row, meta) {
+            return data ? '<a class = \"table-title-and-icon\" id = \"edit' + data + '\" ><i class = \"fa fa-pencil fa-2x\" row = \"' + data + '\" onclick = \"CannaFrontdesk.edit_item(this)\"></i></a>' : '';
+}"
+                                        )
+                                      ),
+                                      list(
+                                        targets = 1, width = "25%"
+                                      ),
+                                      list(
+                                        targets = 2,
+                                        width = "50px",
+                                        render = JS(
+                                          'function(data, type, row, meta) {
+            return data ? "<img class=\\"product-image cart-image\\" src = \\"https://s3-us-west-2.amazonaws.com/cannadatacdn/icons/" + data.toLowerCase() + ".svg\\">" : "";
+  }'
+                                        )
+                                      ),
+                                      list(
+                                        targets = 3, width = "50px", render = JS(
+                                          "function(data, type, row, meta) {
+                                            return ['flower', 'concentrate'].indexOf(row[2]) >= 0 ? data + ' g' : data + ' pkg';
+                                          }"
+                                        )
+                                      ),
+                                      list(
+                                        targets = 4, width = "50px", render = JS(
+                                          "function(data, type, row, meta) {
+                                            return '$' + (data ? data : '0');
+                                          }"
+                                        )
+                                      )
+                                      )))
+  
+  observeEvent(input$edit_item, {
+    req(input$edit_item$row)
+    info <- sales() %>% slice_(~as.numeric(input$edit_item$row))
+    showModal(
+      modalDialog(
+        easyClose = TRUE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$script(
+          "$('.modal-content').css('background-color', '#061726');$('.modal-body').css('overflow','auto');$('.modal-dialog').css('width', '70%');"
+        ),
+        add_to_cartUI(session$ns("edit_online"), reactive(info$type), reactive(info$product), NULL,  info$quantity, info$revenue,
+                      coupon = coupons()),
+        footer = tagList(
+          actionButton(session$ns("edit"), "Submit", style = "float:left;", class = "btn-info add-queue-btn"),
+          actionButton(session$ns("remove"), "Remove", class = "btn-info delete-btn")
+        )
+      )
+    )
+  })
+  
+  observeEvent(input$print, {
+    req(transactionId())
+    showModal(
+      modalDialog(
+        easyClose = TRUE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        selectizeInput(session$ns("printer"), "Printer", choices = structure(printers$id, names = printers$name)),
+        footer = tags$button(id = session$ns("submit_print"), "Print", class = "btn btn-info add-queue-btn action-button")
+      )
+    )
+  })
+  
+  observeEvent(input$submit_print, {
+    req(input$printer)
+    req(transactionId())
+    need_labels <- sales() %>% filter_(~type %in% c("flower", "concentrate"))
+    
+    for (i in seq_len(nrow(need_labels))) {
+      print_label(
+        inventoryId = need_labels$idinventory[i],
+        name = paste0(need_labels$name[i], " (", paste0(c("I", "S", "H")[which(c(
+          need_labels$indica[i] ==
+            1,
+          need_labels$sativa[i] == 1,
+          need_labels$hybrid[i] == 1
+        ))], collapse = "/"), ")"),
+        template = system.file(package = "CannaInventory", "templates", "label.html"),
+        base_url = base_url,
+        width = 1100,
+        height = 400,
+        printer = input$printer,
+        key = getOption("canna_key")
+      )
+    }
+    removeModal()
+  })
+  
+  coupons <- reactive({
+    x <- q_c_coupons(pool)
+    reactive(structure(x$id, names = x$name))
+  })
+  
+edited_item <- callModule(add_to_cart, "edit_online", pool, {
+  req(input$edit_item$row)
+  reactive(sales() %>% slice_(~as.numeric(input$edit_item$row)) %>% pull("type"))
+  },
+                            {
+                              req(input$edit_item$row)
+                              reactive(sales() %>% slice_(~input$edit_item$row) %>% pull("idinventory"))
+                              }, 
+                            {
+                              req(input$edit_item$row)
+                              sales() %>% slice_(~input$edit_item$row) %>% pull("revenue")
+                              },
+                            {
+                              req(input$edit_item$row)
+                              sales() %>% slice_(~input$edit_item$row) %>% pull("quantity")
+                              }, edit = TRUE, coupon = coupons())
+
+  observeEvent(input$edit, {
+    ### edit sale
+    print('test')
+    req(edited_item())
+    req(input$edit_item$row)
+    info <- sales() %>% slice_(~input$edit_item$row)
+    u_c_sale(pool, info$idsale, edited_item()$price, edited_item()$quantity - info$quantity , edited_item()$discount, edited_item()$unit, edited_item()$idcoupon, 
+             edited_item()$reason)
+    trigger_order_info(trigger_order_info() + 1)
+    removeModal()
+  })
+  
+  observeEvent(input$remove, {
+    ### remove sale
+    req(input$edit_item$row)
+    info <- sales() %>% slice_(~input$edit_item$row)
+    d_c_remove_sale(pool, info$idsale, info$idinventory, info$quantity)
+    trigger_order_info(trigger_order_info() + 1)
+    removeModal()
+  })
+  
+  observeEvent(input$submit, {
+    ### check status then do right thing
+    if (order_info()$status == 5) {
+    showModal(
+      modalDialog(
+        easyClose = TRUE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        h1("Confirmation Message"),
+        span(class = "text-msg",
+        textAreaInput(session$ns("confirm_msg"), NULL, value = "Your order has been confirmed. Remember to bring your ID, and rec with you to DISPENSARY NAME.",
+                      rows = 3)
+      ), footer = actionButton(session$ns("send_confirm"), "Confirm Order", class = "btn-info add-queue-btn")
+      )
+    )
+    } else if (order_info()$status == 6) {
+      showModal(
+        modalDialog(
+          easyClose = TRUE,
+          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1("Link Online Sale with Patient"),
+          selectizeInput(session$ns("patient"), "Patient", 
+                         choices = patients(),
+                         options = list(
+            onInitialize = I("function() {this.setValue('');}"),
+            placeholder = "Patient"
+          )),
+          footer = actionButton(session$ns("link"), "Link Order", class = "btn-info add-queue-btn")
+        )
+      )
+    }
+  })
+  
+  observeEvent(input$link, {
+    req(input$patient)
+    u_f_link_order(pool, transactionId(), input$patient)
+    reload_select(list(id = NULL))
+    removeModal()
+  })
+  
+  observeEvent(input$send_confirm, {
+    req(input$confirm_msg)
+    con <- pool::poolCheckout(pool)
+    DBI::dbBegin(con)
+    u_f_confirm_order(con, transactionId(), sales()$idinventory, sales()$quantity)
+    
+    quantities <- vapply(sales()$idinventory, function(x) {
+      q_c_quantity(con, x)
+    }, numeric(1))
+    
+    if (any(quantities < 0)) {
+      DBI::dbRollback(con)
+      showModal(
+        modalDialog(
+          easyClose = TRUE,
+          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1("There was not enough inventory of ", paste0(sales()$product[quantities < 0], collapse = ", "))
+        )
+      )
+    } else {
+      DBI::dbCommit(con)
+      showModal(
+        modalDialog(
+          easyClose = TRUE,
+          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1("Order confirmed! Remember to link order with patient when they arrive.")
+        )
+      )
+      trigger(trigger() + 1)
+      tw_send_message(paste0("+1", order_info()$phone), msg_service_id = msg_service_sid, body = input$confirm_msg)
+    }
+    pool::poolReturn(con)
+  })
+  
+  observeEvent(input$cancel, {
+    ### present cancellation text option
+    ### remove transaction
+    showModal(
+      modalDialog(
+        easyClose = TRUE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        h1("Cancellation Message"),
+        span(class = "text-msg",
+        textAreaInput(session$ns("cancel_msg"), NULL, value = "We are sorry we were unable to process your order. Please contact (xxx)-xxx-xxxx ",
+                      rows = 3)
+      ),
+      footer = actionButton(session$ns("send_cancel"), "Cancel Order", class = "btn-info delete-btn")
+      )
+    )
+  })
+  
+  msg_service_sid = tw_msg_service_list()[[1]]$sid
+  
+  observeEvent(input$send_cancel, {
+    req(input$cancel_msg)
+    d_f_online_sale(pool, transactionId())
+    reload_select(list(id = NULL))
+    trigger(trigger() + 1)
+    removeModal()
+    tw_send_message(paste0("+1", order_info()$phone), msg_service_id = msg_service_sid, body = input$cancel_msg)
+  })
+  
+}
 
 input <-
   function(id,

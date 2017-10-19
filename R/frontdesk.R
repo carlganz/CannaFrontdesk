@@ -13,7 +13,8 @@
 # GNU Affero General Public License for more details.
 #' Frontdesk Shiny Application
 #'
-#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms aws.s3 c3 jsonlite jose openssl httr base64enc
+#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms 
+#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
@@ -37,16 +38,16 @@ frontdesk <-
            base_url = getOption("CannaData_baseUrl"),
            # db = getOption("CannaData_db"),
            bucket = getOption("CannaData_AWS_bucket"),
+  gcp_json = getOption("CannaData_google_json"),
   auth_id = getOption("auth_id"),
   auth_secret = getOption("auth_secret"),
-  scope = "openid email",
+  scope = "openid email", twilio_sid = getOption("TWILIO_SID"),
+  twilio_token = getOption("TWILIO_TOKEN"),
   connection_name = "Username-Password-Authentication") {
     Sys.setenv("TWILIO_SID" = getOption("TWILIO_SID"),
-               "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"),
-               "AWS_ACCESS_KEY_ID"=getOption("AWS_ACCESS_KEY_ID"),
-               "AWS_SECRET_ACCESS_KEY"=getOption("AWS_SECRET_ACCESS_KEY"),
-               "AWS_DEFAULT_REGION" = getOption("AWS_DEFAULT_REGION"))
+               "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"))
     APP_URL <- paste0(base_url, "frontdesk/")
+    
     access_token <- ""
     make_authorization_url <- function(req, APP_URL) {
       url_template <- paste0("https://cannadata.auth0.com/authorize?response_type=code&scope=%s&",
@@ -96,7 +97,7 @@ frontdesk <-
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
             tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
-                                     document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
+                                     document.cookie = cname + \"=\" + cvalue + \";path=/\";
         };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         
@@ -163,12 +164,22 @@ frontdesk <-
     #            )
     #     ))
     
+    
+    options("googleAuthR.scopes.selected" = c("https://www.googleapis.com/auth/cloudprint"))
+    options("googleAuthR.ok_content_types" = c(getOption("googleAuthR.ok_content_types"),
+                                               "text/plain"))
+  
+    
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
       
       if (length(params$code) == 0 && !interactive()) { 
         return()
       }
+      
+      googleAuthR::gar_auth_service(gcp_json,
+                                    scope = c("https://www.googleapis.com/auth/cloudprint"))
+      printers <- gcp_search("")
       
       if (!interactive()) {
         user <- jsonlite::fromJSON(rawToChar(httr::GET(
@@ -207,9 +218,9 @@ frontdesk <-
           "patient_info",
           pool,
           reactive({
-            if (isTruthy(input$patient) &&
-                isTRUE(patients()$verified[patients()$idpatient == as.numeric(input$patient)] == 3)) {
-              as.numeric(input$patient)
+            if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "P" &&
+                isTRUE(patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] == 3)) {
+              as.numeric(substring(input$patient, 2))
             } else {
               NULL
             }
@@ -231,8 +242,8 @@ frontdesk <-
           "new_patient",
           pool,
           reactive({
-            if (isTruthy(input$patient) && isTRUE(patients()$verified[patients()$idpatient == as.numeric(input$patient)] %in% c(1,2))) {
-              as.numeric(input$patient)
+            if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "P" && isTRUE(patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] %in% c(1,2))) {
+              as.numeric(substring(input$patient, 2))
             } else {
               NULL
             }
@@ -245,8 +256,51 @@ frontdesk <-
           trigger_patients
         )
       
+      online <- reactiveVal(
+        data.frame(
+          idtransaction = integer(0),
+          name = character(0),
+          email = character(0),
+          phone = integer(0),
+          status = integer(0),
+          items = integer(0),
+          revenue = integer(0)
+        )
+      )
+      online_load <- reactive({
+        invalidateLater(5000)
+        trigger_online()
+        q_f_online(pool)
+      })
+      
+      observe({
+        if (!identical(online_load(), online())) {
+          online(online_load())
+        }
+      })
+      
+      output$unconfirmed <- renderUI({
+        req((online() %>% filter_(~status == 5) %>% nrow) > 0)
+        orders <- online() %>% filter_(~status == 5)
+        tagList(div(class = "unconfirmed-wrapper",
+          lapply(seq_len(length(orders$name)), function(x) {
+          div(
+            class = "order_alert",
+            onclick = paste0("CannaFrontdesk.click_alert(", x,")"),
+            icon("exclamation-triangle", class = "fa-2x"),
+            tags$p(paste0("Unconfirmed order from ", orders$name[x]))
+          )
+        })))
+      })
+      
+      observe({
+        req(input$click_alert)
+        reload_patient(list(type = "Online", selected = online() %>% filter_(~status == 5) %>% pull("idtransaction") %>% .[input$click_alert$box]))
+      })
+      
       trigger <- reactiveVal(0)
       reload <- reactiveVal(0)
+      trigger_online <- reactiveVal(0)
       queue <-
         callModule(
           queue,
@@ -256,7 +310,9 @@ frontdesk <-
           trigger,
           reload,
           reload_patient,
-          trigger_patients
+          trigger_patients,
+          trigger_online,
+          online
         )
       trigger_patients <- reactiveVal(0)
       all_patients <-
@@ -266,14 +322,33 @@ frontdesk <-
                    reload_patient,
                    trigger_patients)
       
+      callModule(onlineOrder, "online_order", pool, reactive({
+        if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "T") {
+          as.numeric(substring(input$patient, 2))
+        } else {
+          NULL
+        }
+      }), {
+        reactive(if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "T") {
+          online()[online()$idtransaction == as.numeric(substring(input$patient, 2)), ]
+        } else {
+          NULL
+        })
+      },
+      trigger_online, reload_patient, reactive({
+        structure(queue()$idtransaction, names = queue()$name)
+      }), printers, base_url)
+      
       # OBSERVES ---------------------------------------------------------------
       
       observeEvent(input$patient, {
         req(input$patient)
-        if (patients()$verified[patients()$idpatient == as.numeric(input$patient)] == 3)
+        if (substr(input$patient, 1, 1) == "P" && patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] == 3)
           updateNavlistPanel(session, "tabset", "patientInfo")
-        else
+        else if (substr(input$patient, 1, 1) == "P" && patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] %in% 1:2)
           updateNavlistPanel(session, "tabset", "newPatient")
+        else
+          updateNavlistPanel(session, "tabset", "preOrders")
       })
       
       # server side selectize inputs
@@ -284,22 +359,37 @@ frontdesk <-
         # check for new patients anytime we update selectize
         # not needed for now unless we determine it is needed
         # trigger_new(trigger_new() + 1)
+        x <- bind_rows(
+          patients() %>%
+            mutate_(selectGrp = ~ "patient"),
+          online() %>%
+            mutate_(selectGrp = ~ "online", label = ~name)
+        ) %>% 
+          mutate_(valueFld = ~if_else(selectGrp == "patient", paste0("P", idpatient), paste0("T", idtransaction)))
+        if (!is.null(reload_patient()$selected)) {
+          x <- bind_rows(x[x$valueFld ==  paste0(if (reload_patient()$type == "patient") "P" else "T", reload_patient()$selected),],
+                       x[!(x$valueFld ==  paste0(if (reload_patient()$type == "patient") "P" else "T", reload_patient()$selected)),])
+        }
+        
         updateSelectizeInput(
           session,
           "patient",
-          choices = bind_rows(
-            patients()[patients()$idpatient == reload_patient()$selected,],
-            patients()[!(patients()$idpatient == reload_patient()$selected),]
-          ),
+          choices = x,
           server = TRUE,
-          selected = reload_patient()$selected
+          selected = if (!is.null(reload_patient()$selected)) paste0(if (reload_patient()$type == "patient") "P" else "T", reload_patient()$selected)
         )
       })
       
       observe({
         updateSelectizeInput(session,
                              "patient",
-                             choices = isolate(patients()),
+                             choices = isolate(bind_rows(
+                               patients() %>%
+                                 mutate_(selectGrp = ~ "patient"),
+                               online() %>%
+                                 mutate_(selectGrp = ~ "online")
+          ) %>% 
+            mutate_(valueFld = ~if_else(selectGrp == "patient", paste0("P", idpatient), paste0("T", idtransaction)))),
                              server = TRUE)
       })
       
@@ -327,10 +417,10 @@ frontdesk <-
               )
             ))
             reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
-                                time = Sys.time()))
+                                time = Sys.time(), type = "patient"))
           } else if (status == 3) {
             reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
-                                time = Sys.time()))
+                                time = Sys.time(), type = "patient"))
           }
         } else {
           showModal(modalDialog(
@@ -373,7 +463,7 @@ frontdesk <-
         )
         
         trigger_new(trigger_new() + 1)
-        reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID], time = Sys.time()))
+        reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID], time = Sys.time(), type = "patient"))
 
         showModal(modalDialog(
           tags$script(

@@ -191,6 +191,7 @@ CannaFrontdesk = function() {
       $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Patients');
       $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
       $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
+      $("a[data-value='preOrders']").html('<i class = "fa fa-shopping-cart"></i><br>Online Sale');
       // add class
       $("#sidebar .nav").wrapAll("<div class = 'icon-bar'/>");
       $("#sidebar .nav").addClass("sidebar-icon-bar");
@@ -200,6 +201,10 @@ CannaFrontdesk = function() {
       $("div[data-value='patientInfo']").find("h1:contains('Basic Info')").siblings('i').attr('value', 0).on('click', function() {
         $(this).attr('value', parseInt($(this).attr('value')) + 1);
         Shiny.onInputChange("patient_info-edit_basic_info", $(this).attr('value'));
+      });
+      $("div[data-value='patientInfo']").find("h1:contains('Notes')").siblings('i').attr('value', 0).on('click', function() {
+        $(this).attr('value', parseInt($(this).attr('value')) + 1);
+        Shiny.onInputChange("patient_info-edit_notes", $(this).attr('value'));
       });
       $("div[data-value='patientInfo']").find("h1:contains('Medical Info')").siblings('i').attr('value', 0).on('click', function() {
         $(this).attr('value', parseInt($(this).attr('value')) + 1);
@@ -269,6 +274,15 @@ CannaFrontdesk = function() {
           Shiny.onInputChange($(this).addClass("selected").children("img").attr("value", "true").attr("id").toLowerCase(), true);
         }
       });
+    },
+    edit_item: function(el) {
+      Shiny.onInputChange("online_order-edit_item", {row: parseInt($(el).attr("row")),time: Date.now() });
+    },
+    require: function(params) {
+      $("#" + params.id).prop("required", params.required);
+    },
+    click_alert: function(param) {
+      Shiny.onInputChange("click_alert", {box : param, time : Date.now()});
     }
   };
 }();
@@ -282,4 +296,5 @@ $(document).ready(function() {
   Shiny.addCustomMessageHandler("reset_file_input", CannaFrontdesk.reset_file_input);
   Shiny.addCustomMessageHandler("reset_parsley", CannaFrontdesk.reset_parsley);
   Shiny.addCustomMessageHandler("toggle_expiration", CannaFrontdesk.toggle_expiration);
+  Shiny.addCustomMessageHandler("require", CannaFrontdesk.require);
 });

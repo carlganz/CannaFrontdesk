@@ -55,9 +55,14 @@ GNU Affero General Public License for more details.
                          NULL,
                          options = list(maxOptions = 10,
                                         loadThrottle = NA,
-                                        valueField = "idpatient",
+                                        optgroups = list(
+                           list(value = "online", label = "Online Order"),
+                           list(value = "patient", label = "Patients")
+                         ),
+                                        valueField = "valueFld",
                                         searchField = c("firstName", "middleName", "lastName", "californiaID"),
                                         placeholder = "Search",
+                                        optgroupField = "selectGrp",
                                         onInitialize = I("
                                         function() {
                                         $($('#patient').parents('div')[0]).find('input[type=\"text\"]').css('width', '90%');
@@ -65,12 +70,18 @@ GNU Affero General Public License for more details.
                                         "),
                                         render = I("{
                                                    option: function(item, escape) {
-                                                   return '<div>' +
+                                                   return item.selectGrp === 'patient' ? '<div>' +
                                                    '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
                                                    '<ul>' +
                                                    '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
                                                    '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
                                                    (item.expirationDate ? '<li><span>Expiration Date: ' + escape(item.expirationDate) + '</span></li>' : '') +
+                                                   '</ul>' +
+                                                   '</div>' : '<div>' +
+                                                   '<strong>' + escape(item.name) + '</strong>:' +
+                                                   '<ul>' +
+                                                   '<li><span>Time Ordered: ' + escape(item.timeIn) + '</span></li>' +
+                                                   '<li><span>Status: ' + (item.verified === 5 ? 'Unconfirmed' : 'Ready') + '</span></li>' +
                                                    '</ul>' +
                                                    '</div>';
                                                    }               
@@ -84,7 +95,11 @@ GNU Affero General Public License for more details.
         shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
         shiny::tabPanel("allPatients", CannaFrontdesk:::allPatientsUI("all_patients")),
         shiny::tabPanel("patientInfo",CannaFrontdesk:::patientInfoUI("patient_info")), 
-        shiny::tabPanel("newPatient", CannaFrontdesk:::newPatientUI("new_patient")))
+        shiny::tabPanel("newPatient", CannaFrontdesk:::newPatientUI("new_patient")),
+        shiny::tabPanel("preOrders", CannaFrontdesk:::onlineOrdersUI("online_order")))
+    }}
+    {{
+      shiny::uiOutput("unconfirmed")
     }}
   </div>
 

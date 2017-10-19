@@ -666,3 +666,75 @@ input[type=checkbox] {
     top: 0;
     right: 0;
 }
+
+#tabset .fa-shopping-cart {
+  font-size: 2.5em;
+}
+
+.fa-pencil {
+    color: #5cb85c;
+}
+
+svg text {
+   font-family:DinLight;
+  } 
+  
+  .checkbtn {
+    margin: 10px;
+    width: 100%;
+  }
+  
+  .radiobtn {
+    margin: 10px 0;
+    width: 100%;
+  }
+  
+  .checkbtn.active, .radiobtn.active {
+    background-color: #99cc33 !important;
+    color: white;
+  }
+  
+  .checkbtn.active:hover, .radiobtn.active:hover {
+    color: inherit;
+  }
+  
+  .text-msg .form-group {
+    margin: 0 auto;  
+  }
+  
+  .unconfirmed {
+    color: red;
+  }
+  
+  .order_alert {
+    border: 1px solid white;
+    border-radius: 10px;
+    text-align: center;
+    z-index: 2;
+    padding: 5px;
+    background-color: #192836;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.unconfirmed-wrapper {
+      position: fixed;
+    bottom: 15px;
+    right: 15px;
+}
+
+.order_alert:hover {
+  color: black;
+  background-color: white;
+}
+  .order_alert p {
+    font-family: DinMedium;
+  }
+  
+  .order_alert i {
+    color: red;
+  }
+  
+  .text-modal-wrapper div {
+    margin: 0 auto;
+  }
