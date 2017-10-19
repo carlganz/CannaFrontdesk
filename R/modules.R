@@ -942,7 +942,7 @@ patientInfo <-
           h1("Edit Notes"),
           span(class = "text-modal-wrapper",
           textAreaInput(session$ns("edit_note"), NULL, rows = 3, value = if_else(is.na(patient_info_returning()$comment), "", patient_info_returning()$comment))
-        ), footer = actionButton(session$ns("submit_note"), "Submit", class = "btn btn-info add-queue-btn")
+        ), footer = actionButton(session$ns("submit_note"), "Submit", class = "btn btn-info add-queue-btn", placeholder = "No notes recorded")
         )
       )
     })
