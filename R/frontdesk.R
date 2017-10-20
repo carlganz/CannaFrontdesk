@@ -131,7 +131,7 @@ frontdesk <-
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
             tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
-    document.cookie = cname + \"=\" + cvalue + \";\" + expires + \";path=/\";
+    document.cookie = cname + \"=\" + cvalue + \";path=/\";
 };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
         access_token <<- respObj$access_token
