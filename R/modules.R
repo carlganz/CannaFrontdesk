@@ -2397,12 +2397,12 @@ console.log(data)
     showModal(
       modalDialog(
         easyClose = TRUE,
-        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$span(icon("times", class = "close-modal move-icon"), `data-dismiss` = "modal", style = "padding: 15px"),
         tags$script(
           "$('.modal-content').css('background-color', '#061726');$('.modal-body').css('overflow','auto');$('.modal-dialog').css('width', '70%');"
         ),
         add_to_cartUI(session$ns("edit_online"), reactive(info$type), reactive(info$product), NULL,  info$quantity, info$revenue,
-                      coupon = coupons()),
+                      coupon = coupons(), margin_top = 30),
         footer = tagList(
           actionButton(session$ns("edit"), "Submit", style = "float:left;", class = "btn-info add-queue-btn"),
           actionButton(session$ns("remove"), "Remove", class = "btn-info delete-btn")

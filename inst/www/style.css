@@ -738,3 +738,11 @@ svg text {
   .text-modal-wrapper div {
     margin: 0 auto;
   }
+  
+  .move-icon {
+    padding: 15px;
+  }
+  
+  .add-to-cart-image {
+    max-height: 10vh;
+  }
