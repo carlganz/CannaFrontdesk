@@ -45,7 +45,11 @@ frontdesk <-
   twilio_token = getOption("TWILIO_TOKEN"),
   connection_name = "Username-Password-Authentication") {
     Sys.setenv("TWILIO_SID" = getOption("TWILIO_SID"),
-               "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"))
+               "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"),
+               "AWS_ACCESS_KEY_ID" = getOption("AWS_ACCESS_KEY_ID"),
+               "AWS_SECRET_ACCESS_KEY" = getOption("AWS_SECRET_ACCESS_KEY"),
+               "AWS_DEFAULT_REGION" = getOption("AWS_DEFAULT_REGION")
+               )
     APP_URL <- paste0(base_url, "frontdesk/")
     
     access_token <- ""
