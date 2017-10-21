@@ -26,11 +26,17 @@ frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
 
 \item{bucket}{Name of AWS bucket}
 
+\item{gcp_json}{Google Cloud Print Json}
+
 \item{auth_id}{Auth0 ID}
 
 \item{auth_secret}{Auth0 Secret}
 
 \item{scope}{scope}
+
+\item{twilio_sid}{Twilio secret id}
+
+\item{twilio_token}{Twilio token}
 
 \item{connection_name}{connect name}
 }

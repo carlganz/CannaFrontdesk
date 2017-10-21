@@ -7,13 +7,12 @@ Authors@R: c(
   )
 Description: 'Shiny' application for managing patients at front desk.
 Depends: R (>= 3.2.2)
-Imports: shiny, CannaQueries, CannaModules, parsleyr, rintrojs, aws.s3,
+Imports: shiny, CannaQueries, CannaModules, parsleyr, rintrojs, aws.s3, DBI,
   pool, RMariaDB, DT, dplyr, shinyCleave, tidyr, CannaSelectize, hms, c3,
   jose, openssl, jsonlite, httr, base64enc, twilio, googleAuthR, googlePrintr
 Remotes: CannaData/CannaQueries, CannaData/CannaModules, CannaData/parsleyr, 
-  CannaData/shinyCleave, CannaData/CannaSelectize, mrjoh3/c3, rstats-db/RMariaDB,
-  rstudio/pool, tidyverse/hms, carlganz/twilio, MarkEdmondson1234/googleAuthR,
-  CannaData/googlePrintR
+  CannaData/shinyCleave, CannaData/CannaSelectize, mrjoh3/c3,
+  tidyverse/hms, carlganz/twilio, CannaData/googlePrintR
 Suggests: drat, miniUI
 License: AGPL
 Encoding: UTF-8

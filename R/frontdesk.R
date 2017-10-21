@@ -14,11 +14,14 @@
 #' Frontdesk Shiny Application
 #'
 #' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms 
-#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr
+#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
 #' @param bucket Name of AWS bucket
+#' @param gcp_json Google Cloud Print Json
+#' @param twilio_sid Twilio secret id
+#' @param twilio_token Twilio token
 #' @export
 #'
 
@@ -79,7 +82,7 @@ frontdesk <-
       } else if (!interactive()) {
         params <- parseQueryString(req$QUERY_STRING)
         
-        if (!isTRUE(rawToChar(base64enc::base64decode(params$state)) == plumber:::parseCookies(req$HTTP_COOKIE)$cannadata_token)) {
+        if (!isTRUE(rawToChar(base64enc::base64decode(params$state)) == parseCookies(req$HTTP_COOKIE)$cannadata_token)) {
           authorization_url <- make_authorization_url(req, APP_URL)
           return(tagList(
             tags$script(HTML(sprintf("function setCookie(cname, cvalue) {
@@ -299,7 +302,7 @@ frontdesk <-
       
       observe({
         req(input$click_alert)
-        reload_patient(list(type = "Online", selected = online() %>% filter_(~status == 5) %>% pull("idtransaction") %>% .[input$click_alert$box]))
+        reload_patient(list(type = "Online", selected = online() %>% filter_(~status == 5) %>% pull("idtransaction") %>% slice(input$click_alert$box)))
       })
       
       trigger <- reactiveVal(0)
