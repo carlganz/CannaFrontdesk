@@ -99,7 +99,7 @@ GNU Affero General Public License for more details.
         shiny::tabPanel("preOrders", CannaFrontdesk:::onlineOrdersUI("online_order")))
     }}
     {{
-      shiny::uiOutput("unconfirmed")
+      shiny::tags$div(id = "unconfirmed")
     }}
   </div>
 

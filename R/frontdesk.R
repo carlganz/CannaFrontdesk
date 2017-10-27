@@ -282,27 +282,40 @@ frontdesk <-
       
       observe({
         if (!identical(online_load(), online())) {
+          if (length(setdiff(online_load()$idtransaction[online_load()$status == 5], online()$idtransaction[online()$status == 5])) > 0) {
+            # add
+            new_ids <- setdiff(online_load()$idtransaction[online_load()$status == 5], online()$idtransaction[online()$status == 5])
+            insertUI("#unconfirmed", "afterBegin", ui = 
+            tagList(div(class = "unconfirmed-wrapper",
+                            lapply(seq_len(length(new_ids)), function(x) {
+                            div(
+                              class = "order_alert", row = new_ids[x],
+                              onclick = paste0("CannaFrontdesk.click_alert(", new_ids[x],")"),
+                              tags$span(onclick = "CannaFrontdesk.close_alert(this);", class = "close-alert", icon("times")),
+                              icon("exclamation-triangle", class = "fa-2x"),
+                              tags$p(paste0("Unconfirmed order from ", online_load()$name[new_ids[x] == online_load()$idtransaction]))
+                            )
+                          }))))
+          }
+      
+          if (length(setdiff(online()$idtransaction[online()$status == 5], online_load()$idtransaction[online_load()$status == 5])) > 0) {
+            # remove
+            lapply(setdiff(online()$idtransaction[online()$status == 5], online_load()$idtransaction[online_load()$status == 5]), function(x) {
+              removeUI(paste0(".order_alert[row = \"", x, "\"]"))
+            })
+          }
           online(online_load())
         }
       })
       
-      output$unconfirmed <- renderUI({
-        req((online() %>% filter_(~status == 5) %>% nrow) > 0)
-        orders <- online() %>% filter_(~status == 5)
-        tagList(div(class = "unconfirmed-wrapper",
-          lapply(seq_len(length(orders$name)), function(x) {
-          div(
-            class = "order_alert",
-            onclick = paste0("CannaFrontdesk.click_alert(", x,")"),
-            icon("exclamation-triangle", class = "fa-2x"),
-            tags$p(paste0("Unconfirmed order from ", orders$name[x]))
-          )
-        })))
+      observe({
+        req(input$click_alert)
+        reload_patient(list(type = "Online", selected = input$click_alert$box, time = Sys.time()))
       })
       
       observe({
-        req(input$click_alert)
-        reload_patient(list(type = "Online", selected = online() %>% filter_(~status == 5) %>% pull("idtransaction") %>% slice(input$click_alert$box)))
+        req(input$close_alert)
+        removeUI(paste0(".order_alert[row = \"", input$close_alert$box, "\"]"))
       })
       
       trigger <- reactiveVal(0)
@@ -394,7 +407,7 @@ frontdesk <-
                                patients() %>%
                                  mutate_(selectGrp = ~ "patient"),
                                online() %>%
-                                 mutate_(selectGrp = ~ "online")
+                                 mutate_(selectGrp = ~ "online", label = ~name)
           ) %>% 
             mutate_(valueFld = ~if_else(selectGrp == "patient", paste0("P", idpatient), paste0("T", idtransaction)))),
                              server = TRUE)

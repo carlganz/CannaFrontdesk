@@ -282,7 +282,10 @@ CannaFrontdesk = function() {
       $("#" + params.id).prop("required", params.required);
     },
     click_alert: function(param) {
-      Shiny.onInputChange("click_alert", {box : param, time : Date.now()});
+      Shiny.onInputChange("click_alert", {box : parseInt(param), time : Date.now()});
+    },
+    close_alert: function(el) {
+      Shiny.onInputChange("close_alert", {box : parseInt($(el).parents("div").attr("row")), time: Date.now()});
     }
   };
 }();

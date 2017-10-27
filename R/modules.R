@@ -155,7 +155,7 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_add_queue(pool, patientId())
+        i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0)
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
@@ -194,7 +194,7 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_let_in(pool, patientId())
+        i_f_let_in(pool, patientId(), new = nrow(patient_history())==0)
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
@@ -1111,7 +1111,7 @@ patientInfo <-
       h4("No Data Available")
     })
     
-    callModule(CannaModules::patientHistory,
+    patient_history <- callModule(CannaModules::patientHistory,
                "frontdesk",
                pool,
                reactive({
@@ -1844,7 +1844,7 @@ queue <-
         select_(Name = ~name, Phone = ~phone, Status = ~status, Time = ~timeIn, Total = ~revenue, ` ` = ~index)
     }, rownames = TRUE, width = "100%", server = TRUE, 
     selection = "none", options = list(
-      dom = 't',
+      dom = 'tp',
       drawCallback = JS(
         'function() {
         $(".even").removeClass("even").addClass("odd");
@@ -1933,7 +1933,7 @@ queue <-
           ~ remove
         )
     }, rownames = TRUE, width = "100%", server = TRUE, options = list(
-      dom = 't',
+      dom = 'tp',
       drawCallback = JS(
         'function() {
         $(".even").removeClass("even").addClass("odd");
@@ -2024,7 +2024,7 @@ selection = 'none')
           ~ remove
         )
     }, rownames = TRUE, server = TRUE, options = list(
-      dom = 't',
+      dom = 'tp',
       drawCallback = JS(
         'function() {
         $(".even").removeClass("even").addClass("odd");} '
@@ -2282,6 +2282,11 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
     q_f_online_sale(pool, transactionId())
   })
   
+  discount <- reactive({
+    trigger_order_info()
+    q_c_active_discounts(pool, transactionId())
+  })
+  
   observe({
     status <- order_info()$status[1]
     req(status)
@@ -2306,7 +2311,8 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
       select_(Name = ~name, Phone = ~phone, Email = ~email) %>% slice(1) %>%
       t()
   }, rownames = TRUE, class = "table dt-row", selection = 'none', 
-  options = list(dom = "t", columnDefs = list(
+  options = list(dom = "t", 
+                 columnDefs = list(
     list(
       targets = 0,
       render = JS(
@@ -2339,7 +2345,6 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
     list(targets = 1,
          render = JS(
            "function(data, type, row, meta) {
-console.log(data)
             return row[0] === 'Status' ? (parseInt(data) === 5 ? '<span =class \"unconfirmed\">Unconfirmed</span>' : '<span =class \"confirmed\">Confirmed</span>') : 
               row[0] === 'Total' ? '$' + data : data;
            }"
@@ -2347,19 +2352,48 @@ console.log(data)
   )))
   
   output$cart <- DT::renderDataTable({
-    sales() %>% mutate_(index = ~row_number()) %>%
-      select_(~index, ~product, ~type, ~quantity, ~revenue)
-  }, rownames = FALSE, colnames = c('', 'Product', 'Type', 'Quantity', 'Price'), 
-  selection = "none", options = list(dom = "t",
+    req(transactionId())
+    discount <- discount() %>% mutate_(index = ~if_else(is.na(idsale), row_number(), NA_integer_),
+                                       name = ~if_else(is.na(name), reason, name),
+                                       discount = ~if_else(unit == "$", discount, 
+                                                           if_else(is.na(idsale), sum(sales()$revenue), 
+                                                                   if (nrow(sales())>0) {(sales()$revenue[sales()$idsale == idsale])} else {0})  * discount / 100)) %>%
+      select_( ~ idsale, ~ iddiscount, ~ name, price = ~ discount, ~ index)
+    
+    sales() %>%
+      mutate_(
+        index = ~ row_number()
+      ) %>%
+      select_( ~ index, ~ name, ~ type, ~ quantity, price =  ~ revenue, ~idsale) %>%
+      bind_rows(discount) %>% arrange_(~idsale, ~desc(price)) %>% 
+      mutate_(price = ~ format(price, digits = 2, nsmall = 2, scientific = FALSE)) %>%
+      select_( ~ index, ~ name, ~ type, ~ quantity, ~ price, ~idsale)
+
+  }, rownames = FALSE, colnames = c('', 'Product', 'Type', 'Quantity', 'Price', ''), 
+  selection = "none", options = list(dom = "tp",
+                                     rowCallback = JS(
+                                       'function(row, data, index) {
+                                        if (!data[3]) {
+                                          $(row).addClass("discount");
+                                        }
+                                       }'
+                                     ),
+                                     drawCallback = JS(
+                                       'function() {
+        $(".even").removeClass("even").addClass("odd");
+  } '),
                                       columnDefs = list(list(
                                         targets = 0:4, className = "dt-center"
+                                      ),
+                                      list(
+                                        targets = 5, visible = FALSE
                                       ),
                                       list(
                                         targets = 0, orderable = FALSE,
                                         width = "2.5%",
                                         render = JS(
                                           "function(data, type, row, meta) {
-            return data ? '<a class = \"table-title-and-icon\" id = \"edit' + data + '\" ><i class = \"fa fa-pencil fa-2x\" row = \"' + data + '\" onclick = \"CannaFrontdesk.edit_item(this)\"></i></a>' : '';
+            return data ? '<a id = \"edit' + data + '\" ><i class = \"fa fa-pencil fa-2x\" row = \"' + data + '\" onclick = \"CannaFrontdesk.edit_item(this)\"></i></a>' : '';
 }"
                                         )
                                       ),
@@ -2378,14 +2412,14 @@ console.log(data)
                                       list(
                                         targets = 3, width = "50px", render = JS(
                                           "function(data, type, row, meta) {
-                                            return ['flower', 'concentrate'].indexOf(row[2]) >= 0 ? data + ' g' : data + ' pkg';
+                                            return data ? ['flower', 'concentrate'].indexOf(row[2]) >= 0 ? data + ' g' : data + ' pkg': '';
                                           }"
                                         )
                                       ),
                                       list(
                                         targets = 4, width = "50px", render = JS(
                                           "function(data, type, row, meta) {
-                                            return '$' + (data ? data : '0');
+                                            return data ? row[3] ? '$' + data : '<span style = \"color:red\">-$' + Math.abs(data) + '</span>' : '$0';
                                           }"
                                         )
                                       )
@@ -2394,6 +2428,7 @@ console.log(data)
   observeEvent(input$edit_item, {
     req(input$edit_item$row)
     info <- sales() %>% slice_(~as.numeric(input$edit_item$row))
+    dis <- discount()[isTRUE(discount()$idsale ==info$idsale),]
     showModal(
       modalDialog(
         easyClose = TRUE,
@@ -2401,8 +2436,11 @@ console.log(data)
         tags$script(
           "$('.modal-content').css('background-color', '#061726');$('.modal-body').css('overflow','auto');$('.modal-dialog').css('width', '70%');"
         ),
-        add_to_cartUI(session$ns("edit_online"), reactive(info$type), reactive(info$product), NULL,  info$quantity, info$revenue,
-                      coupon = coupons(), margin_top = 30),
+        add_to_cartUI(session$ns("edit_online"), reactive(info$type), reactive(info$name), discount = dis$discount, unit = dis$unit, reason = if (isTruthy(dis$reason)) dis$reason else dis$idcoupon,
+                      quantity = info$quantity, price = info$revenue,
+                      coupon = coupons(), margin_top = 30, strainType = c("hybrid", "sativa", "indica")[c(
+                        as.logical(c(info$hybrid, info$sativa, info$indica))
+                      )]),
         footer = tagList(
           actionButton(session$ns("edit"), "Submit", style = "float:left;", class = "btn-info add-queue-btn"),
           actionButton(session$ns("remove"), "Remove", class = "btn-info delete-btn")
@@ -2418,7 +2456,7 @@ console.log(data)
         easyClose = TRUE,
         tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         tags$script(
-          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          "$('.modal-content').addClass('table-container');"
         ),
         selectizeInput(session$ns("printer"), "Printer", choices = structure(printers$id, names = printers$name)),
         footer = tags$button(id = session$ns("submit_print"), "Print", class = "btn btn-info add-queue-btn action-button")
@@ -2465,22 +2503,46 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
                               reactive(sales() %>% slice_(~input$edit_item$row) %>% pull("idinventory"))
                               }, 
                             {
-                              req(input$edit_item$row)
-                              sales() %>% slice_(~input$edit_item$row) %>% pull("revenue")
+                              NULL
                               },
                             {
-                              req(input$edit_item$row)
-                              sales() %>% slice_(~input$edit_item$row) %>% pull("quantity")
-                              }, edit = TRUE, coupon = coupons())
+                              NULL
+                              }, edit = TRUE, coupon = coupons(), strainType = reactive(c("hybrid", "sativa", "indica")[c(
+                                as.logical(c(sales() %>% slice_(~input$edit_item$row) %>% pull("hybrid"),
+                                             sales() %>% slice_(~input$edit_item$row) %>% pull("sativa"), 
+                                             sales() %>% slice_(~input$edit_item$row) %>% pull("indica")))
+                              )]))
 
   observeEvent(input$edit, {
     ### edit sale
-    print('test')
     req(edited_item())
     req(input$edit_item$row)
     info <- sales() %>% slice_(~input$edit_item$row)
-    u_c_sale(pool, info$idsale, edited_item()$price, edited_item()$quantity - info$quantity , edited_item()$discount, edited_item()$unit, edited_item()$idcoupon, 
-             edited_item()$reason)
+    conn <- pool::poolCheckout(pool)
+    dbBegin(conn)
+    u_c_sale(pool, info$idsale, edited_item()$price, edited_item()$quantity - info$quantity)
+    
+    if (length(discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)]) > 0 && isTRUE(edited_item()$discount > 0)) {
+      u_c_discount(conn, discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)], edited_item()$discount, edited_item()$unit, edited_item()$idcoupon, edited_item()$reason)
+    } else if (isTRUE(edited_item()$discount > 0)) {
+      i_c_discount(conn, transactionId = transactionId(), saleId = info$idsale,
+                   discount = edited_item()$discount, unit= edited_item()$unit, reason = edited_item()$reason, couponId = edited_item()$idcoupon)
+    } else if (length(discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)]) > 0) {
+      d_c_discount(conn, discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)])
+    }
+    
+    if (q_c_quantity(conn, info$idinventory) < 0) {
+      # should explicitely mention quantity?
+      showModal(session = session,
+                modalDialog(easyClose = TRUE, fade = FALSE,
+                            tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+                            tags$script("$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"),
+                            h1("Warning! Not enough inventory")))
+      DBI::dbRollback(conn)
+    } else {
+      DBI::dbCommit(conn)
+    }
+    
     trigger_order_info(trigger_order_info() + 1)
     removeModal()
   })
@@ -2558,7 +2620,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
-          h1("There was not enough inventory of ", paste0(sales()$product[quantities < 0], collapse = ", "))
+          h1("There was not enough inventory of ", paste0(sales()$name[quantities < 0], collapse = ", "))
         )
       )
     } else {

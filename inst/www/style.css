@@ -717,7 +717,7 @@ svg text {
     margin-top: 10px;
 }
 
-.unconfirmed-wrapper {
+#unconfirmed {
       position: fixed;
     bottom: 15px;
     right: 15px;
@@ -745,4 +745,21 @@ svg text {
   
   .add-to-cart-image {
     max-height: 10vh;
+  }
+  
+  .close-alert {
+    position:absolute;
+    right:10px;
+  }
+  
+  .close-alert i {
+    color: white;
+  }
+  
+  .order_alert:hover .close-alert i {
+    color: black;
+  }
+  
+  .discount {
+    font-size: 105%;
   }
