@@ -32,7 +32,9 @@ frontdesk <-
     port = as.integer(getOption("CannaData_port")),
     user = getOption("CannaData_user"),
     password = getOption("CannaData_password"),
-    db = getOption("CannaData_db")
+    db = getOption("CannaData_db"),
+    `ssl-ca` = "https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem",
+    `ssl-verify` = "server-cert"
   ), clientName = getOption("CannaData_clientName"),
            # host = getOption("CannaData_host"),
            # port = as.integer(getOption("CannaData_port")),
