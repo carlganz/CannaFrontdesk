@@ -14,7 +14,7 @@
 #' Frontdesk Shiny Application
 #'
 #' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms 
-#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI
+#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup

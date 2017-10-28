@@ -2469,23 +2469,26 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
     req(transactionId())
     need_labels <- sales() %>% filter_(~type %in% c("flower", "concentrate"))
     
-    for (i in seq_len(nrow(need_labels))) {
-      print_label(
-        inventoryId = need_labels$idinventory[i],
-        name = paste0(need_labels$name[i], " (", paste0(c("I", "S", "H")[which(c(
-          need_labels$indica[i] ==
-            1,
-          need_labels$sativa[i] == 1,
-          need_labels$hybrid[i] == 1
-        ))], collapse = "/"), ")"),
-        template = system.file(package = "CannaInventory", "templates", "label.html"),
-        base_url = base_url,
-        width = 1100,
-        height = 400,
-        printer = input$printer,
-        key = getOption("canna_key")
-      )
-    }
+    mcparallel({
+      for (i in seq_len(nrow(need_labels))) {
+        print_label(
+          inventoryId = need_labels$idinventory[i],
+          name = paste0(need_labels$name[i], " (", paste0(c("I", "S", "H")[which(c(
+            need_labels$indica[i] ==
+              1,
+            need_labels$sativa[i] == 1,
+            need_labels$hybrid[i] == 1
+          ))], collapse = "/"), ")"),
+          template = system.file(package = "CannaInventory", "templates", "label.html"),
+          base_url = base_url,
+          width = 1100,
+          height = 400,
+          printer = input$printer,
+          key = getOption("canna_key")
+        )
+      }
+    })
+    
     removeModal()
   })
   

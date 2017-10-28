@@ -7,7 +7,9 @@
 frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
   getOption("CannaData_host"), port = as.integer(getOption("CannaData_port")),
   user = getOption("CannaData_user"), password =
-  getOption("CannaData_password"), db = getOption("CannaData_db")),
+  getOption("CannaData_password"), db = getOption("CannaData_db"), `ssl-ca` =
+  "https://s3.amazonaws.com/rds-downloads/rds-combined-ca-bundle.pem",
+  `ssl-verify` = "server-cert"),
   clientName = getOption("CannaData_clientName"),
   base_url = getOption("CannaData_baseUrl"),
   bucket = getOption("CannaData_AWS_bucket"),
