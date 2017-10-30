@@ -2479,6 +2479,7 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
             need_labels$sativa[i] == 1,
             need_labels$hybrid[i] == 1
           ))], collapse = "/"), ")"),
+          quantity = paste(need_labels$quantity[i], if (need_labels$type[i] %in% c("flower", "concentrate")) "g" else "pkg"), 
           template = system.file(package = "CannaInventory", "templates", "label.html"),
           base_url = base_url,
           width = 1100,
