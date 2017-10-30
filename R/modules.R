@@ -2583,7 +2583,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
           easyClose = TRUE,
           tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+            "$('.modal-content').addClass('table-container');"
           ),
           h1("Link Online Sale with Patient"),
           selectizeInput(session$ns("patient"), "Patient", 
