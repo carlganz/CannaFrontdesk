@@ -12,7 +12,7 @@ Imports: shiny, CannaQueries, CannaModules, parsleyr, rintrojs, aws.s3, DBI,
   jose, openssl, jsonlite, httr, base64enc, twilio, googleAuthR, googlePrintr
 Remotes: CannaData/CannaQueries, CannaData/CannaModules, CannaData/parsleyr, 
   CannaData/shinyCleave, CannaData/CannaSelectize, mrjoh3/c3,
-  tidyverse/hms, carlganz/twilio, CannaData/googlePrintR
+  tidyverse/hms, carlganz/twilio, CannaData/googlePrintR, rstudio/DT
 Suggests: drat, miniUI
 License: AGPL
 Encoding: UTF-8
