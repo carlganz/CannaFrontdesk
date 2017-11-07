@@ -180,7 +180,7 @@ CannaFrontdesk = function() {
     },
     sidebar: function() {
       // make shiny navlist the sidebar
-      $("#content .nav").parent().attr("id", "sidebar");
+      $("#content #tabset").parent().attr("id", "sidebar");
       // remove bs classes
       $("#sidebar").removeClass("col-sm-4");
       $("#content").find(".col-sm-8").removeClass("col-sm-8");
