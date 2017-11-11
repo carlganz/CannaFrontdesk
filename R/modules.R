@@ -116,7 +116,8 @@ patientInfo <-
            trigger_returning,
            proxy,
            reload_patient,
-           trigger_patients) {
+           trigger_patients,
+           max_points) {
     trigger_patient_info_returning <- reactiveVal(0)
     patient_info_returning <- reactive({
       req(patientId())
@@ -566,6 +567,9 @@ patientInfo <-
       
       # validate recId
       # req(nchar(input$update_recId) == 15,!is.na(as.numeric(input$update_recId)))
+      
+      ####### update patient Metrc ###############
+      
       
       u_f_med_info(
         pool,
@@ -1097,7 +1101,7 @@ patientInfo <-
         select_(~points) %>% 
         mutate_(points=~if_else(is.na(points),0,points)) %>%
         c3() %>% 
-        c3_gauge(min = 0, max = 10000, label = list(
+        c3_gauge(min = 0, max = max_points, label = list(
           format = DT::JS(
             "function(value, ratio) {
             return value;
@@ -1481,6 +1485,7 @@ newPatient <-
             stop("S3 failed", w)
           }
         )
+        ######### Add Patient to Metrc ################
         
         # add patient
         u_f_new_patient(pool,

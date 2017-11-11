@@ -209,6 +209,7 @@ frontdesk <-
       if (interactive()) {
         session$onSessionEnded(stopApp)
       }
+      max_points <- q_c_settings(pool)$points_total
       options(shiny.maxRequestSize = 300 * 1024 ^ 2)
       ## input names may change!!!
       # REACTIVES ---------------------------------------------------------------
@@ -242,7 +243,8 @@ frontdesk <-
           trigger_returning,
           patient_proxy,
           reload_patient,
-          trigger_patients
+          trigger_patients,
+          max_points
         )
       # needs to update outer selectize
       patient_info_new <-
