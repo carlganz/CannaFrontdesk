@@ -195,6 +195,19 @@ frontdesk <-
           httr::modify_url("https://cannadata.auth0.com/", path = "userinfo/",
                            query = list(access_token = access_token))
         )$content))
+        
+        budtenderId <- q_c_budtender(pool, if (isTruthy(user$email)) user$email else NA)
+        
+        if (budtenderId$frontdesk == 0) {
+          showModal(
+            modalDialog(
+              tags$script("$('.modal-content').addClass('table-container');"),
+              h1("You do not have access to this page."),
+              footer = NULL
+            )
+          )
+          return()
+        }
       }
       
       output$user_name <- renderUI({
