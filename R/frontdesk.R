@@ -481,6 +481,7 @@ frontdesk <-
       
       observeEvent(input$add_new_patient, {
         req(input$read_barcode)
+        req(!(input$read_barcode$californiaId %in% patients()$californiaId))
         removeModal()
         i_f_new_patient(
           pool,
