@@ -48,7 +48,8 @@ frontdesk <-
   auth_secret = getOption("auth_secret"),
   scope = "openid email", twilio_sid = getOption("TWILIO_SID"),
   twilio_token = getOption("TWILIO_TOKEN"),
-  connection_name = "Username-Password-Authentication") {
+  connection_name = "Username-Password-Authentication",
+  state = getOption("CannaData_state")) {
     Sys.setenv("TWILIO_SID" = getOption("TWILIO_SID"),
                "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"),
                "AWS_ACCESS_KEY_ID" = getOption("AWS_ACCESS_KEY_ID"),
@@ -142,12 +143,12 @@ frontdesk <-
         access_token <<- respObj$access_token
         return(shiny::htmlTemplate(
           filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
-          clientName = clientName
+          clientName = clientName, state = state
         ))
       } else {
         return(shiny::htmlTemplate(
           filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
-          clientName = clientName
+          clientName = clientName, state = state
         ))
       }
     }
@@ -235,31 +236,35 @@ frontdesk <-
       })
       
       # has button that can update queue module
-      patient_info <-
-        callModule(
-          patientInfo,
-          "patient_info",
-          pool,
-          reactive({
-            if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "P" &&
-                isTRUE(patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] == 3)) {
-              as.numeric(substring(input$patient, 2))
-            } else {
-              NULL
-            }
-          }),
-          bucket,
-          reactive(queue()),
-          trigger,
-          reload,
-          trigger_new,
-          trigger_returning,
-          patient_proxy,
-          reload_patient,
-          trigger_patients,
-          max_points
-        )
+      if (state != "OR-R") {
+        patient_info <-
+          callModule(
+            patientInfo,
+            "patient_info",
+            pool,
+            reactive({
+              if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "P" &&
+                  isTRUE(patients()$verified[patients()$idpatient == as.numeric(substring(input$patient, 2))] == 3)) {
+                as.numeric(substring(input$patient, 2))
+              } else {
+                NULL
+              }
+            }),
+            bucket,
+            reactive(queue()),
+            trigger,
+            reload,
+            trigger_new,
+            trigger_returning,
+            patient_proxy,
+            reload_patient,
+            trigger_patients,
+            max_points
+          )
+      }
+      
       # needs to update outer selectize
+      if (state != "OR-R") {
       patient_info_new <-
         callModule(
           newPatient,
@@ -279,6 +284,7 @@ frontdesk <-
           reload_patient,
           trigger_patients
         )
+      }
       
       online <- reactiveVal(
         data.frame(
@@ -349,15 +355,19 @@ frontdesk <-
           reload_patient,
           trigger_patients,
           trigger_online,
-          online
+          online,
+          state,
+          patients
         )
       trigger_patients <- reactiveVal(0)
-      all_patients <-
-        callModule(allPatients,
-                   "all_patients",
-                   pool,
-                   reload_patient,
-                   trigger_patients)
+      if (state != "OR-R") {
+        all_patients <-
+          callModule(allPatients,
+                     "all_patients",
+                     pool,
+                     reload_patient,
+                     trigger_patients)
+      }
       
       callModule(onlineOrder, "online_order", pool, reactive({
         if (isTruthy(input$patient) && substr(input$patient, 1, 1) == "T") {
@@ -397,8 +407,10 @@ frontdesk <-
         # not needed for now unless we determine it is needed
         # trigger_new(trigger_new() + 1)
         x <- bind_rows(
-          patients() %>%
-            mutate_(selectGrp = ~ "patient"),
+          if (state != "OR-R") {
+            patients() %>%
+            mutate_(selectGrp = ~ "patient")
+            },
           online() %>%
             mutate_(selectGrp = ~ "online", label = ~name)
         ) %>% 
@@ -421,8 +433,14 @@ frontdesk <-
         updateSelectizeInput(session,
                              "patient",
                              choices = isolate(bind_rows(
-                               patients() %>%
-                                 mutate_(selectGrp = ~ "patient"),
+                                 patients() %>%
+                                 mutate_(selectGrp = ~ "patient") %>% {
+                                   if (state == "OR-R") {
+                                     filter_(., ~FALSE)
+                                   } else {
+                                    .
+                                  }
+                                 },
                                online() %>%
                                  mutate_(selectGrp = ~ "online", label = ~name)
           ) %>% 
@@ -434,9 +452,9 @@ frontdesk <-
       observeEvent(input$read_barcode, {
         req(input$read_barcode)
         # PDF417
-        if (any(input$read_barcode$californiaId %in% patients()$californiaID)) {
+        if (state != "OR-R" && any(input$read_barcode$id %in% patients()$id & input$read_barcode$state %in% patients()$state)) {
           status <-
-            patients()$verified[patients()$californiaID == input$read_barcode$californiaId]
+            patients()$verified[patients()$id == input$read_barcode$id & patients()$state == input$read_barcode$state]
           if (status %in% 1:2) {
             showModal(modalDialog(
               h1("New Patient!"),
@@ -453,10 +471,10 @@ frontdesk <-
                 )
               )
             ))
-            reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
+            reload_patient(list(selected = patients()$idpatient[input$read_barcode$id == patients()$id], 
                                 time = Sys.time(), type = "patient"))
           } else if (status == 3) {
-            reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId == patients()$californiaID], 
+            reload_patient(list(selected = patients()$idpatient[input$read_barcode$id == patients()$id], 
                                 time = Sys.time(), type = "patient"))
           }
         } else {
@@ -474,34 +492,89 @@ frontdesk <-
                 input$read_barcode$lastName
               )
             ),
-            footer = actionButton("add_new_patient", "Add New Patient", class = "btn btn-info add-queue-btn")
+            footer = tagList(
+              if (state == "OR-R") {
+                tagList(actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+                        actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
+                )
+                } else 
+              actionButton("add_new_patient", "Create Profile", class = "btn btn-info add-queue-btn")
+              )
           ))
         }
       })
       
+      observeEvent(input$addRec, {
+        i_f_add_queue(pool, NA, FALSE, paste(input$read_barcode$firstName,
+                                             input$read_barcode$lastName))
+        trigger(trigger() + 1)
+        updateNavlistPanel(session, "tabset", "homepage")
+        removeModal()
+      })
+      
+      observeEvent(input$addMed, {
+        showModal(modalDialog(
+          easyClose = TRUE, fade = FALSE,
+          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          h1("New Patient!"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          div(class = "center",
+          textInput("recId", "Enter Medical ID #")),
+          footer = actionButton("add_new_patient", "Create Profile", class = "btn btn-info add-queue-btn")
+          )
+        )
+      })
+      
       observeEvent(input$add_new_patient, {
         req(input$read_barcode)
-        req(!(input$read_barcode$californiaId %in% patients()$californiaId))
+        req(!(input$read_barcode$id %in% patients()$id))
         removeModal()
-        i_f_new_patient(
-          pool,
-          input$read_barcode$californiaId,
-          paste0(substr(input$read_barcode$expirationDate,1,2), "/",
-                 substr(input$read_barcode$expirationDate,3,4),"/",
-                 substr(input$read_barcode$expirationDate,5,8)),
-          input$read_barcode$firstName,
-          input$read_barcode$lastName,
-          input$read_barcode$middleName,
-          paste0(substr(input$read_barcode$birthday,1,2), "/",
-                 substr(input$read_barcode$birthday,3,4),"/",
-                 substr(input$read_barcode$birthday,5,8)),
-          input$read_barcode$address,
-          input$read_barcode$city,
-          substr(input$read_barcode$zip, 1, 5)
-        )
+        if (state == "OR-R") {
+          req(input$recId)
+          if (input$recId %in% patients()$recId) {
+            i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE)
+            trigger(trigger() + 1)
+          } else {
+          new_row <- data.frame(
+            firstName = input$read_barcode$firstName,
+            lastName = input$read_barcode$lastName,
+            recId = input$recId,
+            addDate = mySql_date(Sys.Date()),
+            verified = 3, birthday = NA
+          )
+          con <- pool::poolCheckout(pool)
+          DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
+          id <- last_insert_id(con)
+          pool::poolReturn(con)
+          i_f_add_queue(pool, id, TRUE)
+          trigger(trigger() + 1)
+          trigger_new(trigger_new() + 1)
+          }
+        } else {
+          i_f_new_patient(
+            pool,
+            input$read_barcode$id,
+            paste0(substr(input$read_barcode$expirationDate,1,2), "/",
+                   substr(input$read_barcode$expirationDate,3,4),"/",
+                   substr(input$read_barcode$expirationDate,5,8)),
+            input$read_barcode$firstName,
+            input$read_barcode$lastName,
+            input$read_barcode$middleName,
+            paste0(substr(input$read_barcode$birthday,1,2), "/",
+                   substr(input$read_barcode$birthday,3,4),"/",
+                   substr(input$read_barcode$birthday,5,8)),
+            input$read_barcode$address,
+            input$read_barcode$city,
+            substr(input$read_barcode$zip, 1, 5),
+            input$read_barcode$state
+          )
+        }
         
         trigger_new(trigger_new() + 1)
-        reload_patient(list(selected = patients()$idpatient[input$read_barcode$californiaId %in% patients()$californiaID], time = Sys.time(), type = "patient"))
+        trigger_patients(trigger_patients() + 2)
+        reload_patient(list(selected = patients()$idpatient[input$read_barcode$id %in% patients()$id], time = Sys.time(), type = "patient"))
 
         showModal(modalDialog(
           tags$script(

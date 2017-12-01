@@ -74,7 +74,7 @@ CannaFrontdesk = function() {
         "DAI": "city",
         "DAJ": "state",
         "DAK": "zip",
-        "DAQ": "californiaId"
+        "DAQ": "id"
       };
       window.onkeydown = function(e) {
         asc.push(e.which);
@@ -188,9 +188,15 @@ CannaFrontdesk = function() {
       $("#sidebar").detach().prependTo("body");
       // append icons
       $("a[data-value='homepage']").html('<i class="fa fa-home fa-2x"></i><br>Home');
-      $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Patients');
-      $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
-      $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
+      if ($("a[data-value='allPatients']")) {
+        $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Patients');
+      }
+      if ($("a[data-value='patientInfo']")) {
+        $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
+      }
+      if ($("a[data-value='newPatient']")) {
+        $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
+      }
       $("a[data-value='preOrders']").html('<i class = "fa fa-shopping-cart"></i><br>Online Sale');
       // add class
       $("#sidebar .nav").wrapAll("<div class = 'icon-bar'/>");
@@ -221,6 +227,15 @@ CannaFrontdesk = function() {
       $("div[data-value='newPatient']").find("h1:contains('Basic Info')").siblings('i').attr('value', 0).on('click', function() {
         $(this).attr('value', parseInt($(this).attr('value')) + 1);
         Shiny.onInputChange("new_patient-edit_basic_info", $(this).attr('value'));
+      });
+      
+      $("div[data-value='homepage']").find("h1:contains('Queue')").siblings('i').attr('value', 0).on('click', function() {
+        $(this).attr('value', parseInt($(this).attr('value')) + 1);
+        Shiny.onInputChange("frontdesk-new_queue", $(this).attr('value'));
+      });
+      $("div[data-value='homepage']").find("h1:contains('In Store')").siblings('i').attr('value', 0).on('click', function() {
+        $(this).attr('value', parseInt($(this).attr('value')) + 1);
+        Shiny.onInputChange("frontdesk-new_store", $(this).attr('value'));
       });
     },
     reset_parsley: function(params) {

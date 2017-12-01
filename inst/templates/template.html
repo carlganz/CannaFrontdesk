@@ -71,7 +71,7 @@ GNU Affero General Public License for more details.
                                         render = I("{
                                                    option: function(item, escape) {
                                                    return item.selectGrp === 'patient' ? '<div>' +
-                                                   '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.californiaID)  + ')</strong>:' +
+                                                   '<strong>' + escape(item.firstName) + ' ' + (item.middleName ? escape(item.middleName) + ' ' : '') + escape(item.lastName) + ' (' + escape(item.id)  + ')</strong>:' +
                                                    '<ul>' +
                                                    '<li><span>Date Added: ' + escape(item.addDate) + '</span></li>' +
                                                    '<li><span>Status: ' + (item.verified === 1 ? 'Pending completion of signup form' : item.verified === 2 ? 'Pending verification' : 'Ready') + '</span></li>' +
@@ -87,16 +87,21 @@ GNU Affero General Public License for more details.
                                                    }               
 }")
                                         )
-                       ), c(Inventory = "inventory", Connect = "connect", `Sales` = "POS")) }}
+                       ), c(Inventory = "inventory", Connect = "connect", `Sales` = "POS", Settings = "settings")) }}
 
   <!--main content javascript depends on names of modules FYI -->
   <div id="content">
-    {{ shiny::navlistPanel(id = "tabset", well=FALSE, 
+    {{ switch(state,
+        "OR-R" = shiny::navlistPanel(id = "tabset", well=FALSE, 
+        shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
+        shiny::tabPanel("preOrders", CannaFrontdesk:::onlineOrdersUI("online_order"))),
+        shiny::navlistPanel(id = "tabset", well=FALSE, 
         shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
         shiny::tabPanel("allPatients", CannaFrontdesk:::allPatientsUI("all_patients")),
         shiny::tabPanel("patientInfo",CannaFrontdesk:::patientInfoUI("patient_info")), 
         shiny::tabPanel("newPatient", CannaFrontdesk:::newPatientUI("new_patient")),
         shiny::tabPanel("preOrders", CannaFrontdesk:::onlineOrdersUI("online_order")))
+        )
     }}
     {{
       shiny::tags$div(id = "unconfirmed")

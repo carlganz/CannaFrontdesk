@@ -17,7 +17,7 @@ patientInfoUI <- function(id) {
   
   tagList(div(
     class = "content",
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+      div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         div(
           class = "row",
           div(class = "countdown-container notexpired",
@@ -276,24 +276,24 @@ patientInfo <-
                 input_width = 8
               ),
               input(
-                session$ns("californiaID"),
+                session$ns("id"),
                 type = "tel",
                 placeholder = "ID #",
                 label = "ID #",
                 label_width = 4,
                 maxlength = 8,
                 `data-parsley-californiaid` = I(""),
-                value = patient_info_returning()$californiaID,
+                value = patient_info_returning()$id,
                 input_width = 8
               ),
               input(
-                session$ns("californiaIDexpiration"),
+                session$ns("idExpiration"),
                 # type = "date",
                 placeholder = "ID Expiration",
                 label = "ID EXP",
                 label_width = 4,
                 `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/",
-                value = format(as.Date(patient_info_returning()$californiaIDexpiration), "%m/%d/%Y"),
+                value = format(as.Date(patient_info_returning()$idExpiration), "%m/%d/%Y"),
                 input_width = 8,
                 required = FALSE
               ),
@@ -333,7 +333,7 @@ patientInfo <-
       tags$script(
         paste0(
           'var cleave = new Cleave("#',
-          session$ns("californiaIDexpiration"),
+          session$ns("idExpiration"),
           '", {
           date: true, datePattern: ["m","d", "Y"]
     })'
@@ -432,7 +432,7 @@ patientInfo <-
         input$name,
         input$name2,
         input$address,
-        input$californiaID,
+        input$id,
         input$city,
         input$zip,
         input$state,
@@ -456,7 +456,7 @@ patientInfo <-
       }
       
       # ID # is legit
-      req(is_californiaId(input$californiaID))
+      req(is_californiaId(input$id))
       
       req(nchar(input$state) == 2)
       # make sure date is date
@@ -467,8 +467,8 @@ patientInfo <-
         first = input$name,
         last = input$name2,
         address = input$address,
-        californiaId = input$californiaID,
-        californiaIDexpiration = if (isTruthy(input$californiaIDexpiration)) input$californiaIDexpiration else NA_character_,
+        id = input$id,
+        idExpiration = if (isTruthy(input$idExpiration)) input$idExpiration else NA_character_,
         city = input$city,
         zip = input$zip,
         state = input$state,
@@ -483,10 +483,10 @@ patientInfo <-
       
       update_option(proxy, value = patientId(), list(
         firstName = input$name, lastName = input$name2, middleName = patient_info_returning()$middleName,
-        californiaID = input$californiaID, idpatient = patientId(),
+        id = input$id, idpatient = patientId(),
         addDate = patient_info_returning()$addDate, 
         verified = 3, expirationDate = patient_info_returning()$expirationDate,
-        label = paste0(input$name, ", ", input$name2, " (", input$californiaID, ")")
+        label = paste0(input$name, ", ", input$name2, " (", input$id, ")")
       ))
       
       trigger_queue(trigger_queue() + 1)
@@ -585,11 +585,11 @@ patientInfo <-
       update_option(proxy, value = patientId(), list(
         firstName = patient_info_returning()$firstName, lastName = patient_info_returning()$lastName, 
         middleName = patient_info_returning()$middleName,
-        californiaID = patient_info_returning()$californiaID, idpatient = patientId(),
+        id = patient_info_returning()$id, idpatient = patientId(),
         addDate = patient_info_returning()$addDate, 
         verified = 3, expirationDate = input$expirationDate,
         label = paste0(patient_info_returning()$firstName, ", ", patient_info_returning()$lastName, 
-                       " (", patient_info_returning()$californiaID, ")")
+                       " (", patient_info_returning()$id, ")")
       ))
       
       removeModal()
@@ -893,7 +893,7 @@ patientInfo <-
           textDeal = ~ if_else(textDeal == 1, "YES", "NO"),
           birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)"),
           recommender = ~ if_else(recommender=="", NA_character_, recommender),
-          californiaIDexpiration = ~format(as.Date(californiaIDexpiration), "%m/%d/%Y")
+          idExpiration = ~format(as.Date(idExpiration), "%m/%d/%Y")
         ) %>%
         select_(
           # Name = ~ name,
@@ -901,8 +901,8 @@ patientInfo <-
           Address = ~ address,
           City = ~ city,
           Zip = ~ zip,
-          `ID #` = ~ californiaID,
-          `ID Exp` = ~ californiaIDexpiration,
+          `ID #` = ~ id,
+          `ID Exp` = ~ idExpiration,
           Email = ~ email,
           `Deals by Email` = ~ emailDeal,
           Phone = ~ phone,
@@ -1279,14 +1279,14 @@ newPatient <-
                 input_width = 8
               ),
               input(
-                session$ns("californiaID"),
+                session$ns("id"),
                 type = "tel",
                 placeholder = "ID #",
                 label = "ID #",
                 label_width = 4,
                 maxlength = 8,
                 `data-parsley-californiaid` = I(""),
-                value = patient_info_new()$californiaID,
+                value = patient_info_new()$id,
                 input_width = 8
               ),
               input(
@@ -1362,7 +1362,7 @@ newPatient <-
         input$name,
         input$name2,
         input$address,
-        input$californiaID,
+        input$id,
         input$city,
         input$zip,
         input$state,
@@ -1374,7 +1374,7 @@ newPatient <-
       req(nchar(input$zip) == 5,!is.na(as.integer(input$zip)))
       
       # ID # is legit
-      req(is_californiaId(input$californiaID))
+      req(is_californiaId(input$id))
       
       req(nchar(input$state) == 2)
       
@@ -1387,7 +1387,7 @@ newPatient <-
         first = input$name,
         last = input$name2,
         address = input$address,
-        californiaId = input$californiaID,
+        id = input$id,
         city = input$city,
         zip = input$zip,
         state = input$state,
@@ -1397,10 +1397,10 @@ newPatient <-
       trigger_patients(trigger_patients() + 1)
       update_option(proxy, value = patientId(), list(
         firstName = input$name, lastName = input$name2, middleName = patient_info_new()$middleName,
-        californiaID = input$californiaID, idpatient = patientId(),
+        id = input$id, idpatient = patientId(),
         addDate = patient_info_new()$addDate, 
         verified = patient_info_new()$verified, expirationDate = NA,
-        label = paste0(input$name, ", ", input$name2, " (", input$californiaID, ")")
+        label = paste0(input$name, ", ", input$name2, " (", input$id, ")")
       ))
       
       removeModal()
@@ -1551,7 +1551,7 @@ newPatient <-
           patient_info_new()$lastName
         ))
       } else {
-        h1("Please select new patient")
+        h1("Select incomplete profile or create new profile")
       }
       
     })
@@ -1559,7 +1559,7 @@ newPatient <-
     output$info <- DT::renderDataTable({
       patient_info_new() %>%
         mutate_(birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)"),
-                californiaIDexpiration= ~ format(as.Date(californiaIDexpiration), "%m/%d/%Y")) %>%
+                idExpiration= ~ format(as.Date(idExpiration), "%m/%d/%Y")) %>%
         select_(
           #Name = ~name,
           DOB = ~ birthday,
@@ -1567,8 +1567,8 @@ newPatient <-
           City = ~ city,
           Zip = ~ zip,
           State = ~ state,
-          `ID #` = ~ californiaID,
-          `ID Exp` = ~ californiaIDexpiration
+          `ID #` = ~ id,
+          `ID Exp` = ~ idExpiration
         ) %>%
         t()  %>% as.data.frame(stringsAsFactors = FALSE) %>% tidyr::replace_na(list(`V1` =
                                                                                       "N/A"))
@@ -1714,13 +1714,13 @@ queueUI <- function(id) {
         box(h1("Online Sales"),
         DT::dataTableOutput(ns("online")))),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-        box(h1("Queue"),
+        box(tableTitle("Queue", "plus"),
             DT::dataTableOutput(ns(
               "queue"
             )))),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(
-          h1("In Store"),
+          tableTitle("In Store", "plus"),
           DT::dataTableOutput(ns("store"))
         ))
   ))
@@ -1737,14 +1737,18 @@ queue <-
            reload_patient,
            trigger_patients,
            trigger_online,
-           online) {
+           online,
+           state,
+           patients) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
       invalidateLater(5000)
       trigger()
       trigger_queue()
-      q_f_queue(pool)
+      q_f_queue(pool) %>% 
+        mutate_(name = ~if_else(is.na(name) > 0, tName, name)) %>%
+        select_(~-tName)
     })
     
     queue <- reactive({
@@ -1829,6 +1833,230 @@ queue <-
       reload_patient(list(selected = online()$idtransaction[input$onlineSale$row], time = Sys.time(), type = "transaction"))
     })
     
+    
+    observeEvent(input$new_queue, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        tags$script(
+          "$('.modal-content').addClass('table-container');"
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("Add Customer to Queue"),
+        div(
+          class = "center",
+          if (state == "OR-R") {
+        textInput(session$ns("queue_name"), "Name")
+          } else {
+            selectizeInput(session$ns("queue_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
+                                                                            loadThrottle = NA,
+                                                                            valueField = "idpatient",
+                                                                            searchField = c("firstName", "middleName", "lastName", "id"),
+                                                                            placeholder = "Search",
+                                                                            labelField = "label"
+            ))
+          }
+        ),
+        footer = 
+          if (state != "OR-R") {
+            tags$button(
+              id = session$ns("queue_add"),
+              "Add to Queue",
+              class = "btn btn-info add-queue-btn action-button"
+            )
+          } else {
+          tagList(tags$button(
+          id = session$ns("queue_med"),
+          "Add Medical",
+          class = "btn btn-info add-queue-btn action-button"
+        ),
+        tags$button(
+          id = session$ns("queue_rec"),
+          "Add Recreational",
+          class = "btn btn-info add-queue-btn action-button"
+        )
+      )
+            }
+      ))
+      if (state != "OR-R") updateSelectizeInput(session, "queue_name", choices = patients() %>% 
+                                                  filter_(~as.Date(.data$expirationDate) >= Sys.Date()), server = TRUE, selected = NA)
+    })
+    
+    observeEvent(input$queue_add, {
+      req(input$queue_name)
+      if (as.numeric(input$queue_name) %in% queue_store()$idpatient) {
+        showModal(modalDialog(
+        fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        h1(paste(
+          "Patient already in",
+          if (queue_store()$status[as.numeric(input$queue_name) == queue_store()$idpatient] == 2)
+            "store"
+          else
+            "queue"
+        ))))
+      } else {
+      i_f_add_queue(pool, input$queue_name, FALSE)
+      trigger(trigger() + 1)
+      removeModal()
+      }
+    })
+    
+    observeEvent(input$queue_rec, {
+      i_f_add_queue(pool, NA, FALSE, input$queue_name)
+      trigger(trigger() + 1)
+      removeModal()
+    })
+    
+    observeEvent(input$queue_med, {
+      showModal(modalDialog(
+        easyClose = TRUE, fade = FALSE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("New Patient!"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        div(class = "center",
+        textInput(session$ns("recId"), "Enter Medical ID #")),
+        footer = actionButton(session$ns("new_queue_patient"), "Create Profile", class = "btn btn-info add-queue-btn")
+      )
+      )
+    })
+    
+    observeEvent(input$new_queue_patient, {
+      req(input$recId)
+      if (input$recId %in% patients()$recId) {
+        i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE)
+        trigger(trigger() + 1)
+      } else {
+        new_row <- data.frame(
+          firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
+          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]],
+          recId = input$recId,
+          addDate = mySql_date(Sys.Date()),
+          verified = 3, birthday = NA
+        )
+        con <- pool::poolCheckout(pool)
+        DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
+        id <- last_insert_id(con)
+        pool::poolReturn(con)
+        i_f_add_queue(pool, id, TRUE)
+        trigger(trigger() + 1)
+        removeModal()
+        # trigger_new(trigger_new() + 1)
+      }
+    })
+    
+    observeEvent(input$new_store, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        tags$script(
+          "$('.modal-content').addClass('table-container');"
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("Let Customer into Store"),
+        div(
+          class = "center",
+          if (state == "OR-R") {
+        textInput(session$ns("store_name"), "Name")
+          } else {
+            selectizeInput(session$ns("store_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
+                                                                            loadThrottle = NA,
+                                                                            labelField = "label",
+                                                                            valueField = "idpatient",
+                                                                            searchField = c("firstName", "middleName", "lastName", "id"),
+                                                                            placeholder = "Search"
+            ))
+            }
+        ),
+        footer = if (state == "OR-R") {tagList(tags$button(
+          id = session$ns("store_med"),
+          "Add Medical",
+          class = "btn btn-info add-queue-btn action-button"
+        ),
+        tags$button(
+          id = session$ns("store_rec"),
+          "Add Recreational",
+          class = "btn btn-info add-queue-btn action-button"
+        )
+        )} else {
+          tags$button(
+            id = session$ns("store_add"),
+            "Let in Store",
+            class = "btn btn-info add-queue-btn action-button"
+          )
+        }
+        ))
+      if (state != "OR-R") updateSelectizeInput(session, "store_name", choices = patients() %>% 
+                                                  filter_(~as.Date(expirationDate) >= Sys.Date()), server = TRUE, selected = NA)
+    })
+    
+    observeEvent(input$store_add, {
+      req(input$store_name)
+      if (as.numeric(input$store_name) %in% queue_store()$idpatient) {
+        showModal(modalDialog(
+          fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1(paste(
+            "Patient already in",
+            if (queue_store()$status[as.numeric(input$store_name) == queue_store()$idpatient] == 2)
+              "store"
+            else
+              "queue"
+          ))))
+      } else {
+      i_f_let_in(pool, input$store_add, FALSE)
+      removeModal()
+      trigger(trigger() + 1)
+      }
+    })
+    
+    observeEvent(input$store_med, {
+      showModal(modalDialog(
+        easyClose = TRUE, fade = FALSE,
+        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("New Patient!"),
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ),
+        div(class = "center",
+        textInput(session$ns("recId"), "Enter Medical ID #")),
+        footer = actionButton(session$ns("new_store_patient"), "Create Profile", class = "btn btn-info add-queue-btn")
+      )
+      )
+    })
+    
+    observeEvent(input$new_store_patient, {
+      req(input$recId)
+      if (input$recId %in% patients()$recId) {
+        i_f_let_in(pool, patients()$idpatient[patients()$recId == input$recId], FALSE)
+        trigger(trigger() + 1)
+      } else {
+        new_row <- data.frame(
+          firstName = stringr::str_split(input$store_name, " ", 2)[[c(1, 1)]],
+          lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
+          recId = input$recId,
+          addDate = mySql_date(Sys.Date()),
+          verified = 3, birthday = NA
+        )
+        con <- pool::poolCheckout(pool)
+        DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
+        id <- last_insert_id(con)
+        pool::poolReturn(con)
+        i_f_let_in(pool, id, TRUE)
+        trigger(trigger() + 1)
+        removeModal()
+        # trigger_new(trigger_new() + 1)
+      }
+    })
+    
+    observeEvent(input$store_rec, {
+      i_f_let_in(pool, NA, FALSE, input$store_name)
+      trigger(trigger() + 1)
+      removeModal()
+    })
+    
     observe({
       req(queue())
       dataTableAjax(session, online() %>% select_(~-idtransaction, ~-email) %>% 
@@ -1899,18 +2127,22 @@ queue <-
     
     observe({
       req(queue())
-      dataTableAjax(session, queue() %>% select_( ~ -idtransaction,  ~ -idpatient) %>%
+      dataTableAjax(session, queue() %>% select_( ~ -idtransaction) %>% 
                       mutate_(
                         letIn = ~ row_number(),
                         remove = ~ row_number(),
-                        info = ~ row_number(),
+                        info = ~ if (state == "OR-R") {
+                          NA_integer_
+                          } else {
+                            if_else(is.na(idpatient), NA_integer_, row_number())
+                            },
                         timeIn = ~ as.character(as.POSIXct(
                           hms::as.hms(hms::as.hms(timeIn))
-                        ), "%I:%M %p")
+                        ), "%I:%M %p"),
+                        name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
                       ) %>%
                       select_(
                         Name =  ~ name,
-                        `ID #` =  ~ californiaID,
                         `Time` = ~ timeIn,
                         ~ letIn,
                         ~ info,
@@ -1920,18 +2152,17 @@ queue <-
     })
     
     output$queue <- DT::renderDataTable({
-      isolate(queue()) %>% select_( ~ -idtransaction,  ~ -idpatient) %>%
+      isolate(queue()) %>% select_( ~ -idtransaction) %>%
         mutate_(
           letIn = ~ row_number(),
           remove = ~ row_number(),
-          info = ~ row_number(),
+          info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
           timeIn = ~ as.character(as.POSIXct(
             hms::as.hms(hms::as.hms(timeIn))
           ), "%I:%M %p")
         ) %>%
         select_(
           Name =  ~ name,
-          `ID #` =  ~ californiaID,
           `Time` = ~ timeIn,
           ~ letIn,
           ~ info,
@@ -1946,21 +2177,19 @@ queue <-
 ),
 columnDefs = list(
   list(
-    targets = seq_len(ncol(queue()) + 2) - 1,
+    targets = 0:5,
     orderable = FALSE,
     className = "dt-center"
   ),
-  list(targets = c(0),
+  list(targets = 0,
        width = "5%"),
   list(targets = 1,
        width = "20%"),
   list(targets = 2,
-       width = "12%"),
-  list(targets = 3,
        width = "14%"),
-  list(targets = 4:6,
+  list(targets = 3:5,
        width = "18%"),
-  list(targets = 4,
+  list(targets = 3,
        render = JS(
          paste0(
            'function(data, type, row, meta) {
@@ -1969,16 +2198,16 @@ columnDefs = list(
   }'
 )
          )),
-list(targets = 5,
+list(targets = 4, visible = state != "OR-R",
      render = JS(
        paste0(
          'function(data, type, row, meta) {
-         return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
-         session$ns("infoQ"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
+         return data ? "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+         session$ns("infoQ"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>" : "";
       }'
        )
        )),
-list(targets = 6,
+list(targets = 5,
      render = JS(
        paste0(
          'function(data, type, row, meta) {
@@ -1988,23 +2217,23 @@ list(targets = 6,
        )
        ))
      )
-       ), colnames = c("Name", "ID #", "Time", "", "", ""),
+       ), colnames = c("Name", "Time", "", "", ""),
 selection = 'none')
     
     
     observe({
       req(in_store())
-      dataTableAjax(session, in_store() %>% select_( ~ -idtransaction, ~ -idpatient) %>%
+      dataTableAjax(session, in_store() %>% select_( ~ -idtransaction) %>% 
                     mutate_(
                       remove = ~ row_number(),
-                      info = ~ row_number(),
+                      info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
                       timeIn = ~ as.character(as.POSIXct(
                         hms::as.hms(hms::as.hms(timeIn))
-                      ), "%I:%M %p")
+                      ), "%I:%M %p"),
+                      name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
                     ) %>%
                     select_(
                       Name = ~ name,
-                      `ID #` =  ~ californiaID,
                       `Time` = ~ timeIn,
                       ~ info,
                       ~ remove
@@ -2013,17 +2242,17 @@ selection = 'none')
     })
     
     output$store <- DT::renderDataTable({
-      isolate(in_store()) %>% select_( ~ -idtransaction, ~ -idpatient) %>%
+      isolate(in_store()) %>% select_( ~ -idtransaction) %>% 
         mutate_(
           remove = ~ row_number(),
-          info = ~ row_number(),
+          info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
           timeIn = ~ as.character(as.POSIXct(
             hms::as.hms(hms::as.hms(timeIn))
-          ), "%I:%M %p")
+          ), "%I:%M %p"),
+          name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
         ) %>%
         select_(
           Name = ~ name,
-          `ID #` =  ~ californiaID,
           `Time` = ~ timeIn,
           ~ info,
           ~ remove
@@ -2036,7 +2265,7 @@ selection = 'none')
       ),
       columnDefs = list(
         list(
-          targets = seq_len(ncol(in_store()) + 1) - 1,
+          targets = 0:4,
           orderable = FALSE,
           className = "dt-center"
         ),
@@ -2045,19 +2274,17 @@ selection = 'none')
         list(targets = 1,
              width = "20%"),
         list(targets = 2,
-             width = "12%"),
-        list(targets = 3,
              width = "14%"),
-        list(targets = 4:5,
+        list(targets = 3:4,
              width = "27%"),
-        list(targets = 4,
+        list(targets = 3, visible = state != "OR-R",
              render = JS(paste0(
                'function(data, type, row, meta) {
-               return "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
-               session$ns("infoS"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>";
+               return data ? "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
+               session$ns("infoS"),'\\");CannaFrontdesk.change_tab(\\"patientInfo\\");\'>Info</button>" : "";
   }'
              ))),
-        list(targets = 5,
+        list(targets = 4,
              render = JS(paste0(
                'function(data, type, row, meta) {
                return "<button row = \'" + data + "\' class = \'btn btn-info delete-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
@@ -2065,7 +2292,7 @@ selection = 'none')
          }'
              )))
              )
-    ), colnames = c("Name", "ID #", "Time", "", ""),
+    ), colnames = c("Name", "Time", "", ""),
     selection = 'none')
     
     
@@ -2078,10 +2305,11 @@ allPatientsUI <- function(id) {
   tagList(div(
     class = "content",
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-        box(
+          box(
           h1("Incomplete Patients"),
           DT::dataTableOutput(ns("incomplete"))
-        )),
+        )
+        ),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(
           h1("All Patients"),
@@ -2117,21 +2345,22 @@ allPatients <-
     })
     
     output$patients <- DT::renderDataTable({
-      patients() %>%
+      patients() %>% 
         mutate_(info = ~row_number(),
                 expirationDate = ~ format(as.Date(expirationDate), "%m/%d/%Y"),
                 lastTransaction = ~format(as.Date(lastTransaction), "%m/%d/%Y"),
-                age = ~ floor(as.numeric(Sys.Date()-as.Date(birthday))/365)
+                age = ~ if_else(is.na(birthday), NA_integer_, as.integer(floor(as.numeric(Sys.Date()-as.Date(birthday))/365))),
+                name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
         ) %>% 
-        select_(Name = ~name, `ID #`=~californiaID, 
+        select_(Name = ~name, 
                 Age = ~age, `Exp Date` =~expirationDate,`Last Transaction` = ~lastTransaction, 
                 ~info)
-    }, colnames = c("Name", "ID #", "Age", "Exp Date", "Last Transaction", 
+    }, colnames = c("Name",  "Age", "Exp Date", "Last Transaction", 
                     ""),
     options = list(
       dom = 'tp',
       columnDefs = list(list(
-        targets = 0:5,
+        targets = 0:4,
         className = "dt-center"
       ),
       list(
@@ -2140,10 +2369,6 @@ allPatients <-
       ),
       list(
         targets = 1,
-        width = "5%"
-      ),
-      list(
-        targets = 2,
         width = "3%",
         render = JS(
           'function(data, type, row, meta) {
@@ -2152,15 +2377,15 @@ allPatients <-
         )
         ),
       list(
+        targets = 2,
+        width = "7%"
+      ),
+      list(
         targets = 3,
         width = "7%"
       ),
       list(
         targets = 4,
-        width = "7%"
-      ),
-      list(
-        targets = 5,
         width = "8%",
         orderable = FALSE,
         render = JS(
@@ -2184,7 +2409,7 @@ allPatients <-
       new_patients() %>%
         mutate_(index = ~row_number(),
                 addDate = ~format(as.Date(addDate), "%m/%d/%Y")) %>%
-        select_(~name, ~californiaID, ~addDate, ~index)
+        select_(~name, ~id, ~addDate, ~index)
     }, colnames = c("Name", "ID #", "Add Date", ""),
     options = list(
       pageLength = 5,
@@ -2532,10 +2757,12 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
     u_c_sale(pool, info$idsale, edited_item()$price, edited_item()$quantity - info$quantity)
     
     if (length(discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)]) > 0 && isTRUE(edited_item()$discount > 0)) {
-      u_c_discount(conn, discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)], edited_item()$discount, edited_item()$unit, edited_item()$idcoupon, edited_item()$reason)
+      u_c_discount(conn, discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)], edited_item()$discount, edited_item()$unit, edited_item()$idcoupon, edited_item()$reason,
+                   if (edited_item()$unit == "$") edited_item()$discount else (edited_item()$discount/100) * edited_item()$price)
     } else if (isTRUE(edited_item()$discount > 0)) {
       i_c_discount(conn, transactionId = transactionId(), saleId = info$idsale,
-                   discount = edited_item()$discount, unit= edited_item()$unit, reason = edited_item()$reason, couponId = edited_item()$idcoupon)
+                   discount = edited_item()$discount, unit= edited_item()$unit, reason = edited_item()$reason, couponId = edited_item()$idcoupon,
+                   if (edited_item()$unit == "$") edited_item()$discount else (edited_item()$discount/100) * edited_item()$price)
     } else if (length(discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)]) > 0) {
       d_c_discount(conn, discount()$iddiscount[isTRUE(discount()$idsale == info$idsale)])
     }
