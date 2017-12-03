@@ -62,7 +62,7 @@ CannaFrontdesk = function() {
     read_barcode: function() {
       var pressed = false;
       var chars = [];
-      var asc = [];
+
       var spec = {
         "DBA": "expirationDate",
         "DCS": "lastName",
@@ -76,10 +76,12 @@ CannaFrontdesk = function() {
         "DAK": "zip",
         "DAQ": "id"
       };
-      window.onkeydown = function(e) {
-        asc.push(e.which);
-        if (e.which === 17) {
-          chars.push(String.fromCharCode(10));
+      $(window).keydown(function(e) {
+     
+        if (e.which==74 && e.ctrlKey) {
+          e.preventDefault();
+        } else if (e.which === 17) {
+          chars.push("\n");
         } else if (e.which !== 16) {
           chars.push(String.fromCharCode(e.which));
         }
@@ -92,10 +94,11 @@ CannaFrontdesk = function() {
               // need to redo to parse explicitely using regex
               var info = {};
               barcode.split("\n").map(function(row) {
-                if (spec[row.substring(1, 4)]) {
-                  info[spec[row.substring(1, 4)]] = row.substring(4);
+                if (spec[row.substring(0, 3)]) {
+                  info[spec[row.substring(0, 3)]] = row.substring(3);
                 }
               });
+    
               var today = new Date();
               var dd = today.getDate();
               var mm = today.getMonth() + 1; //January is 0!
@@ -118,7 +121,7 @@ CannaFrontdesk = function() {
           }, 2150);
         }
         pressed = true;
-      };
+      });
     },
     telephone_input: function() {
       var telephoneInputBinding = new Shiny.InputBinding();
@@ -315,4 +318,14 @@ $(document).ready(function() {
   Shiny.addCustomMessageHandler("reset_parsley", CannaFrontdesk.reset_parsley);
   Shiny.addCustomMessageHandler("toggle_expiration", CannaFrontdesk.toggle_expiration);
   Shiny.addCustomMessageHandler("require", CannaFrontdesk.require);
+});
+
+$(document).keydown(function(event) {
+    if((event.ctrlKey) && (event.which == 74) ){
+		event.preventDefault();
+	} else if((event.ctrlKey) && (event.which == 54)){
+		event.preventDefault();
+	} else if((event.ctrlKey) && (event.which == 77)){
+		event.preventDefault();
+	} 
 });
