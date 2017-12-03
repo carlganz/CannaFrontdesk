@@ -17,7 +17,8 @@ frontdesk(pool = pool::dbPool(RMariaDB::MariaDB(), host =
   auth_id = getOption("auth_id"), auth_secret = getOption("auth_secret"),
   scope = "openid email", twilio_sid = getOption("TWILIO_SID"),
   twilio_token = getOption("TWILIO_TOKEN"),
-  connection_name = "Username-Password-Authentication")
+  connection_name = "Username-Password-Authentication",
+  state = getOption("CannaData_state"))
 }
 \arguments{
 \item{pool}{pool connection}

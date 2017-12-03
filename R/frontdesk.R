@@ -14,7 +14,7 @@
 #' Frontdesk Shiny Application
 #'
 #' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms 
-#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel
+#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel docuSignr
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
@@ -179,6 +179,12 @@ frontdesk <-
     options("googleAuthR.ok_content_types" = c(getOption("googleAuthR.ok_content_types"),
                                                "text/plain"))
   
+    msg_service_sid = tw_msg_service_list()[[1]]$sid
+    Sys.setenv(docuSign_username = getOption("docuSign_username"))
+    Sys.setenv(docuSign_password = getOption("docuSign_password"))
+    Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
+    # login on launch
+    docu_log <- docuSignr::docu_login(demo = TRUE)
     
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
@@ -282,7 +288,10 @@ frontdesk <-
           trigger_returning,
           patient_proxy,
           reload_patient,
-          trigger_patients
+          trigger_patients,
+          msg_service_sid,
+          base_url,
+          docu_log
         )
       }
       
@@ -384,7 +393,7 @@ frontdesk <-
       },
       trigger_online, reload_patient, reactive({
         structure(queue()$idtransaction, names = queue()$name)
-      }), printers, base_url)
+      }), printers, base_url, msg_service_sid)
       
       # OBSERVES ---------------------------------------------------------------
       

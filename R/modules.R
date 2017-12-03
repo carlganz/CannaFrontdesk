@@ -1180,7 +1180,10 @@ newPatientUI <- function(id) {
                         formId = ns("newPatient"),
                         class = "btn btn-info add-queue-btn",
                         style = "width:30%"
-                      )
+                      ),
+                      tags$button(id = ns("text_form"), "Text Form",
+                                  class = "btn btn-info add-queue-btn action-button",
+                                  style = "width:30%", formnovalidate = NA)
                     )
                   ),
                   div(class = "form-horizontal container fluid col-md-12",
@@ -1241,7 +1244,10 @@ newPatient <-
            trigger_returning,
            proxy,
            reload_patient,
-           trigger_patients) {
+           trigger_patients,
+           msg_service_sid,
+           base_url,
+           docu_log) {
     trigger_patient_info_new <- reactiveVal(0)
     patient_info_new <- reactive({
       req(patientId())
@@ -1445,6 +1451,71 @@ newPatient <-
         ))
       } else if (is.na(patient_info_new()$docuSigned) ||
                  patient_info_new()$docuSigned == 0) {
+        docuStatus <- docu_envelope_status(base_url = docu_log[1, 3], envelope_id = patient_info_new()$envelopeId)
+        if (docuStatus == "completed") {
+          u_docuSign(pool, patientId = patientId())
+          id <- patientId()
+          
+          medicalS3 <-
+            paste0(
+              paste("medical", id, Sys.Date(), sep = "_"),
+              ".",
+              tools::file_ext(input$medicalPath$datapath)
+            )
+          
+          photoS3 <-
+            paste0(
+              paste("photo", id, Sys.Date(), sep = "_"),
+              ".",
+              tools::file_ext(input$photoIdPath$datapath)
+            )
+          
+          tryCatch(
+            aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
+            warning = function(w) {
+              stop("S3 failed \n", w)
+            }
+          )
+          
+          tryCatch(
+            aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
+            warning = function(w) {
+              stop("S3 failed", w)
+            }
+          )
+          ######### Add Patient to Metrc ################
+          
+          # add patient
+          u_f_new_patient(pool,
+                          id,
+                          input$date,
+                          input$physician,
+                          photoS3,
+                          medicalS3,
+                          input$recId)
+          
+          ### add to queue?
+          lapply(c("date", "physician", "recId"), function(x) {
+            updateTextInput(session, x, value = "")
+          })
+          
+          trigger_files(trigger_files() + 1)
+          trigger_new(trigger_new() + 1)
+          trigger_returning(trigger_returning() + 1)
+          trigger_patients(trigger_patients() + 1)
+          session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
+          session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
+          session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
+          ### go to patient info page with new patient there
+          reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
+          showModal(modalDialog(
+            easyClose = TRUE,
+            tags$script(
+              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+            ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+            h1("New patient has been added")
+          ))
+        } else {
         showModal(modalDialog(
           easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
@@ -1454,6 +1525,7 @@ newPatient <-
             "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
           )
         ))
+        }
       } else {
         # upload images to S3
         id <- patientId()
@@ -1532,6 +1604,43 @@ newPatient <-
         h1("Data cannot be recovered once removed!"),
         footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
       ))
+    })
+    
+    observeEvent(input$text_form, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("Enter Phone #"),
+        div(class = "center",
+        shinyCleave::phoneInput(session$ns("text_phone"), NULL, placeholder = "Phone #")),
+        footer = tags$button(id = session$ns("send_form"), class = "action-button btn btn-info add-queue-btn", "Send")
+      ))
+    })
+    
+    observeEvent(input$send_form, {
+      req(input$text_phone)
+      
+      url <- httr::modify_url(
+        url = paste0(base_url, "signup/"),
+        query = list(
+          idpatient = patientId(),
+          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), getOption("canna_key"))
+        )
+      )
+      
+      phone <- as.numeric(gsub("[ ()]", "", input$text_phone))
+      # remove leading 1?
+      req(nchar(phone) %in% 10:11,!is.na(phone))
+      
+      if (substr(phone, 1, 1) == "1") {
+        phone <- substr(phone, 2, nchar(phone))
+      }
+      
+      tw_send_message(paste0("+1", phone), msg_service_id = msg_service_sid, body = paste("Please sign-up at the following link: ", url))
+      removeModal()
+      
     })
     
     observeEvent(input$delete, {
@@ -2503,7 +2612,8 @@ onlineOrdersUI <- function(id) {
               )))
 }
 
-onlineOrder <- function(input, output, session, pool, transactionId, order_info, trigger, reload_select, patients, printers, base_url) {
+onlineOrder <- function(input, output, session, pool, transactionId, order_info, trigger, reload_select, 
+                        patients, printers, base_url, msg_service_sid) {
   
   trigger_order_info <- reactiveVal(0)
   sales <- reactive({
@@ -2897,7 +3007,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
     )
   })
   
-  msg_service_sid = tw_msg_service_list()[[1]]$sid
+  
   
   observeEvent(input$send_cancel, {
     req(input$cancel_msg)
