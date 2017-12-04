@@ -582,6 +582,7 @@ patientInfo <-
       
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
       trigger_patients(trigger_patients() + 1)
+      trigger_new(trigger_new() + 1)
       update_option(proxy, value = patientId(), list(
         firstName = patient_info_returning()$firstName, lastName = patient_info_returning()$lastName, 
         middleName = patient_info_returning()$middleName,
