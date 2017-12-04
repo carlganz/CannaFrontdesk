@@ -1085,6 +1085,7 @@ patientInfo <-
     output$patient_type <- renderC3({
       req(patientId())
       req(patient_sales()$profit)
+      req(nrow(patient_sales())>0)
       patient_sales() %>% 
         mutate_(type = ~tools::toTitleCase(type)) %>%
         spread_("type", "profit") %>%
@@ -1987,7 +1988,7 @@ queue <-
             }
       ))
       if (state != "OR-R") updateSelectizeInput(session, "queue_name", choices = patients() %>% 
-                                                  filter_(~as.Date(.data$expirationDate) >= Sys.Date()), server = TRUE, selected = NA)
+                                                  filter_(~as.Date(hms::as.hms(.data$expirationDate)) >= Sys.Date()), server = TRUE, selected = NA)
     })
     
     observeEvent(input$queue_add, {
