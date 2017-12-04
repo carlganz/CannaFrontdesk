@@ -1639,6 +1639,7 @@ newPatient <-
       }
       
       tw_send_message(paste0("+1", phone), msg_service_id = msg_service_sid, body = paste("Please sign-up at the following link: ", url))
+      u_f_phone(pool, patientId(), phone)
       removeModal()
       
     })
