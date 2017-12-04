@@ -1988,7 +1988,7 @@ queue <-
             }
       ))
       if (state != "OR-R") updateSelectizeInput(session, "queue_name", choices = patients() %>% 
-                                                  filter_(~as.Date(hms::as.hms(.data$expirationDate)) >= Sys.Date()), server = TRUE, selected = NA)
+                                                  filter_(~difftime(.data$expirationDate, Sys.Date()) <= 0), server = TRUE, selected = NA)
     })
     
     observeEvent(input$queue_add, {
@@ -2098,7 +2098,7 @@ queue <-
         }
         ))
       if (state != "OR-R") updateSelectizeInput(session, "store_name", choices = patients() %>% 
-                                                  filter_(~as.Date(expirationDate) >= Sys.Date()), server = TRUE, selected = NA)
+                                                  filter_(~difftime(.data$expirationDate, Sys.Date()) <= 0), server = TRUE, selected = NA)
     })
     
     observeEvent(input$store_add, {
