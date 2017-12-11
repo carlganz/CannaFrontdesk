@@ -1090,7 +1090,9 @@ patientInfo <-
       patient_sales() %>% 
         mutate_(type = ~tools::toTitleCase(type)) %>%
         spread_("type", "profit") %>%
-        select_(~contains("Flower"), ~contains("Concentrate"),~contains("Edible"),~contains("Other")) %>% 
+        select_(~contains("Flower"), ~contains("Concentrate"),~contains("Edible"),~contains("Beverage"),
+                ~contains("Soap"), ~contains("Vaporizer"), ~contains("Tincture"), ~contains("Ointment"),
+                ~contains("Joint"), ~contains("Tobacco"), ~contains("Paraphernalia"), ~contains("Misc")) %>% 
         summarise_all(function(x) {x[!is.na(x)][1]}) %>% c3() %>%
         c3_pie(format=DT::JS("function(value,ratio,id) {return '$' + value;}"))
       
