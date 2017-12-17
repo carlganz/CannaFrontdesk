@@ -13,7 +13,7 @@
 # GNU Affero General Public License for more details.
 #' Frontdesk Shiny Application
 #'
-#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms 
+#' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms scales
 #' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel docuSignr
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_

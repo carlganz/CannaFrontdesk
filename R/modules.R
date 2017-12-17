@@ -160,12 +160,16 @@ patientInfo <-
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
+        today_count <- patient_history() %>% filter_(~date == Sys.Date()) %>% nrow()
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient added to queue.")
+          h1("Patient added to queue."),
+          if (today_count > 0) {
+            h1(sprintf("NOTE: This is their %s  visit today!", scales::ordinal(today_count + 1)))
+          }
         ))
       }
     })
@@ -199,12 +203,16 @@ patientInfo <-
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
+        today_count <- patient_history() %>% filter_(~date == Sys.Date()) %>% nrow()
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient has been let into store.")
+          h1("Patient has been let into store."),
+          if (today_count > 0) {
+            h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
+          }
         ))
       }
     })
@@ -2012,7 +2020,19 @@ queue <-
       } else {
       i_f_add_queue(pool, input$queue_name, FALSE)
       trigger(trigger() + 1)
+      today_count <- q_f_visit_count(pool, input$queue_name)
+      if (today_count == 0) { 
       removeModal()
+      } else {
+        showModal(
+          modalDialog(
+          fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
+        ))
+      }
       }
     })
     
@@ -2121,7 +2141,20 @@ queue <-
           ))))
       } else {
       i_f_let_in(pool, input$store_add, FALSE)
-      removeModal()
+        today_count <- q_f_visit_count(pool, input$store_name)
+        if (today_count == 0) { 
+          removeModal()
+        } else {
+          showModal(
+            modalDialog(
+            fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+            tags$script(
+              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+            ),
+            h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
+          )
+          )
+        }
       trigger(trigger() + 1)
       }
     })
