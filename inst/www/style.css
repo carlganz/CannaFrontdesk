@@ -41,7 +41,7 @@ div#sidebar {
    top:0;
    left:0;
    background-color:#192836;
-   padding-top: 150px;
+   padding-top: 15vh;
 }
 
 .sidebar-nav-list li {
@@ -767,3 +767,24 @@ svg text {
   .center .form-group {
     margin: 0 auto;
   }
+  
+  .help-button {
+     width: 100%;
+    text-align: center;
+    position:absolute;
+    bottom: 15px;
+    cursor: pointer;
+  }
+  
+  .help-button:hover {
+    color: #99cc33;
+  }
+  
+  .introjs-tooltip {
+    background-color: #192836 !important;
+  }
+  
+  .introjs-tooltip {
+      max-width: 100% !important;
+      min-width: 500px !important;
+    }

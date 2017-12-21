@@ -204,6 +204,11 @@ CannaFrontdesk = function() {
       // add class
       $("#sidebar .nav").wrapAll("<div class = 'icon-bar'/>");
       $("#sidebar .nav").addClass("sidebar-icon-bar");
+      $("#sidebar").append("<i class = 'fa fa-question-circle-o fa-2x help-button'  aria-hidden='true'></i>");
+      $(".help-button").attr("val", 0).on("click", function() {
+        Shiny.onInputChange("help", $(this).attr("val"));
+        $(this).attr("val", $(this).attr("val") + 1);
+      });
     },
     // hard coded NS from Shiny Modules
     icon_inputs: function() {

@@ -590,6 +590,7 @@ frontdesk <-
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
           tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          easyClose = TRUE,
           h1(
             paste(
               "Sign in app is ready for",
@@ -598,6 +599,104 @@ frontdesk <-
             )
           )
         ))
+      })
+      
+      # rintrojs
+      
+      observeEvent(input$help, {
+        
+        intro <- data.frame(
+          element = c(NA, "#sidebar", "div[data-value='homepage'] > div > div:nth-child(1) > div > div", 
+                      "div[data-value='homepage'] > div > div:nth-child(2) > div > div", "div[data-value='homepage'] > div > div:nth-child(3) > div > div",
+                      "div[data-value='homepage'] .fa-plus",
+                      "a[data-value='allPatients']", "div[data-value='allPatients'] > div > div:nth-child(1) > div > div", "div[data-value='allPatients'] > div > div:nth-child(2) > div > div",
+                      "a[data-value='patientInfo']", "div[data-value='patientInfo'] > div > div:nth-child(1) > div > div", "div[data-value='patientInfo'] > div > div:nth-child(3) > div:nth-child(1) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(2) > div",
+                      "div[data-value='patientInfo'] > div > div:nth-child(2) > div:nth-child(2) > div > div.table-title-and-icon > i",
+                      "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(2) > div", "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(3) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(3) > div", "div[data-value='patientInfo'] > div > div:nth-child(3) > div:nth-child(4) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(4) > div", "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(5) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(5) > div",
+                      "a[data-value='newPatient']", "#new_patient-newPatient > div:nth-child(1) > div:nth-child(2) > div",
+                      "#new_patient-newPatient > div:nth-child(2) > div:nth-child(2)", "#new_patient-newPatient > div:nth-child(2) > div:nth-child(3)",
+                      "#new_patient-newPatient > div:nth-child(1) > div:nth-child(3) > div", "a[data-value='preOrders']",
+                      "#online_order-onlineSale > div:nth-child(1) > div.row > div", "#online_order-onlineSale > div:nth-child(2) > div:nth-child(2) > div",
+                      "#online_order-onlineSale > div.col-xs-12.col-sm-12.col-md-12.col-lg-12 > div > div",
+                      "#online_order-onlineSale > div:nth-child(2) > div:nth-child(1) > div"
+                      ),
+          intro = c(as.character(tagList(
+            h1("CannaData Frontdesk Tour"),
+            h3("The frontdesk application enables you to check-in new and returning patients. It is also where you process online orders."),
+            h3("Lots of information about your customers is available in the front desk application. Allow us to show you...")
+          )),
+          as.character(tagList(
+            h1("Sidebar"),
+            "The sidebar provides access to five pages:",
+            tags$ul(
+              tags$li(tags$b("Homepage:", "for viewing who is currently in store, and pending online orders.")),
+              tags$li(tags$b("All Patients:", "for viewing all patients.")),
+              tags$li(tags$b("Patient Info:", "when an individual patient is selected their information will be displayed here.")),
+              tags$li(tags$b("New Patient:", "when processing a new patient you will enter their information in this page.")),
+              tags$li(tags$b("Online Sale:", "for processing online orders."))
+            )
+          )),
+          as.character(tagList(h1("Preorder"), "When customers make preorders online they will appear in this table.")),
+          as.character(tagList(h1("Queue"), "This table displays which patients are waiting to enter the store. Patients in queue can be let into store by pressing the 'Let In' button next to the patient's name.")),
+          as.character(tagList(h1("In Store"), "This table displays which patients are currently in the store. When customers complete their transaction they will automatically be removed from list.")),
+          as.character(tagList(h1("Add"), "Customers can be added to queue or let into store by pressing the green plus sign.")),
+          as.character(tagList(h1("All Patients"), "The all patients page allows you to view and sort your customers.")),
+          as.character(tagList(h1("Incomplete Profiles"), "This table displays patients with incomplete profiles. A patient will have an incomplete profile when you first add them into the system. We will discuss adding new patients in depth in a moment.")),
+          as.character(tagList(h1("All Patients Table"), "This table displays all registered patients. You can sort by pressing column name.")),
+          as.character(tagList(h1("Patient Info"), "When a patient is selected, this page will display information about the patient.")),
+          as.character(tagList(h1("Patient Status"), "The current status of the patient's medical card is displayed clearly at the top.")),
+          as.character(tagList(h1("Buttons"), "Patients with valid medical cards can be added to queue or let directly into store. You also have the option of deleting a patient, but this is uncommon.")),
+          as.character(tagList(h1("Basic Customer Info"), "View basic information about a selected customer.")),
+          as.character(tagList(h1("Edit Customer Info"), "Edit info by pressing the green pencil.")), 
+          as.character(tagList(h1("Medical Info"), "See information about the patient's medical card.")), 
+          as.character(tagList(h1("Images"), "View images of the patient's ID and medical recommendation.")), 
+          as.character(tagList(h1("Notes"), "Keep notes about each customer.")), 
+          as.character(tagList(h1("Reward Points"), "Check the number of reward points the customer has accumulated.")), 
+          as.character(tagList(h1("Preferences"), "Understand which strains and products the customer likes.")), 
+          as.character(tagList(h1("Past Transactions"), "See more information about individual transactions by clicking on them.")), 
+          as.character(tagList(h1("Past Products"), "A pie chart indicating what types of products the customer has bought in the past.")),
+          as.character(tagList(h1("New Patients"), "To process a new patient you either scan their ID or have the patient enter their infomation into the signup application.")),
+          as.character(tagList(h1("New Patient Info"), "When a new patient's incomplete profile is selected their information will appear here.")),
+          as.character(tagList(h1("Enter Medical Info"), "Here is where you enter the information from the patient's medical card.")),
+          as.character(tagList(h1("Upload Images"), "After you scan an image of the patient's ID and medical card, you will upload the files here.")),
+          as.character(tagList(h1("Images"), "When an image is uploaded it will appear here.")),
+          as.character(tagList(h1("Preorders"), "Processing preorders involves two steps:", 
+                               tags$ol(tags$li("Confirming the preorder"), tags$li("Linking preorder to customer when they arrive")))),
+          as.character(tagList(h1("Customer Info"), "Basic data about the person making the preorder is viewable here.")),
+          as.character(tagList(h1("Order Info"), "Details about the transaction are available here.")),
+          as.character(tagList(h1("Cart"), "The cart is viewable here. Items can be edited or removed, and discounts can be applied.")),
+          as.character(tagList(h1("Buttons"), "Labels for the ordered items can be printed. The order can be confirmed, or cancelled with a message to the customer.",
+                               "Once an order is confirmed, the confirmed button is replaced with a 'Link' button, which enables you to associate a preorder with a checked in patient."))
+          )
+        )
+        
+        introjs(session, options = list(steps=intro,
+                                        showStepNumbers = FALSE,
+                                        showBullets = FALSE),  
+                events = list(
+          "onbeforechange" = I("
+if ((this._currentStep==2 | this._currentStep == 5) && !$('div[data-value=\"homepage\"]').hasClass('active')) {
+        $('a[data-value=\"homepage\"]').tab('show');
+} else if ((this._currentStep == 6 || this._currentStep == 8) && !$('div[data-value=\"allPatients\"]').hasClass('active')) {
+        $('a[data-value=\"allPatients\"]').tab('show');
+} else if ((this._currentStep == 9 || this._currentStep == 20)) {
+        $('a[data-value=\"patientInfo\"]').tab('show');
+        // select patient
+var x=$('#patient').selectize();
+    var select = x[0].selectize;
+select.setValue('P1');
+} else if ((this._currentStep == 21 || this._currentStep == 25) && !$('div[data-value=\"newPatient\"]').hasClass('active')) {
+    $('a[data-value=\"newPatient\"]').tab('show');
+} else if (this._currentStep == 26 && !$('div[data-value=\"preOrders\"]').hasClass('active')) {
+  $('a[data-value=\"preOrders\"]').tab('show');
+  }
+")
+        ))
+        
       })
       
     }
