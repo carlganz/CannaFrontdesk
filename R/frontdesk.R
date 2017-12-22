@@ -633,11 +633,11 @@ frontdesk <-
             h1("Sidebar"),
             "The sidebar provides access to five pages:",
             tags$ul(
-              tags$li(tags$b("Homepage:", "for viewing who is currently in store, and pending online orders.")),
-              tags$li(tags$b("All Patients:", "for viewing all patients.")),
-              tags$li(tags$b("Patient Info:", "when an individual patient is selected their information will be displayed here.")),
-              tags$li(tags$b("New Patient:", "when processing a new patient you will enter their information in this page.")),
-              tags$li(tags$b("Online Sale:", "for processing online orders."))
+              tags$li(tags$b("Homepage:"), "for viewing who is currently in store, and pending online orders."),
+              tags$li(tags$b("All Patients:"), "for viewing all patients."),
+              tags$li(tags$b("Patient Info:"), "when an individual patient is selected their information will be displayed here."),
+              tags$li(tags$b("New Patient:"), "when processing a new patient you will enter their information in this page."),
+              tags$li(tags$b("Online Sale:"), "for processing online orders.")
             )
           )),
           as.character(tagList(h1("Preorder"), "When customers make preorders online they will appear in this table.")),
@@ -679,7 +679,7 @@ frontdesk <-
                                         showBullets = FALSE),  
                 events = list(
           "onbeforechange" = I("
-if ((this._currentStep==2 | this._currentStep == 5) && !$('div[data-value=\"homepage\"]').hasClass('active')) {
+if ((this._currentStep==2 || this._currentStep == 5) && !$('div[data-value=\"homepage\"]').hasClass('active')) {
         $('a[data-value=\"homepage\"]').tab('show');
 } else if ((this._currentStep == 6 || this._currentStep == 8) && !$('div[data-value=\"allPatients\"]').hasClass('active')) {
         $('a[data-value=\"allPatients\"]').tab('show');
