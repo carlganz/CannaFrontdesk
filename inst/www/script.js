@@ -192,10 +192,10 @@ CannaFrontdesk = function() {
       // append icons
       $("a[data-value='homepage']").html('<i class="fa fa-home fa-2x"></i><br>Home');
       if ($("a[data-value='allPatients']")) {
-        $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Patients');
+        $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Customers');
       }
       if ($("a[data-value='patientInfo']")) {
-        $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Patient Info');
+        $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Customer Info');
       }
       if ($("a[data-value='newPatient']")) {
         $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');

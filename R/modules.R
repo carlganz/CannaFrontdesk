@@ -17,12 +17,13 @@ patientInfoUI <- function(id) {
   
   tagList(div(
     class = "content",
+    if (getOption("CannaData_state") %in% c("CA-M", "CO-M", "OR-M")) {
       div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         div(
           class = "row",
           div(class = "countdown-container notexpired",
               uiOutput(ns("expiration")))
-        )),
+        ))},
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
       div(
@@ -35,6 +36,8 @@ patientInfoUI <- function(id) {
       box(tableTitle("Notes"),
           uiOutput(ns("notes"))
           ),
+      if (getOption("CannaData_state") %in% c("CO-M", "CA-M", "OR-M")) {
+      tagList(
       box(tableTitle("Preferences"),
           DT::dataTableOutput(ns("preference"))),
       box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
@@ -42,7 +45,7 @@ patientInfoUI <- function(id) {
               uiOutput(ns("no_type"), TRUE),
               c3Output(ns("patient_type"))
           )
-      )
+      ))}
     ),
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
@@ -54,26 +57,29 @@ patientInfoUI <- function(id) {
           div(
             tags$button(
               id = ns("remove"),
-              "Delete Patient",
+              "Delete",
               class = "btn btn-info delete-btn action-button",
-              style = "width:30%;",
+              style = "width:20%;",
               formnovalidate = NA
             ),
             tags$button(
               id = ns("let_in"),
-              "Let in Store",
+              "Let In",
               class = "btn btn-info add-queue-btn action-button",
-              style = "width:30%;"
+              style = "width:20%;"
             ),
             tags$button(
               id = ns("add_queue"),
-              "Add to Queue",
+              "Add Queue",
               class = "btn btn-info add-queue-btn action-button",
-              style = "width:30%;"
-            )
+              style = "width:23%;"
+            ),
+            uiOutput(ns("textButton"))
           )
         )
       ),
+      if (getOption("CannaData_state") %in% c("CO-M", "CA-M", "OR-M")) {
+      tagList(
       box(tableTitle("Medical Info"),
           DT::dataTableOutput(ns("recommendation"))),
       box(
@@ -90,7 +96,17 @@ patientInfoUI <- function(id) {
                 "recommendation_image_out"
               )))
         )
-      ),
+      ))} else {
+        tagList(
+          box(tableTitle("Preferences"),
+              DT::dataTableOutput(ns("preference"))),
+          box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
+              div(style = "margin-top:35px",
+                  uiOutput(ns("no_type"), TRUE),
+                  c3Output(ns("patient_type"))
+              )
+          ))
+      },
       box(h1("Reward Points"),style = "overflow:hidden",
           div(style = "margin-top:8%",
               c3Output(ns("patient_points"))
@@ -117,7 +133,9 @@ patientInfo <-
            proxy,
            reload_patient,
            trigger_patients,
-           max_points) {
+           max_points,
+           base_url,
+           msg_service_sid) {
     trigger_patient_info_returning <- reactiveVal(0)
     patient_info_returning <- reactive({
       req(patientId())
@@ -133,7 +151,7 @@ patientInfo <-
     # add patient to queue
     observeEvent(input$add_queue, {
       req(patientId())
-      if (expired() <= 0) {
+      if (isTRUE(expired() <= 0)) {
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
@@ -176,7 +194,7 @@ patientInfo <-
     
     observeEvent(input$let_in, {
       req(patientId())
-      if (expired() <= 0) {
+      if (isTRUE(expired() <= 0)) {
         showModal(modalDialog(
           easyClose = TRUE,
           tags$script(
@@ -866,6 +884,43 @@ patientInfo <-
         session$sendCustomMessage("toggle_expiration", FALSE)
       }
     })
+
+    observeEvent(input$text_form, {
+      showModal(modalDialog(
+        easyClose = TRUE,
+        tags$script(
+          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+        ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+        h1("Enter Phone #"),
+        div(class = "center",
+            shinyCleave::phoneInput(session$ns("text_phone"), NULL, placeholder = "Phone #")),
+        footer = tags$button(id = session$ns("send_form"), class = "action-button btn btn-info add-queue-btn", "Send")
+      ))
+    })
+    
+    observeEvent(input$send_form, {
+      req(input$text_phone)
+      url <- httr::modify_url(
+        url = paste0(base_url, "signup/"),
+        query = list(
+          idpatient = patientId(),
+          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), key = gsub("\n  ", "\n", getOption("canna_key")))
+        )
+      )
+      
+      phone <- as.numeric(gsub("[ ()]", "", input$text_phone))
+      # remove leading 1?
+      req(nchar(phone) %in% 10:11,!is.na(phone))
+      
+      if (substr(phone, 1, 1) == "1") {
+        phone <- substr(phone, 2, nchar(phone))
+      }
+      
+      tw_send_message(paste0("+1", phone), msg_service_id = msg_service_sid, body = paste("Please sign-up at the following link: ", url))
+      u_f_phone(pool, patientId(), phone)
+      removeModal()
+      
+    })
     
     output$name <- renderUI({
       if (isTruthy(patientId())) {
@@ -880,9 +935,14 @@ patientInfo <-
       }
     })
     
+    output$textButton <- renderUI({
+      req(patientId(), !isTruthy(patient_info_returning()$phone))
+      actionButton(session$ns("text_form"), "Rewards", class = "btn btn-info add-queue-btn", width = "20%")
+    })
+    
     # status
     output$expiration <- renderUI({
-      if (expired() <= 0) {
+      if (isTRUE(expired() <= 0)) {
         # bad
         tagList(h2("Expired!!!"),
                 p(paste(
@@ -1638,7 +1698,7 @@ newPatient <-
         url = paste0(base_url, "signup/"),
         query = list(
           idpatient = patientId(),
-          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), getOption("canna_key"))
+          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), gsub("\n  ", "\n", getOption("canna_key")))
         )
       )
       
@@ -1965,8 +2025,13 @@ queue <-
         h1("Add Customer to Queue"),
         div(
           class = "center",
-          if (state == "OR-R") {
-        textInput(session$ns("queue_name"), "Name")
+          if (state %in% c("OR-R", "CO-R")) {
+        tagList(textInput(session$ns("queue_name"), "Name"),
+         if (state == "CO-R") {
+           tagList(tags$br(),
+           textInput(session$ns("queue_id"), "ID #"))
+         }       
+        )
           } else {
             selectizeInput(session$ns("queue_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
                                                                             loadThrottle = NA,
@@ -1978,9 +2043,15 @@ queue <-
           }
         ),
         footer = 
-          if (state != "OR-R") {
+          if (!state  %in% c("OR-R","CO-R")) {
             tags$button(
               id = session$ns("queue_add"),
+              "Add to Queue",
+              class = "btn btn-info add-queue-btn action-button"
+            )
+          } else if (state == "CO-R") {
+            tags$button(
+              id = session$ns("queue_rec"),
               "Add to Queue",
               class = "btn btn-info add-queue-btn action-button"
             )
@@ -1998,7 +2069,7 @@ queue <-
       )
             }
       ))
-      if (state != "OR-R") updateSelectizeInput(session, "queue_name", choices = patients() %>% 
+      if (!state %in% c("OR-R","CO-R")) updateSelectizeInput(session, "queue_name", choices = patients() %>% 
                                                   filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
@@ -2037,12 +2108,32 @@ queue <-
     })
     
     observeEvent(input$queue_rec, {
-      i_f_add_queue(pool, NA, FALSE, input$queue_name)
+      req(input$queue_name)
+      if (state == "CO-R") {
+        req(input$queue_id)
+        ### check if already in db
+        ### if not add them then to db then to queue
+        if (input$queue_id %in% patients()$id) {
+          id <- patients() %>% filter_(~id == input$queue_id) %>% slice(1) %>% pull("idpatient")
+        } else {
+          con <- pool::poolCheckout(pool)
+          i_f_new_patient(con, input$queue_id, NA, input$queue_name, NA_character_, NA, NA, NA, NA, NA, NA, 3)
+          id <- last_insert_id(con)
+          pool::poolReturn(con)
+        }
+        i_f_add_queue(pool, id, input$queue_id %in% patients()$id)
+      } else {
+        i_f_add_queue(pool, NA, FALSE, input$queue_name)
+      }
       trigger(trigger() + 1)
       removeModal()
     })
     
     observeEvent(input$queue_med, {
+      req(input$queue_name)
+      if (state == "CO-R") {
+        req(input$queue_id)
+      }
       showModal(modalDialog(
         easyClose = TRUE, fade = FALSE,
         tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
@@ -2090,8 +2181,12 @@ queue <-
         h1("Let Customer into Store"),
         div(
           class = "center",
-          if (state == "OR-R") {
-        textInput(session$ns("store_name"), "Name")
+          if (state %in% c("OR-R", "CO-R")) {
+        tagList(textInput(session$ns("store_name"), "Name"),
+            if (state == "CO-R") {
+              tagList(tags$br(),
+                      textInput(session$ns("store_id"), "ID #"))
+            })       
           } else {
             selectizeInput(session$ns("store_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
                                                                             loadThrottle = NA,
@@ -2102,25 +2197,33 @@ queue <-
             ))
             }
         ),
-        footer = if (state == "OR-R") {tagList(tags$button(
-          id = session$ns("store_med"),
-          "Add Medical",
-          class = "btn btn-info add-queue-btn action-button"
-        ),
-        tags$button(
-          id = session$ns("store_rec"),
-          "Add Recreational",
-          class = "btn btn-info add-queue-btn action-button"
-        )
-        )} else {
+        footer = if (!state  %in% c("OR-R","CO-R")) {
           tags$button(
             id = session$ns("store_add"),
             "Let in Store",
             class = "btn btn-info add-queue-btn action-button"
           )
+        } else if (state == "CO-R") {
+          tags$button(
+            id = session$ns("store_rec"),
+            "Let in Store",
+            class = "btn btn-info add-queue-btn action-button"
+          )
+        } else {
+          tagList(tags$button(
+            id = session$ns("store_med"),
+            "Add Medical",
+            class = "btn btn-info add-queue-btn action-button"
+          ),
+          tags$button(
+            id = session$ns("store_rec"),
+            "Add Recreational",
+            class = "btn btn-info add-queue-btn action-button"
+          )
+          )
         }
         ))
-      if (state != "OR-R") updateSelectizeInput(session, "store_name", choices = patients() %>% 
+      if (!state  %in% c("OR-R","CO-R")) updateSelectizeInput(session, "store_name", choices = patients() %>% 
                                                   filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
@@ -2199,7 +2302,21 @@ queue <-
     })
     
     observeEvent(input$store_rec, {
+      req(input$store_name)
+      if (state == "CO-R") {
+        req(input$store_id)
+      if (input$store_id %in% patients()$id) {
+        id <- patients() %>% filter_(~id == input$store_id) %>% slice(1) %>% pull("idpatient")
+      } else {
+        con <- pool::poolCheckout(pool)
+        i_f_new_patient(con, input$queue_id, NA, input$queue_name, NA_character_, NA, NA, NA, NA, NA, NA, 3)
+        id <- last_insert_id(con)
+        pool::poolReturn(con)
+      }
+      i_f_let_in(pool, id, !input$store_id %in% patients()$id)
+      } else {
       i_f_let_in(pool, NA, FALSE, input$store_name)
+      }
       trigger(trigger() + 1)
       removeModal()
     })
@@ -2453,13 +2570,13 @@ allPatientsUI <- function(id) {
     class = "content",
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
           box(
-          h1("Incomplete Patients"),
+          h1("Incomplete Profiles"),
           DT::dataTableOutput(ns("incomplete"))
         )
         ),
     div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         box(
-          h1("All Patients"),
+          h1("All Customers"),
           DT::dataTableOutput(ns("patients"))
         ))
   ))
@@ -2863,7 +2980,7 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
           width = 1100,
           height = 400,
           printer = input$printer,
-          key = getOption("canna_key")
+          key = gsub("\n  ", "\n", getOption("canna_key"))
         )
       }
     })
