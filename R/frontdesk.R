@@ -731,11 +731,31 @@ if ((this._currentStep==2 || this._currentStep == 5) && !$('div[data-value=\"hom
         // select patient
 var x=$('#patient').selectize();
     var select = x[0].selectize;
-select.setValue('P1');
+    var options = select.options;
+    var option = Object.keys(options).map(function(value) {
+        return options[value]
+      }).filter(function(value) {
+        return value.verified === 3
+      })[0].valueFld;
+if (option) {
+select.setValue(option);
+}
 } else if ((this._currentStep == 21 || this._currentStep == 25) && !$('div[data-value=\"newPatient\"]').hasClass('active')) {
     $('a[data-value=\"newPatient\"]').tab('show');
 } else if (this._currentStep == 26 && !$('div[data-value=\"preOrders\"]').hasClass('active')) {
   $('a[data-value=\"preOrders\"]').tab('show');
+        // select preorder
+var x=$('#patient').selectize();
+    var select = x[0].selectize;
+    var options = select.options;
+    var option = Object.keys(options).map(function(value) {
+        return options[value]
+      }).filter(function(value) {
+        return value.verified === 5 || value.verified === 6;
+      })[0].valueFld;
+if (option) {
+select.setValue(option);
+}
   }
 ")
         ))
