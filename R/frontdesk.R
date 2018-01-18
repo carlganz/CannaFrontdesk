@@ -656,10 +656,12 @@ frontdesk <-
                       "a[data-value='patientInfo']", "div[data-value='patientInfo'] > div > div:nth-child(1) > div > div", "div[data-value='patientInfo'] > div > div:nth-child(3) > div:nth-child(1) > div",
                       "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(2) > div",
                       "div[data-value='patientInfo'] > div > div:nth-child(2) > div:nth-child(2) > div > div.table-title-and-icon > i",
-                      "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(2) > div", "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(3) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(2) > div",
+                      "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(3) > div",
                       "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(3) > div", "div[data-value='patientInfo'] > div > div:nth-child(3) > div:nth-child(4) > div",
-                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(4) > div", "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(5) > div",
-                      "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(5) > div",
+                      # "div[data-value='patientInfo']  > div > div:nth-child(2) > div:nth-child(4) > div", 
+                      # "div[data-value='patientInfo']  > div > div:nth-child(3) > div:nth-child(5) > div",
+                      "div[data-value='patientInfo'] > div > div:nth-child(3) > div:nth-child(5) > div",
                       "a[data-value='newPatient']", "#new_patient-newPatient > div:nth-child(1) > div:nth-child(2) > div",
                       "#new_patient-newPatient > div:nth-child(2) > div:nth-child(2)", "#new_patient-newPatient > div:nth-child(2) > div:nth-child(3)",
                       "#new_patient-newPatient > div:nth-child(1) > div:nth-child(3) > div", "a[data-value='preOrders']",
@@ -695,13 +697,14 @@ frontdesk <-
           as.character(tagList(h1("Buttons"), "Patients with valid medical cards can be added to queue or let directly into store. You also have the option of deleting a patient, but this is uncommon.")),
           as.character(tagList(h1("Basic Customer Info"), "View basic information about a selected customer.")),
           as.character(tagList(h1("Edit Customer Info"), "Edit info by pressing the green pencil.")), 
-          as.character(tagList(h1("Medical Info"), "See information about the patient's medical card.")), 
-          as.character(tagList(h1("Images"), "View images of the patient's ID and medical recommendation.")), 
+          # as.character(tagList(h1("Medical Info"), "See information about the patient's medical card.")), 
+          as.character(tagList(h1("Preferences"), "Understand which strains and products the customer likes.")),
+          as.character(tagList(h1("Past Products"), "A pie chart indicating what types of products the customer has bought in the past.")),
+          # as.character(tagList(h1("Images"), "View images of the patient's ID and medical recommendation.")), 
           as.character(tagList(h1("Notes"), "Keep notes about each customer.")), 
           as.character(tagList(h1("Reward Points"), "Check the number of reward points the customer has accumulated.")), 
-          as.character(tagList(h1("Preferences"), "Understand which strains and products the customer likes.")), 
+          # as.character(tagList(h1("Preferences"), "Understand which strains and products the customer likes.")), 
           as.character(tagList(h1("Past Transactions"), "See more information about individual transactions by clicking on them.")), 
-          as.character(tagList(h1("Past Products"), "A pie chart indicating what types of products the customer has bought in the past.")),
           as.character(tagList(h1("New Patients"), "To process a new patient you either scan their ID or have the patient enter their infomation into the signup application.")),
           as.character(tagList(h1("New Patient Info"), "When a new patient's incomplete profile is selected their information will appear here.")),
           as.character(tagList(h1("Enter Medical Info"), "Here is where you enter the information from the patient's medical card.")),
@@ -726,7 +729,7 @@ if ((this._currentStep==2 || this._currentStep == 5) && !$('div[data-value=\"hom
         $('a[data-value=\"homepage\"]').tab('show');
 } else if ((this._currentStep == 6 || this._currentStep == 8) && !$('div[data-value=\"allPatients\"]').hasClass('active')) {
         $('a[data-value=\"allPatients\"]').tab('show');
-} else if ((this._currentStep == 9 || this._currentStep == 20)) {
+} else if ((this._currentStep == 9 || this._currentStep == 18)) {
         $('a[data-value=\"patientInfo\"]').tab('show');
         // select patient
 var x=$('#patient').selectize();
@@ -740,9 +743,9 @@ var x=$('#patient').selectize();
 if (option) {
 select.setValue(option);
 }
-} else if ((this._currentStep == 21 || this._currentStep == 25) && !$('div[data-value=\"newPatient\"]').hasClass('active')) {
+} else if ((this._currentStep == 19 || this._currentStep == 23) && !$('div[data-value=\"newPatient\"]').hasClass('active')) {
     $('a[data-value=\"newPatient\"]').tab('show');
-} else if (this._currentStep == 26 && !$('div[data-value=\"preOrders\"]').hasClass('active')) {
+} else if (this._currentStep == 24 && !$('div[data-value=\"preOrders\"]').hasClass('active')) {
   $('a[data-value=\"preOrders\"]').tab('show');
         // select preorder
 var x=$('#patient').selectize();
@@ -751,8 +754,9 @@ var x=$('#patient').selectize();
     var option = Object.keys(options).map(function(value) {
         return options[value]
       }).filter(function(value) {
-        return value.verified === 5 || value.verified === 6;
+        return value.status === 5 || value.status === 6;
       })[0].valueFld;
+
 if (option) {
 select.setValue(option);
 }
