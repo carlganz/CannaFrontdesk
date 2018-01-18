@@ -29,12 +29,12 @@ body {
     /*overflow: none;*/
 }
 
-div#header{
+#header{
    position:fixed; 
    z-index: 5;
 }
 
-div#sidebar {
+#sidebar {
    position:fixed;
    height:100%;
    width:180px; 
@@ -42,6 +42,10 @@ div#sidebar {
    left:0;
    background-color:#192836;
    padding-top: 15vh;
+}
+
+.inactive {
+  display:none;
 }
 
 .sidebar-nav-list li {
@@ -788,3 +792,12 @@ svg text {
       max-width: 100% !important;
       min-width: 500px !important;
     }
+    
+    #header .search-box {
+      width: 100%;
+    }
+    
+    
+      #header .navbar-nav {
+    margin: 0;
+  }

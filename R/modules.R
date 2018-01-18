@@ -17,13 +17,12 @@ patientInfoUI <- function(id) {
   
   tagList(div(
     class = "content",
-    if (getOption("CannaData_state") %in% c("CA-M", "CO-M", "OR-M")) {
       div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
         div(
           class = "row",
           div(class = "countdown-container notexpired",
               uiOutput(ns("expiration")))
-        ))},
+        )),
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
       div(
@@ -145,7 +144,11 @@ patientInfo <-
     # days until expired
     expired <- reactive({
       req(patientId())
-      difftime(patient_info_returning()$expirationDate, Sys.Date())
+      if (isTruthy(patient_info_returning()$expirationDate)) {
+        difftime(patient_info_returning()$expirationDate, Sys.Date())
+      } else {
+        (-1*floor(difftime(patient_info_returning()$birthday, Sys.Date())/365)) - 21
+      }
     })
     
     # add patient to queue
@@ -157,7 +160,7 @@ patientInfo <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient's medical card is expired!")
+          h1("Customer is not eligible!")
         ))
       } else if (patientId() %in% queue()$idpatient) {
         showModal(modalDialog(
@@ -166,7 +169,7 @@ patientInfo <-
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ),
           h1(paste(
-            "Patient already in",
+            "Customer already in",
             if (queue()$status[patientId() == queue()$idpatient] == 2)
               "store"
             else
@@ -184,7 +187,7 @@ patientInfo <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient added to queue."),
+          h1("Customer added to queue."),
           if (today_count > 0) {
             h1(sprintf("NOTE: This is their %s  visit today!", scales::ordinal(today_count + 1)))
           }
@@ -200,7 +203,7 @@ patientInfo <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient's medical card is expired!")
+          h1("Customer is ineligible!")
         ))
       } else if (patientId() %in% queue()$idpatient) {
         showModal(modalDialog(
@@ -209,7 +212,7 @@ patientInfo <-
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1(paste(
-            "Patient already in",
+            "Customer already in",
             if (queue()$status[patientId() == queue()$idpatient])
               "store"
             else
@@ -227,7 +230,7 @@ patientInfo <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Patient has been let into store."),
+          h1("Customer has been let into store."),
           if (today_count > 0) {
             h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
           }
@@ -244,7 +247,7 @@ patientInfo <-
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1(
-            "Cannot remove patient while patient is in active transaction."
+            "Cannot remove customer while customer is in active transaction."
           )
         ))
       } else {
@@ -253,7 +256,7 @@ patientInfo <-
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("Are you sure you want to remove patient?"),
+          h1("Are you sure you want to remove customer?"),
           h1("Data cannot be recovered once removed!"),
           footer = tags$button(id = session$ns("delete"), class = "action-button btn btn-info delete-btn", "Remove")
         ))
@@ -942,6 +945,7 @@ patientInfo <-
     
     # status
     output$expiration <- renderUI({
+      if (getOption("CannaData_state") %in% c("CA-M", "CO-M")) {
       if (isTRUE(expired() <= 0)) {
         # bad
         tagList(h2("Expired!!!"),
@@ -952,6 +956,13 @@ patientInfo <-
         # good
         tagList(h2(expired()),
                 p("days until medical card expires"))
+      }
+      } else {
+        if (isTRUE(expired() <= 0)) {
+          tagList(h2("STOP! Customer is under 21! STOP!"))
+        } else {
+          tagList(h2("Customer is", expired() + 21, "years old"))
+        }
       }
     })
     
