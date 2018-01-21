@@ -468,7 +468,7 @@ frontdesk <-
             patients()$verified[patients()$id == input$read_barcode$id & patients()$state == input$read_barcode$state]
           if (status %in% 1:2) {
             showModal(modalDialog(
-              h1("New Patient!"),
+              h1("New Customer!"),
               tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
               easyClose = TRUE,
               tags$script(
@@ -492,7 +492,7 @@ frontdesk <-
           showModal(modalDialog(
             easyClose = TRUE,
             tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-            h1("New Patient!"),
+            h1("New Customer!"),
             tags$script(
               "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
             ),
@@ -503,22 +503,14 @@ frontdesk <-
                 input$read_barcode$lastName
               )
             ),
-            footer = tagList(
-              if (state %in% c("OR-R")) {
-                tagList(actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+            footer = tagList(actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
                         actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
                 )
-              } else if (state == "CO-R") {
-                actionButton("addRec", "Add Customer", class = "btn btn-info add-queue-btn")
-                } else 
-              actionButton("add_new_patient", "Create Profile", class = "btn btn-info add-queue-btn")
-              )
           ))
         }
       })
       
       observeEvent(input$addRec, {
-        if (state == "CO-R") {
           if (input$read_barcode$id %in% patients()$id) {
             id <- patients() %>% filter_(~id == input$store_id) %>% slice(1) %>% pull("idpatient")
           } else {
@@ -547,103 +539,43 @@ frontdesk <-
             trigger_returning(trigger_returning() + 1)
             trigger(trigger() + 1)
           }
-          # print(id)
+  
           reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
-          
-        } else {
-          i_f_add_queue(pool, NA, FALSE, paste(input$read_barcode$firstName,
-                                             input$read_barcode$lastName))
-          trigger(trigger() + 1)
-          updateNavlistPanel(session, "tabset", "homepage")
-        }
-        
-        
         
         removeModal()
       })
       
       observeEvent(input$addMed, {
-        showModal(modalDialog(
-          easyClose = TRUE, fade = FALSE,
-          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          h1("New Patient!"),
-          tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
-          div(class = "center",
-          textInput("recId", "Enter Medical ID #")),
-          footer = actionButton("add_new_patient", "Create Profile", class = "btn btn-info add-queue-btn")
-          )
+        con <- pool::poolCheckout(pool)
+        i_f_new_patient(
+          con,
+          input$read_barcode$id,
+          paste0(substr(input$read_barcode$expirationDate,1,2), "/",
+                 substr(input$read_barcode$expirationDate,3,4),"/",
+                 substr(input$read_barcode$expirationDate,5,8)),
+          input$read_barcode$firstName,
+          input$read_barcode$lastName,
+          input$read_barcode$middleName,
+          paste0(substr(input$read_barcode$birthday,1,2), "/",
+                 substr(input$read_barcode$birthday,3,4),"/",
+                 substr(input$read_barcode$birthday,5,8)),
+          input$read_barcode$address,
+          input$read_barcode$city,
+          substr(input$read_barcode$zip, 1, 5),
+          input$read_barcode$state,
+          verified = 2
         )
-      })
-      
-      observeEvent(input$add_new_patient, {
-        req(input$read_barcode)
+        id <- last_insert_id(con)
+        pool::poolReturn(con)
+        trigger_patients(trigger_patients() + 1)
+        trigger_returning(trigger_returning() + 1)
+        trigger(trigger() + 1)
+        
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         
         removeModal()
-        if (state == "OR-R") {
-          req(!(input$read_barcode$id %in% patients()$id))
-          req(input$recId)
-          if (input$recId %in% patients()$recId) {
-            i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE)
-            trigger(trigger() + 1)
-          } else {
-          new_row <- data.frame(
-            firstName = input$read_barcode$firstName,
-            lastName = input$read_barcode$lastName,
-            recId = input$recId,
-            addDate = mySql_date(Sys.Date()),
-            verified = 3, birthday = NA
-          )
-          con <- pool::poolCheckout(pool)
-          DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
-          id <- last_insert_id(con)
-          pool::poolReturn(con)
-          i_f_add_queue(pool, id, TRUE)
-          trigger(trigger() + 1)
-          trigger_new(trigger_new() + 1)
-          }
-        } else {
-          
-          i_f_new_patient(
-            pool,
-            input$read_barcode$id,
-            paste0(substr(input$read_barcode$expirationDate,1,2), "/",
-                   substr(input$read_barcode$expirationDate,3,4),"/",
-                   substr(input$read_barcode$expirationDate,5,8)),
-            input$read_barcode$firstName,
-            input$read_barcode$lastName,
-            input$read_barcode$middleName,
-            paste0(substr(input$read_barcode$birthday,1,2), "/",
-                   substr(input$read_barcode$birthday,3,4),"/",
-                   substr(input$read_barcode$birthday,5,8)),
-            input$read_barcode$address,
-            input$read_barcode$city,
-            substr(input$read_barcode$zip, 1, 5),
-            input$read_barcode$state
-          )
-        }
-        
-        trigger_new(trigger_new() + 1)
-        trigger_patients(trigger_patients() + 1)
-        reload_patient(list(selected = patients()$idpatient[input$read_barcode$id %in% patients()$id], time = Sys.time(), type = "patient"))
-
-        showModal(modalDialog(
-          tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
-          tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          easyClose = TRUE,
-          h1(
-            paste(
-              "Sign in app is ready for",
-              input$read_barcode$firstName,
-              input$read_barcode$lastName
-            )
-          )
-        ))
       })
-      
+   
       # rintrojs
       
       observeEvent(input$help, {

@@ -35,16 +35,24 @@ patientInfoUI <- function(id) {
       box(tableTitle("Notes"),
           uiOutput(ns("notes"))
           ),
-      if (getOption("CannaData_state") %in% c("CO-M", "CA-M", "OR-M")) {
       tagList(
-      box(tableTitle("Preferences"),
-          DT::dataTableOutput(ns("preference"))),
-      box(h1("Past Products", style = "width:100%;text-align:left;"),style = "overflow:hidden",
-          div(style = "margin-top:35px",
-              uiOutput(ns("no_type"), TRUE),
-              c3Output(ns("patient_type"))
+        box(tableTitle("Medical Info"),
+            DT::dataTableOutput(ns("recommendation"))),
+        box(
+          class = "images",
+          tableTitle("Images"),
+          div(
+            class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+            div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                h4("Photo ID"),
+                uiOutput(ns("id_image_out"))),
+            div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                h4("Rec"),
+                uiOutput(ns(
+                  "recommendation_image_out"
+                )))
           )
-      ))}
+        ))
     ),
     div(
       class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
@@ -77,25 +85,6 @@ patientInfoUI <- function(id) {
           )
         )
       ),
-      if (getOption("CannaData_state") %in% c("CO-M", "CA-M", "OR-M")) {
-      tagList(
-      box(tableTitle("Medical Info"),
-          DT::dataTableOutput(ns("recommendation"))),
-      box(
-        class = "images",
-        tableTitle("Images"),
-        div(
-          class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-          div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-              h4("Photo ID"),
-              uiOutput(ns("id_image_out"))),
-          div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
-              h4("Rec"),
-              uiOutput(ns(
-                "recommendation_image_out"
-              )))
-        )
-      ))} else {
         tagList(
           box(tableTitle("Preferences"),
               DT::dataTableOutput(ns("preference"))),
@@ -104,8 +93,7 @@ patientInfoUI <- function(id) {
                   uiOutput(ns("no_type"), TRUE),
                   c3Output(ns("patient_type"))
               )
-          ))
-      },
+          )),
       box(h1("Reward Points"),style = "overflow:hidden",
           div(style = "margin-top:8%",
               c3Output(ns("patient_points"))
