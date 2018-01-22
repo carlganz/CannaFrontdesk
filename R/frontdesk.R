@@ -48,7 +48,7 @@ frontdesk <-
   auth_secret = getOption("auth_secret"),
   scope = "openid email", twilio_sid = getOption("TWILIO_SID"),
   twilio_token = getOption("TWILIO_TOKEN"),
-  connection_name = "Username-Password-Authentication",
+  connection_name = getOption("auth_connection"),
   state = getOption("CannaData_state")) {
     Sys.setenv("TWILIO_SID" = getOption("TWILIO_SID"),
                "TWILIO_TOKEN" = getOption("TWILIO_TOKEN"),
