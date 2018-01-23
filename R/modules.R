@@ -1279,9 +1279,8 @@ newPatientUI <- function(id) {
                             ),
                             input(
                               ns("recId"),
-                              "tel",
-                              placeholder = "Rec #",
-                              `data-parsley-type` = "integer", label_width = 4
+                              "text",
+                              placeholder = "Rec #", label_width = 4
                             ),
                             tags$script(
                               paste0(
