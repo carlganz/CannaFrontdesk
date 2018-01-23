@@ -395,7 +395,7 @@ frontdesk <-
       },
       trigger_online, reload_patient, reactive({
         structure(queue()$idtransaction, names = queue()$name)
-      }), printers, base_url, msg_service_sid)
+      }), printers, base_url, msg_service_sid, clientName)
       
       # OBSERVES ---------------------------------------------------------------
       

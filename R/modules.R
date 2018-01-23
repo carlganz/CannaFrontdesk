@@ -2766,7 +2766,7 @@ onlineOrdersUI <- function(id) {
 }
 
 onlineOrder <- function(input, output, session, pool, transactionId, order_info, trigger, reload_select, 
-                        patients, printers, base_url, msg_service_sid) {
+                        patients, printers, base_url, msg_service_sid, clientName) {
   
   trigger_order_info <- reactiveVal(0)
   sales <- reactive({
@@ -3067,7 +3067,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
         ),
         h1("Confirmation Message"),
         span(class = "text-msg",
-        textAreaInput(session$ns("confirm_msg"), NULL, value = "Your order has been confirmed. Remember to bring your ID, and rec with you to DISPENSARY NAME.",
+        textAreaInput(session$ns("confirm_msg"), NULL, value = sprintf("Your order has been confirmed. Remember to bring your ID, and rec with you to %s.", clientName),
                       rows = 3)
       ), footer = actionButton(session$ns("send_confirm"), "Confirm Order", class = "btn-info add-queue-btn")
       )
