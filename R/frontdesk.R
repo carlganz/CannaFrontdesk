@@ -671,9 +671,9 @@ var x=$('#patient').selectize();
         return options[value]
       }).filter(function(value) {
         return value.verified === 3
-      })[0].valueFld;
+      })[0];
 if (option) {
-select.setValue(option);
+select.setValue(option.valueFld);
 }
 } else if ((this._currentStep == 19 || this._currentStep == 23) && !$('div[data-value=\"newPatient\"]').hasClass('active')) {
     $('a[data-value=\"newPatient\"]').tab('show');
@@ -687,10 +687,10 @@ var x=$('#patient').selectize();
         return options[value]
       }).filter(function(value) {
         return value.status === 5 || value.status === 6;
-      })[0].valueFld;
+      })[0];
 
 if (option) {
-select.setValue(option);
+select.setValue(option.valueFld);
 }
   }
 ")

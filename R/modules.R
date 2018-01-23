@@ -135,7 +135,7 @@ patientInfo <-
       if (isTruthy(patient_info_returning()$expirationDate)) {
         difftime(patient_info_returning()$expirationDate, Sys.Date())
       } else {
-        (-1*floor(difftime(patient_info_returning()$birthday, Sys.Date())/365)) - 21
+        (-1*ceiling(difftime(patient_info_returning()$birthday, Sys.Date())/365)) - 21
       }
     })
     
