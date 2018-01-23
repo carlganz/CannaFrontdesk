@@ -892,7 +892,7 @@ patientInfo <-
     observeEvent(input$send_form, {
       req(input$text_phone)
       url <- httr::modify_url(
-        url = paste0(base_url, "signup/"),
+        url = paste0(base_url, "reward/"),
         query = list(
           idpatient = patientId(),
           idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), key = gsub("\n  ", "\n", getOption("canna_key")))
@@ -1694,7 +1694,7 @@ newPatient <-
       req(input$text_phone)
       
       url <- httr::modify_url(
-        url = paste0(base_url, "reward/"),
+        url = paste0(base_url, "signup/"),
         query = list(
           idpatient = patientId(),
           idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), gsub("\n  ", "\n", getOption("canna_key")))
