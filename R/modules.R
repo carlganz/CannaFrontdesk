@@ -933,7 +933,7 @@ patientInfo <-
     
     # status
     output$expiration <- renderUI({
-      if (getOption("CannaData_state") %in% c("CA-M", "CO-M")) {
+      if (isTruthy(patient_info_returning()$expirationDate)) {
       if (isTRUE(expired() <= 0)) {
         # bad
         tagList(h2("Expired!!!"),
