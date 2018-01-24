@@ -328,6 +328,7 @@ patientInfo <-
                 session$ns("phone"),
                 type = "tel",
                 placeholder = "Phone",
+                required = FALSE,
                 label_width = 4,
                 input_width = 8,
                 `data-parsley-length` = "[12,14]",
@@ -409,7 +410,7 @@ patientInfo <-
         input(
           session$ns("email"),
           placeholder = "Email",
-          label_width = 4,
+          label_width = 4, required = FALSE,
           `data-parsley-type` = "email",
           value = patient_info_returning()$email
         ),
@@ -453,8 +454,6 @@ patientInfo <-
         input$city,
         input$zip,
         input$state,
-        input$phone,
-        input$email,
         input$birthday
       )
       
