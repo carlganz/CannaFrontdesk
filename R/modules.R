@@ -361,7 +361,7 @@ patientInfo <-
                tags$li(
                  icon("mobile", "deal-type fa-2x"),
                  value = tolower(as.character(as.logical(patient_info_returning()$textDeal))),
-                 class = if (patient_info_returning()$textDeal) "selected",
+                 class = if (isTRUE(patient_info_returning()$textDeal)) "selected",
                  alt = session$ns("textDeal")
                ))
             ),
@@ -429,7 +429,7 @@ patientInfo <-
                tags$li(
                  icon("envelope-o", "deal-type fa-2x"),
                  value = tolower(as.character(as.logical(patient_info_returning()$emailDeal))),
-                 class = if (patient_info_returning()$emailDeal) "selected",
+                 class = if (isTRUE(patient_info_returning()$emailDeal)) "selected",
                  alt = session$ns("emailDeal")
                )
       ))),
