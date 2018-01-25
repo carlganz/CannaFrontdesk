@@ -17,14 +17,13 @@ patientInfoUI <- function(id) {
   
   tagList(div(
     class = "content",
-      div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+      col(12,
         div(
           class = "row",
           div(class = "countdown-container notexpired",
               uiOutput(ns("expiration")))
         )),
-    div(
-      class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+    col(6,
       div(
         div(class = "name-container",
             uiOutput(ns(
@@ -41,12 +40,11 @@ patientInfoUI <- function(id) {
         box(
           class = "images",
           tableTitle("Images"),
-          div(
-            class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-            div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+          col(12,
+            col(6,
                 h4("Photo ID"),
                 uiOutput(ns("id_image_out"))),
-            div(class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+            col(6,
                 h4("Rec"),
                 uiOutput(ns(
                   "recommendation_image_out"
@@ -54,8 +52,7 @@ patientInfoUI <- function(id) {
           )
         ))
     ),
-    div(
-      class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+    col(6,
       div(
         class = "row",
         div(
@@ -276,8 +273,7 @@ patientInfo <-
           # add parsley
           tags$form(
             id = session$ns("basic_info_form"),
-            div(
-              class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+            col(6,
               input(
                 session$ns("name"),
                 placeholder = "First",
@@ -358,7 +354,7 @@ patientInfo <-
         )
               ),
       tags$label("Text Deal", class = "control-label control-label-left col-sm-4"),
-      tags$div(class = "checkbox checkbox-icons col-sm-7",
+      col(7, class = "checkbox checkbox-icons",
                tags$li(
                  icon("mobile", "deal-type fa-2x"),
                  value = tolower(as.character(as.logical(patient_info_returning()$textDeal))),
@@ -366,8 +362,7 @@ patientInfo <-
                  alt = session$ns("textDeal")
                ))
             ),
-      div(
-        class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+      col(6,
         input(
           session$ns("address"),
           placeholder = "Address",
@@ -426,7 +421,7 @@ patientInfo <-
       )
         ),
       tags$label("Email Deal", class = "control-label control-label-left col-sm-4"),
-      tags$div(class = "col-sm-7 checkbox checkbox-icons",
+      col(7, class = "checkbox checkbox-icons",
                tags$li(
                  icon("envelope-o", "deal-type fa-2x"),
                  value = tolower(as.character(as.logical(patient_info_returning()$emailDeal))),
@@ -801,7 +796,7 @@ patientInfo <-
               "Photo ID",
               span(class = "req", "*")
             ),
-            div(class = "col-sm-9",
+            col(9,
                 shiny::fileInput(session$ns("photoIdPath"), NULL))
           ),
           div(
@@ -812,7 +807,7 @@ patientInfo <-
               "Rec",
               span(class = "req", "*")
             ),
-            div(class = "col-sm-9",
+            col(9,
                 shiny::fileInput(session$ns("medicalPath"), NULL))
           )
         ),
@@ -1204,8 +1199,7 @@ newPatientUI <- function(id) {
               tags$form(
                 id = ns("newPatient"),
                 class = "form",
-                div(
-                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                col(6,
                   div(
                     div(class = "name-container",
                         uiOutput(ns(
@@ -1216,15 +1210,12 @@ newPatientUI <- function(id) {
                   box(
                     class = "images",
                     h1("Images"),
-                    div(
-                      class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
-                      div(
-                        class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                    col(12,
+                      col(6,
                         h4("Photo ID"),
                         shiny::imageOutput(ns("new_id_image"), inline = T, height = "auto")
                       ),
-                      div(
-                        class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                      col(6,
                         h4("Rec"),
                         shiny::imageOutput(
                           ns("new_medical_image"),
@@ -1235,8 +1226,7 @@ newPatientUI <- function(id) {
                     )
                   )
                 ),
-                div(
-                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                col(6,
                   div(
                     class = "row",
                     div(
@@ -1256,7 +1246,7 @@ newPatientUI <- function(id) {
                                   style = "width:30%", formnovalidate = NA)
                     )
                   ),
-                  div(class = "form-horizontal container fluid col-md-12",
+                  col(12, class = "form-horizontal container fluid",
                       div(
                         class = "row",
                         
@@ -1292,7 +1282,7 @@ newPatientUI <- function(id) {
                             )
                               )
                             )),
-              div(class = "form-horizontal container fluid col-md-12", div(
+              col(12, class = "form-horizontal container fluid", div(
                 class = "row",
                 h1("Upload Images", style = "width:100%;margin-bottom:15px"),
                 div(class = "input-container",
@@ -1337,8 +1327,7 @@ newPatient <-
           # add parsley
           tags$form(
             id = session$ns("basic_info_form"),
-            div(
-              class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+            col(6,
               input(
                 session$ns("name"),
                 placeholder = "First",
@@ -1384,8 +1373,7 @@ newPatient <-
                 )
               )
                 ),
-            div(
-              class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+            col(6,
               input(
                 session$ns("address"),
                 placeholder = "Address",
@@ -1781,7 +1769,7 @@ newPatient <-
             "Photo ID",
             span(class = "req", "*")
           ),
-          div(class = "col-sm-7",
+          col(7,
               shiny::fileInput(
                 session$ns("photoIdPath"), NULL, width = "100%"
               ),
@@ -1804,7 +1792,7 @@ newPatient <-
             "Rec",
             span(class = "req", "*")
           ),
-          div(class = "col-sm-7",
+          col(7,
               shiny::fileInput(
                 session$ns("medicalPath"), NULL, width = "100%"
               ),
@@ -1889,15 +1877,15 @@ queueUI <- function(id) {
   
   tagList(div(
     class = "content",
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+    col(12,
         box(h1("Online Sales"),
         DT::dataTableOutput(ns("online")))),
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+    col(12,
         box(tableTitle("Queue", "plus"),
             DT::dataTableOutput(ns(
               "queue"
             )))),
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+    col(12,
         box(
           tableTitle("In Store", "plus"),
           DT::dataTableOutput(ns("store"))
@@ -2565,13 +2553,13 @@ allPatientsUI <- function(id) {
   
   tagList(div(
     class = "content",
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+    col(12,
           box(
           h1("Incomplete Profiles"),
           DT::dataTableOutput(ns("incomplete"))
         )
         ),
-    div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+    col(12,
         box(
           h1("All Customers"),
           DT::dataTableOutput(ns("patients"))
@@ -2722,8 +2710,7 @@ onlineOrdersUI <- function(id) {
               tags$form(
                 id = ns("onlineSale"),
                 class = "form",
-                div(
-                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                col(6,
                   div(
                     div(class = "name-container",
                         uiOutput(ns(
@@ -2732,8 +2719,7 @@ onlineOrdersUI <- function(id) {
                   box(h1("Patient Info", style = "width:100%"),
                       DT::dataTableOutput(ns("patient_info")))
                 ),
-                div(
-                  class = "col-xs-6 col-sm-6 col-md-6 col-lg-6",
+                col(6,
                   div(
                     class = "row",
                     div(
@@ -2756,7 +2742,7 @@ onlineOrdersUI <- function(id) {
                   box(h1("Order Info", style = "width:100%"),
                       DT::dataTableOutput(ns("order_info")))
                 ),
-                div(class = "col-xs-12 col-sm-12 col-md-12 col-lg-12",
+                col(12,
                     box(
                     h1("Cart", style = "width:100%"),
                     DT::dataTableOutput(ns("cart"))
