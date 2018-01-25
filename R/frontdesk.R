@@ -140,15 +140,14 @@ frontdesk <-
     document.cookie = cname + \"=\" + cvalue + \";path=/\";
 };setCookie(\"cannadata_token\",\"%s\");location.replace(\"%s\");", authorization_url$state, authorization_url$url)))))
         }
-        access_token <<- respObj$access_token
         return(shiny::htmlTemplate(
           filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
-          clientName = clientName, state = state
+          clientName = clientName, state = state, accessToken = respObj$access_token
         ))
       } else {
         return(shiny::htmlTemplate(
           filename = system.file(package = "CannaFrontdesk", "templates", "template.html"),
-          clientName = clientName, state = state
+          clientName = clientName, state = state, accessToken = ""
         ))
       }
     }
@@ -188,7 +187,7 @@ frontdesk <-
     
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
-      
+      access_token <- isolate(input$access_token)      
       if (length(params$code) == 0 && !interactive()) { 
         return()
       }

@@ -91,6 +91,7 @@ GNU Affero General Public License for more details.
 
   <!--main content javascript depends on names of modules FYI -->
   <div id="content">
+    <div style = "display:none;"><input id = "access_token" type = "text" class = "form-control" value = "{{ accessToken  }}"></div>
     {{ switch(state,
         "OR-R" = shiny::navlistPanel(id = "tabset", well=FALSE, 
         shiny::tabPanel("homepage",CannaFrontdesk:::queueUI("frontdesk")), 
