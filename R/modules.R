@@ -162,7 +162,14 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0)
+        i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (getOption("CannaData_state") %in% c("CO-R","CO-M","OR-R")) {
+          if (isTruthy(patient_info_returning()$expirationDate)) {
+          getOption("metrc_medical_facilityNumber")
+        } else {
+          getOption("metrc_recreational_facilityNumber")
+        }} else {
+          1
+        })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
@@ -205,7 +212,14 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_let_in(pool, patientId(), new = nrow(patient_history())==0)
+        i_f_let_in(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (getOption("CannaData_state") %in% c("CO-R","CO-M","OR-R")) {
+          if (isTruthy(patient_info_returning()$expirationDate)) {
+            getOption("metrc_medical_facilityNumber")
+          } else {
+            getOption("metrc_recreational_facilityNumber")
+          }} else {
+            1
+          })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
@@ -580,7 +594,7 @@ patientInfo <-
       # req(nchar(input$update_recId) == 15,!is.na(as.numeric(input$update_recId)))
       
       ####### update patient Metrc ###############
-      
+      # metrc_post_patients_update()
       
       u_f_med_info(
         pool,
@@ -1615,6 +1629,8 @@ newPatient <-
           }
         )
         ######### Add Patient to Metrc ################
+        # metrc_post_patients()
+        
         
         # add patient
         u_f_new_patient(pool,
@@ -2008,15 +2024,16 @@ queue <-
           "$('.modal-content').addClass('table-container');"
         ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         h1("Add Customer to Queue"),
-        div(
+        tags$form(id = session$ns("queue_form"),
           class = "center",
-          if (state %in% c("OR-R", "CO-R")) {
+          if (state %in% c("OR-R", "CO-R", "CA-R")) {
         tagList(textInput(session$ns("queue_name"), "Name"),
-         if (state == "CO-R") {
+
            tagList(tags$br(),
-           textInput(session$ns("queue_id"), "ID #"))
-         }       
-        )
+           textInput(session$ns("queue_id"), "ID #")),
+            tags$script(
+              '$("#frontdesk-queue_id, #frontdesk-queue_name").attr("required", true)'
+            ))
           } else {
             selectizeInput(session$ns("queue_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
                                                                             loadThrottle = NA,
@@ -2027,70 +2044,26 @@ queue <-
             ))
           }
         ),
-        footer = 
-          if (!state  %in% c("OR-R","CO-R")) {
-            tags$button(
-              id = session$ns("queue_add"),
-              "Add to Queue",
-              class = "btn btn-info add-queue-btn action-button"
-            )
-          } else if (state == "CO-R") {
-            tags$button(
-              id = session$ns("queue_rec"),
-              "Add to Queue",
-              class = "btn btn-info add-queue-btn action-button"
-            )
-          } else {
-          tagList(tags$button(
-          id = session$ns("queue_med"),
-          "Add Medical",
-          class = "btn btn-info add-queue-btn action-button"
+        footer =
+          tagList(parsleyr::submit_form(
+          session$ns("queue_med"),
+          label = "Add Medical",
+          class = "btn btn-info add-queue-btn",
+          formId = session$ns("queue_form")
         ),
-        tags$button(
-          id = session$ns("queue_rec"),
-          "Add Recreational",
-          class = "btn btn-info add-queue-btn action-button"
+        parsleyr::submit_form(
+          session$ns("queue_rec"),
+          label = "Add Recreational",
+          class = "btn btn-info add-queue-btn",
+          formId = session$ns("queue_form")
         )
       )
-            }
+            
       ))
       if (!state %in% c("OR-R","CO-R")) updateSelectizeInput(session, "queue_name", choices = patients() %>% 
                                                   filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
-    observeEvent(input$queue_add, {
-      req(input$queue_name)
-      if (as.numeric(input$queue_name) %in% queue_store()$idpatient) {
-        showModal(modalDialog(
-        fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-        tags$script(
-          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-        ),
-        h1(paste(
-          "Patient already in",
-          if (queue_store()$status[as.numeric(input$queue_name) == queue_store()$idpatient] == 2)
-            "store"
-          else
-            "queue"
-        ))))
-      } else {
-      i_f_add_queue(pool, input$queue_name, FALSE)
-      trigger(trigger() + 1)
-      today_count <- q_f_visit_count(pool, input$queue_name)
-      if (today_count == 0) { 
-      removeModal()
-      } else {
-        showModal(
-          modalDialog(
-          fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
-          h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
-        ))
-      }
-      }
-    })
     
     observeEvent(input$queue_rec, {
       req(input$queue_name)
@@ -2106,9 +2079,9 @@ queue <-
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
-        i_f_add_queue(pool, id, input$queue_id %in% patients()$id)
+        i_f_add_queue(pool, id, input$queue_id %in% patients()$id, facilityNumber = getOption("metrc_recreational_facilityNumber"))
       } else {
-        i_f_add_queue(pool, NA, FALSE, input$queue_name)
+        i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = getOption("metrc_recreational_facilityNumber"))
       }
       trigger(trigger() + 1)
       removeModal()
@@ -2126,7 +2099,7 @@ queue <-
         tags$script(
           "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
         ),
-        div(class = "center",
+        tags$form(class = "center",
         textInput(session$ns("recId"), "Enter Medical ID #")),
         footer = actionButton(session$ns("new_queue_patient"), "Create Profile", class = "btn btn-info add-queue-btn")
       )
@@ -2136,7 +2109,7 @@ queue <-
     observeEvent(input$new_queue_patient, {
       req(input$recId)
       if (input$recId %in% patients()$recId) {
-        i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE)
+        i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
         trigger(trigger() + 1)
       } else {
         new_row <- data.frame(
@@ -2150,7 +2123,7 @@ queue <-
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
         id <- last_insert_id(con)
         pool::poolReturn(con)
-        i_f_add_queue(pool, id, TRUE)
+        i_f_add_queue(pool, id, TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
         trigger(trigger() + 1)
         removeModal()
         # trigger_new(trigger_new() + 1)
@@ -2164,14 +2137,16 @@ queue <-
           "$('.modal-content').addClass('table-container');"
         ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
         h1("Let Customer into Store"),
-        div(
+        tags$form(id = session$ns("store_form"),
           class = "center",
-          if (state %in% c("OR-R", "CO-R")) {
+          if (state %in% c("OR-R", "CO-R", "CA-R")) {
         tagList(textInput(session$ns("store_name"), "Name"),
-            if (state == "CO-R") {
               tagList(tags$br(),
-                      textInput(session$ns("store_id"), "ID #"))
-            })       
+                      textInput(session$ns("store_id"), "ID #"),
+                      tags$script(
+                        '$("#frontdesk-store_id, #frontdesk-store_name").attr("required", true)'
+                      ))
+            )       
           } else {
             selectizeInput(session$ns("store_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
                                                                             loadThrottle = NA,
@@ -2182,72 +2157,27 @@ queue <-
             ))
             }
         ),
-        footer = if (!state  %in% c("OR-R","CO-R")) {
-          tags$button(
-            id = session$ns("store_add"),
-            "Let in Store",
-            class = "btn btn-info add-queue-btn action-button"
-          )
-        } else if (state == "CO-R") {
-          tags$button(
-            id = session$ns("store_rec"),
-            "Let in Store",
-            class = "btn btn-info add-queue-btn action-button"
-          )
-        } else {
-          tagList(tags$button(
-            id = session$ns("store_med"),
-            "Add Medical",
-            class = "btn btn-info add-queue-btn action-button"
+        footer = 
+          tagList(parsleyr::submit_form(
+            session$ns("store_med"),
+            label = "Add Medical",
+            class = "btn btn-info add-queue-btn",
+            formId = session$ns("store_form")
           ),
-          tags$button(
-            id = session$ns("store_rec"),
-            "Add Recreational",
-            class = "btn btn-info add-queue-btn action-button"
+          parsleyr::submit_form(
+            session$ns("store_rec"),
+            label = "Add Recreational",
+            class = "btn btn-info add-queue-btn",
+            formId = session$ns("store_form")
           )
           )
-        }
         ))
       if (!state  %in% c("OR-R","CO-R")) updateSelectizeInput(session, "store_name", choices = patients() %>% 
                                                   filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
-    observeEvent(input$store_add, {
-      req(input$store_name)
-      if (as.numeric(input$store_name) %in% queue_store()$idpatient) {
-        showModal(modalDialog(
-          fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
-          h1(paste(
-            "Patient already in",
-            if (queue_store()$status[as.numeric(input$store_name) == queue_store()$idpatient] == 2)
-              "store"
-            else
-              "queue"
-          ))))
-      } else {
-      i_f_let_in(pool, input$store_add, FALSE)
-        today_count <- q_f_visit_count(pool, input$store_name)
-        if (today_count == 0) { 
-          removeModal()
-        } else {
-          showModal(
-            modalDialog(
-            fade = FALSE, easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-            tags$script(
-              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-            ),
-            h1(sprintf("NOTE: This is their %s visit today!", scales::ordinal(today_count + 1)))
-          )
-          )
-        }
-      trigger(trigger() + 1)
-      }
-    })
-    
     observeEvent(input$store_med, {
+      req(input$store_name,input$store_id)
       showModal(modalDialog(
         easyClose = TRUE, fade = FALSE,
         tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
@@ -2378,6 +2308,7 @@ queue <-
       req(queue())
       dataTableAjax(session, queue() %>% select_( ~ -idtransaction) %>% 
                       mutate_(
+                        recreational = ~ if_else(as.logical(recreational), "R", "M"),
                         letIn = ~ row_number(),
                         remove = ~ row_number(),
                         info = ~ if (state == "OR-R") {
@@ -2391,33 +2322,37 @@ queue <-
                         name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
                       ) %>%
                       select_(
+                        ` ` = ~ recreational,
                         Name =  ~ name,
                         `Time` = ~ timeIn,
                         ~ letIn,
                         ~ info,
                         ~ remove
-                      ), rownames = TRUE, outputId = "queue")
+                      ), rownames = FALSE, outputId = "queue")
       reloadData(queue_proxy, resetPaging = FALSE)
     })
     
     output$queue <- DT::renderDataTable({
-      isolate(queue()) %>% select_( ~ -idtransaction) %>%
+      isolate(queue()) %>% select_( ~ -idtransaction) %>% 
         mutate_(
+          recreational = ~ if_else(as.logical(recreational), "R", "M"),
           letIn = ~ row_number(),
           remove = ~ row_number(),
           info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
           timeIn = ~ as.character(as.POSIXct(
             hms::as.hms(hms::as.hms(timeIn))
-          ), "%I:%M %p")
+          ), "%I:%M %p"),
+          name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
         ) %>%
         select_(
+          ` ` = ~ recreational,
           Name =  ~ name,
           `Time` = ~ timeIn,
           ~ letIn,
           ~ info,
           ~ remove
         )
-    }, rownames = TRUE, width = "100%", server = TRUE, options = list(
+    }, rownames = FALSE, width = "100%", server = TRUE, options = list(
       dom = 'tp',
       drawCallback = JS(
         'function() {
@@ -2474,6 +2409,7 @@ selection = 'none')
       req(in_store())
       dataTableAjax(session, in_store() %>% select_( ~ -idtransaction) %>% 
                     mutate_(
+                      recreational = ~ if_else(as.logical(recreational), "R", "M"),
                       remove = ~ row_number(),
                       info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
                       timeIn = ~ as.character(as.POSIXct(
@@ -2482,17 +2418,19 @@ selection = 'none')
                       name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
                     ) %>%
                     select_(
+                      ` ` = ~ recreational,
                       Name = ~ name,
                       `Time` = ~ timeIn,
                       ~ info,
                       ~ remove
-                    ), rownames = TRUE, outputId = "store")
+                    ), rownames = FALSE, outputId = "store")
       reloadData(store_proxy, resetPaging = FALSE)
     })
     
     output$store <- DT::renderDataTable({
       isolate(in_store()) %>% select_( ~ -idtransaction) %>% 
         mutate_(
+          recreational = ~ if_else(as.logical(recreational), "R", "M"),
           remove = ~ row_number(),
           info = ~ if_else(is.na(idpatient), NA_integer_, row_number()),
           timeIn = ~ as.character(as.POSIXct(
@@ -2501,12 +2439,13 @@ selection = 'none')
           name = ~ if_else(is.na(id), name, paste0(name, " (", id, ")"))
         ) %>%
         select_(
+          ` ` = ~ recreational,
           Name = ~ name,
           `Time` = ~ timeIn,
           ~ info,
           ~ remove
         )
-    }, rownames = TRUE, server = TRUE, options = list(
+    }, rownames = FALSE, server = TRUE, options = list(
       dom = 'tp',
       drawCallback = JS(
         'function() {
