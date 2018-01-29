@@ -179,11 +179,11 @@ frontdesk <-
                                                "text/plain"))
   
     msg_service_sid = tw_msg_service_list()[[1]]$sid
-    # Sys.setenv(docuSign_username = getOption("docuSign_username"))
-    # Sys.setenv(docuSign_password = getOption("docuSign_password"))
-    # Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
+    Sys.setenv(docuSign_username = getOption("docuSign_username"))
+    Sys.setenv(docuSign_password = getOption("docuSign_password"))
+    Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
     # # login on launch
-    # docu_log <- docuSignr::docu_login(demo = TRUE)
+    docu_log <- docuSignr::docu_login(demo = TRUE)
     
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
