@@ -14,7 +14,7 @@
 #' Frontdesk Shiny Application
 #'
 #' @import shiny CannaQueries shinyCleave rintrojs RMariaDB pool DT dplyr CannaModules CannaSelectize hms scales
-#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel docuSignr
+#' @import aws.s3 c3 jsonlite jose openssl httr base64enc twilio googleAuthR googlePrintr DBI parallel docuSignr CannaMetrc
 #' @importFrom tools file_ext
 #' @importFrom tidyr replace_na spread_
 #' @inheritParams CannaSignup::signup
@@ -562,7 +562,7 @@ frontdesk <-
           input$read_barcode$city,
           substr(input$read_barcode$zip, 1, 5),
           input$read_barcode$state,
-          verified = 2
+          verified = 1
         )
         id <- last_insert_id(con)
         pool::poolReturn(con)

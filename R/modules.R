@@ -1520,83 +1520,83 @@ newPatient <-
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient has not finished signup form yet. Please wait...")
         ))
-      # } else if (is.na(patient_info_new()$docuSigned) ||
-      #            patient_info_new()$docuSigned == 0) {
-      #   docuStatus <- docu_envelope_status(base_url = docu_log[1, 3], envelope_id = patient_info_new()$envelopeId)
-      #   if (docuStatus == "completed") {
-      #     u_docuSign(pool, patientId = patientId())
-      #     id <- patientId()
-      #     
-      #     medicalS3 <-
-      #       paste0(
-      #         paste("medical", id, Sys.Date(), sep = "_"),
-      #         ".",
-      #         tools::file_ext(input$medicalPath$datapath)
-      #       )
-      #     
-      #     photoS3 <-
-      #       paste0(
-      #         paste("photo", id, Sys.Date(), sep = "_"),
-      #         ".",
-      #         tools::file_ext(input$photoIdPath$datapath)
-      #       )
-      #     
-      #     tryCatch(
-      #       aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
-      #       warning = function(w) {
-      #         stop("S3 failed \n", w)
-      #       }
-      #     )
-      #     
-      #     tryCatch(
-      #       aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
-      #       warning = function(w) {
-      #         stop("S3 failed", w)
-      #       }
-      #     )
-      #     ######### Add Patient to Metrc ################
-      #     
-      #     # add patient
-      #     u_f_new_patient(pool,
-      #                     id,
-      #                     input$date,
-      #                     input$physician,
-      #                     photoS3,
-      #                     medicalS3,
-      #                     input$recId)
-      #     
-      #     ### add to queue?
-      #     lapply(c("date", "physician", "recId"), function(x) {
-      #       updateTextInput(session, x, value = "")
-      #     })
-      #     
-      #     trigger_files(trigger_files() + 1)
-      #     trigger_new(trigger_new() + 1)
-      #     trigger_returning(trigger_returning() + 1)
-      #     trigger_patients(trigger_patients() + 1)
-      #     session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
-      #     session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
-      #     session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
-      #     ### go to patient info page with new patient there
-      #     reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
-      #     showModal(modalDialog(
-      #       easyClose = TRUE,
-      #       tags$script(
-      #         "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-      #       ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-      #       h1("New patient has been added")
-      #     ))
-      #   } else {
-      #   showModal(modalDialog(
-      #     easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-      #     tags$script(
-      #       "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-      #     ),
-      #     h1(
-      #       "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
-      #     )
-      #   ))
-      #   }
+      } else if (is.na(patient_info_new()$docuSigned) ||
+                 patient_info_new()$docuSigned == 0) {
+        docuStatus <- docu_envelope_status(base_url = docu_log[1, 3], envelope_id = patient_info_new()$envelopeId)
+        if (docuStatus == "completed") {
+          u_docuSign(pool, patientId = patientId())
+          id <- patientId()
+
+          medicalS3 <-
+            paste0(
+              paste("medical", id, Sys.Date(), sep = "_"),
+              ".",
+              tools::file_ext(input$medicalPath$datapath)
+            )
+
+          photoS3 <-
+            paste0(
+              paste("photo", id, Sys.Date(), sep = "_"),
+              ".",
+              tools::file_ext(input$photoIdPath$datapath)
+            )
+
+          tryCatch(
+            aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
+            warning = function(w) {
+              stop("S3 failed \n", w)
+            }
+          )
+
+          tryCatch(
+            aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
+            warning = function(w) {
+              stop("S3 failed", w)
+            }
+          )
+          ######### Add Patient to Metrc ################
+
+          # add patient
+          u_f_new_patient(pool,
+                          id,
+                          input$date,
+                          input$physician,
+                          photoS3,
+                          medicalS3,
+                          input$recId)
+
+          ### add to queue?
+          lapply(c("date", "physician", "recId"), function(x) {
+            updateTextInput(session, x, value = "")
+          })
+
+          trigger_files(trigger_files() + 1)
+          trigger_new(trigger_new() + 1)
+          trigger_returning(trigger_returning() + 1)
+          trigger_patients(trigger_patients() + 1)
+          session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
+          session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
+          session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
+          ### go to patient info page with new patient there
+          reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
+          showModal(modalDialog(
+            easyClose = TRUE,
+            tags$script(
+              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+            ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+            h1("New patient has been added")
+          ))
+        } else {
+        showModal(modalDialog(
+          easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+          tags$script(
+            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+          ),
+          h1(
+            "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
+          )
+        ))
+        }
       } else {
         # upload images to S3
         id <- patientId()
@@ -2117,13 +2117,14 @@ queue <-
           lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]],
           recId = input$recId,
           addDate = mySql_date(Sys.Date()),
-          verified = 3, birthday = NA
+          verified = 1, birthday = NA
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
         id <- last_insert_id(con)
         pool::poolReturn(con)
-        i_f_add_queue(pool, id, TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
+        # i_f_add_queue(pool, id, TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         trigger(trigger() + 1)
         removeModal()
         # trigger_new(trigger_new() + 1)
@@ -2203,13 +2204,14 @@ queue <-
           lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
           recId = input$recId,
           addDate = mySql_date(Sys.Date()),
-          verified = 3, birthday = NA
+          verified = 1, birthday = NA
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
         id <- last_insert_id(con)
         pool::poolReturn(con)
-        i_f_let_in(pool, id, TRUE)
+        # i_f_let_in(pool, id, TRUE)
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         trigger(trigger() + 1)
         removeModal()
         # trigger_new(trigger_new() + 1)
