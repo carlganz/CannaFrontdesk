@@ -503,8 +503,9 @@ frontdesk <-
                 input$read_barcode$lastName
               )
             ),
-            footer = tagList(actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
-                        actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
+            footer = tagList(
+              if ( nchar(getOption("metrc_recreational_facilityNumber"))>0) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+                        if ( nchar(getOption("metrc_medical_facilityNumber"))>0 || getOption("CannaData_state") == "CA-M") actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
                 )
           ))
         }
