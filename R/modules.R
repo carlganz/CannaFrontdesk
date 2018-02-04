@@ -1680,6 +1680,7 @@ newPatient <-
     })
     
     observeEvent(input$text_form, {
+      req(patientId())
       showModal(modalDialog(
         easyClose = TRUE,
         tags$script(
@@ -1922,7 +1923,8 @@ queue <-
            trigger_online,
            online,
            state,
-           patients) {
+           patients,
+           trigger_new) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
@@ -2026,7 +2028,6 @@ queue <-
         h1("Add Customer to Queue"),
         tags$form(id = session$ns("queue_form"),
           class = "center",
-          if (state %in% c("OR-R", "CO-R", "CA-R")) {
         tagList(textInput(session$ns("queue_name"), "Name"),
 
            tagList(tags$br(),
@@ -2034,15 +2035,6 @@ queue <-
             tags$script(
               '$("#frontdesk-queue_id, #frontdesk-queue_name").attr("required", true)'
             ))
-          } else {
-            selectizeInput(session$ns("queue_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
-                                                                            loadThrottle = NA,
-                                                                            valueField = "idpatient",
-                                                                            searchField = c("firstName", "middleName", "lastName", "id"),
-                                                                            placeholder = "Search",
-                                                                            labelField = "label"
-            ))
-          }
         ),
         footer =
           tagList(parsleyr::submit_form(
@@ -2060,8 +2052,6 @@ queue <-
       )
             
       ))
-      if (!state %in% c("OR-R","CO-R")) updateSelectizeInput(session, "queue_name", choices = patients() %>% 
-                                                  filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
     
@@ -2084,38 +2074,21 @@ queue <-
         i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = getOption("metrc_recreational_facilityNumber"))
       }
       trigger(trigger() + 1)
+      trigger_new(trigger_new() + 1)
       removeModal()
     })
     
     observeEvent(input$queue_med, {
       req(input$queue_name)
-      if (state == "CO-R") {
-        req(input$queue_id)
-      }
-      showModal(modalDialog(
-        easyClose = TRUE, fade = FALSE,
-        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-        h1("New Patient!"),
-        tags$script(
-          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-        ),
-        tags$form(class = "center",
-        textInput(session$ns("recId"), "Enter Medical ID #")),
-        footer = actionButton(session$ns("new_queue_patient"), "Create Profile", class = "btn btn-info add-queue-btn")
-      )
-      )
-    })
-    
-    observeEvent(input$new_queue_patient, {
-      req(input$recId)
-      if (input$recId %in% patients()$recId) {
-        i_f_add_queue(pool, patients()$idpatient[patients()$recId == input$recId], TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
+      req(input$queue_id)
+      if (input$queue_id %in% patients()$id) {
+        i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
         trigger(trigger() + 1)
       } else {
         new_row <- data.frame(
           firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
           lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]],
-          recId = input$recId,
+          id = input$queue_id,
           addDate = mySql_date(Sys.Date()),
           verified = 1, birthday = NA
         )
@@ -2124,8 +2097,9 @@ queue <-
         id <- last_insert_id(con)
         pool::poolReturn(con)
         # i_f_add_queue(pool, id, TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
-        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         trigger(trigger() + 1)
+        trigger_new(trigger_new() + 1)
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         removeModal()
         # trigger_new(trigger_new() + 1)
       }
@@ -2140,7 +2114,6 @@ queue <-
         h1("Let Customer into Store"),
         tags$form(id = session$ns("store_form"),
           class = "center",
-          if (state %in% c("OR-R", "CO-R", "CA-R")) {
         tagList(textInput(session$ns("store_name"), "Name"),
               tagList(tags$br(),
                       textInput(session$ns("store_id"), "ID #"),
@@ -2148,15 +2121,6 @@ queue <-
                         '$("#frontdesk-store_id, #frontdesk-store_name").attr("required", true)'
                       ))
             )       
-          } else {
-            selectizeInput(session$ns("store_name"), "Name", NULL, NULL, options = list(maxOptions = 10,
-                                                                            loadThrottle = NA,
-                                                                            labelField = "label",
-                                                                            valueField = "idpatient",
-                                                                            searchField = c("firstName", "middleName", "lastName", "id"),
-                                                                            placeholder = "Search"
-            ))
-            }
         ),
         footer = 
           tagList(parsleyr::submit_form(
@@ -2173,36 +2137,18 @@ queue <-
           )
           )
         ))
-      if (!state  %in% c("OR-R","CO-R")) updateSelectizeInput(session, "store_name", choices = patients() %>% 
-                                                  filter_(~difftime(.data$expirationDate, Sys.Date()) > 0), server = TRUE, selected = NA)
     })
     
     observeEvent(input$store_med, {
       req(input$store_name,input$store_id)
-      showModal(modalDialog(
-        easyClose = TRUE, fade = FALSE,
-        tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-        h1("New Patient!"),
-        tags$script(
-          "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-        ),
-        div(class = "center",
-        textInput(session$ns("recId"), "Enter Medical ID #")),
-        footer = actionButton(session$ns("new_store_patient"), "Create Profile", class = "btn btn-info add-queue-btn")
-      )
-      )
-    })
-    
-    observeEvent(input$new_store_patient, {
-      req(input$recId)
-      if (input$recId %in% patients()$recId) {
-        i_f_let_in(pool, patients()$idpatient[patients()$recId == input$recId], FALSE)
+      if (input$store_id %in% patients()$id) {
+        i_f_let_in(pool, patients()$idpatient[patients()$id == input$store_name], FALSE)
         trigger(trigger() + 1)
       } else {
         new_row <- data.frame(
           firstName = stringr::str_split(input$store_name, " ", 2)[[c(1, 1)]],
           lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
-          recId = input$recId,
+          id = input$store_id,
           addDate = mySql_date(Sys.Date()),
           verified = 1, birthday = NA
         )
@@ -2211,8 +2157,9 @@ queue <-
         id <- last_insert_id(con)
         pool::poolReturn(con)
         # i_f_let_in(pool, id, TRUE)
-        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         trigger(trigger() + 1)
+        trigger_patients(trigger_patients() + 1)
+        reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         removeModal()
         # trigger_new(trigger_new() + 1)
       }
@@ -2220,8 +2167,8 @@ queue <-
     
     observeEvent(input$store_rec, {
       req(input$store_name)
-      if (state == "CO-R") {
-        req(input$store_id)
+      req(input$store_id)
+      
       if (input$store_id %in% patients()$id) {
         id <- patients() %>% filter_(~id == input$store_id) %>% slice(1) %>% pull("idpatient")
       } else {
@@ -2231,10 +2178,9 @@ queue <-
         pool::poolReturn(con)
       }
       i_f_let_in(pool, id, !input$store_id %in% patients()$id)
-      } else {
-      i_f_let_in(pool, NA, FALSE, input$store_name)
-      }
+
       trigger(trigger() + 1)
+      trigger_patients(trigger_patients() + 1)
       removeModal()
     })
     
