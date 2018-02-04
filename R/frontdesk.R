@@ -504,8 +504,8 @@ frontdesk <-
               )
             ),
             footer = tagList(
-              if ( nchar(getOption("metrc_recreational_facilityNumber"))>0) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
-                        if ( nchar(getOption("metrc_medical_facilityNumber"))>0 || getOption("CannaData_state") == "CA-M") actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
+              if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0)) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+                        if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0) actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
                 )
           ))
         }

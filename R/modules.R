@@ -2038,14 +2038,14 @@ queue <-
         ),
         footer =
           tagList(
-            if ( nchar(getOption("metrc_medical_facilityNumber"))>0 || getOption("CannaData_state") == "CA-M")
+            if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0)
             parsleyr::submit_form(
           session$ns("queue_med"),
           label = "Add Medical",
           class = "btn btn-info add-queue-btn",
           formId = session$ns("queue_form")
         ),
-        if ( nchar(getOption("metrc_recreational_facilityNumber"))>0)
+        if ( isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
         parsleyr::submit_form(
           session$ns("queue_rec"),
           label = "Add Recreational",
@@ -2127,14 +2127,14 @@ queue <-
         ),
         footer = 
           tagList(
-            if ( nchar(getOption("metrc_medical_facilityNumber"))>0 || getOption("CannaData_state") == "CA-M")
+            if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0)
               parsleyr::submit_form(
                 session$ns("store_med"),
                 label = "Add Medical",
                 class = "btn btn-info add-queue-btn",
                 formId = session$ns("store_form")
               ),
-            if ( nchar(getOption("metrc_recreational_facilityNumber"))>0)
+            if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
               parsleyr::submit_form(
                 session$ns("store_rec"),
                 label = "Add Recreational",
