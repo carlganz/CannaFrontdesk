@@ -190,17 +190,17 @@ CannaFrontdesk = function() {
       // move sidebar outside of content
       $("#sidebar").detach().prependTo("body");
       // append icons
-      $("a[data-value='homepage']").html('<i class="fa fa-home fa-2x"></i><br>Home');
+      $("a[data-value='homepage']").html('<i class="fa fa-home fa-lg"></i><br>Home');
       if ($("a[data-value='allPatients']")) {
-        $("a[data-value='allPatients']").html('<i class="fa fa-users fa-2x"></i><br>All Customers');
+        $("a[data-value='allPatients']").html('<i class="fa fa-users fa-lg"></i><br>All Customers');
       }
       if ($("a[data-value='patientInfo']")) {
-        $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-2x"></i><br>Customer Info');
+        $("a[data-value='patientInfo']").html('<i class="fa fa-user fa-lg"></i><br>Customer Info');
       }
       if ($("a[data-value='newPatient']")) {
-        $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-2x"></i><br>New Patient');
+        $("a[data-value='newPatient']").html('<i class="fa fa-user-plus fa-lg"></i><br>New Patient');
       }
-      $("a[data-value='preOrders']").html('<i class = "fa fa-shopping-cart"></i><br>Online Sale');
+      $("a[data-value='preOrders']").html('<i class = "fa fa-shopping-cart fa-lg"></i><br>Online Sale');
       // add class
       $("#sidebar .nav").wrapAll("<div class = 'icon-bar'/>");
       $("#sidebar .nav").addClass("sidebar-icon-bar");
