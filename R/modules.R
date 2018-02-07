@@ -562,6 +562,20 @@ patientInfo <-
         label_width = 4
       ),
       input(
+        session$ns("plants"),
+        type = "tel",
+        placeholder = "Max Plants",
+        value = patient_info_returning()$plants,
+        label_width = 4
+      ),
+      input(
+        session$ns("smokable"),
+        type = "tel",
+        placeholder = "Max Smokable",
+        value = patient_info_returning()$smokable,
+        label_width = 4
+      ),
+      input(
         session$ns("medicalCondition"),
         placeholder = "Condition",
         required = FALSE,
@@ -584,7 +598,9 @@ patientInfo <-
       req(patientId(),
           input$expirationDate,
           input$physician,
-          input$recId)
+          input$recId,
+          input$plants,
+          input$smokable)
       
       # validate date
       req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$",
@@ -594,7 +610,10 @@ patientInfo <-
       # req(nchar(input$update_recId) == 15,!is.na(as.numeric(input$update_recId)))
       
       ####### update patient Metrc ###############
-      # metrc_post_patients_update()
+      if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
+        metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+                            input$plants, input$smokable, Sys.Date())
+      }
       
       u_f_med_info(
         pool,
@@ -602,7 +621,7 @@ patientInfo <-
         expirationDate = input$expirationDate,
         physician = input$physician,
         medicalCondition = input$medicalCondition,
-        recId = input$recId
+        recId = input$recId, input$plants, input$smokable
       )
       
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
@@ -1268,7 +1287,20 @@ newPatientUI <- function(id) {
                         div(class = "input-container",
                             input(ns("physician"), placeholder = "Physician", label_width = 4),
                             input(
-                              ns("date"),
+                              ns("startDate"),
+                              "text", `data-date-language` ="en", `data-date-week-start` =0,
+                              `data-min-date` = format(Sys.Date() - 366, "%m-%d-%Y"),
+                              `data-max-date` = format(Sys.Date(), "%m-%d-%Y"),
+                              `data-initial-date` = NA, `data-date-format` = "mm/dd/yyyy",
+                              placeholder = "Start Date (MM/DD/YYYY)",
+                              label = "Start Date",
+                              `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
+                            ),
+                            tags$script(
+                              paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
+                            ),
+                            input(
+                              ns("endDate"),
                               "text", `data-date-language` ="en", `data-date-week-start` =0,
                               `data-min-date` = format(Sys.Date(), "%m-%d-%Y"),
                               `data-max-date` = format(Sys.Date() + 366, "%m-%d-%Y"),
@@ -1277,23 +1309,31 @@ newPatientUI <- function(id) {
                               label = "Exp Date",
                               `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
                             ),
-                            tags$script(
-                              paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
-                            ),
                             input(
                               ns("recId"),
                               "text",
                               placeholder = "Rec #", label_width = 4
                             ),
+                            input(ns("plants"), placeholder = "Max Plants", type = "number", label_width = 4, required = TRUE),
+                            input(ns("smokable"), placeholder = "Max Smokable", type = "number", label_width = 4, required = TRUE),
                             tags$script(
                               paste0(
                                 "var expDate=new Cleave('#",
-                                ns("date"),
+                                ns("endDate"),
                                 "', {
                                 date: true, datePattern: ['m', 'd', 'Y']
 })"
               )
-                            )
+                            ),
+              tags$script(
+                paste0(
+                  "var expDate=new Cleave('#",
+                  ns("startDate"),
+                  "', {
+                                date: true, datePattern: ['m', 'd', 'Y']
+})"
+                )
+              )
                               )
                             )),
               col(12, class = "form-horizontal container fluid", div(
@@ -1488,7 +1528,10 @@ newPatient <-
       # server side form validation
       req(
         patientId(),
-        input$date,
+        input$startDate,
+        input$endDate,
+        input$plants,
+        input$smokable,
         input$recId,
         input$medicalPath,
         input$photoIdPath,
@@ -1555,15 +1598,21 @@ newPatient <-
             }
           )
           ######### Add Patient to Metrc ################
+          if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
+            metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+                                input$plants, input$smokable, Sys.Date())
+          }
 
           # add patient
           u_f_new_patient(pool,
                           id,
-                          input$date,
+                          input$endDate,
                           input$physician,
                           photoS3,
                           medicalS3,
-                          input$recId)
+                          input$recId,
+                          input$plants,
+                          input$smokable)
 
           ### add to queue?
           lapply(c("date", "physician", "recId"), function(x) {
@@ -1629,17 +1678,22 @@ newPatient <-
           }
         )
         ######### Add Patient to Metrc ################
-        # metrc_post_patients()
+        if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
+          metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+                              input$plants, input$smokable, Sys.Date())
+        }
         
         
         # add patient
         u_f_new_patient(pool,
                         id,
-                        input$date,
+                        input$endDate,
                         input$physician,
                         photoS3,
                         medicalS3,
-                        input$recId)
+                        input$recId,
+                        input$plants,
+                        input$smokable)
         
         ### add to queue?
         lapply(c("date", "physician", "recId"), function(x) {
