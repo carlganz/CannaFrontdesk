@@ -305,7 +305,8 @@ frontdesk <-
           trigger_patients,
           msg_service_sid,
           base_url,
-          docu_log
+          docu_log,
+          settings
         )
       }
       

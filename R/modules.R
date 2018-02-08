@@ -259,6 +259,10 @@ patientInfo <-
     
     observeEvent(input$delete, {
       d_f_patient(pool, patientId())
+      ### metrc delete
+      if (getOption("CannaData_state") %in% c("CO", "MD", "OR")) {
+        # metrc_delete_patient(settings$medicalFacilityNumber, )
+      }
       # trigger reload of selectize
       trigger_new(trigger_new() + 1)
       trigger_returning(trigger_returning() + 1)
@@ -1359,7 +1363,8 @@ newPatient <-
            trigger_patients,
            msg_service_sid,
            base_url,
-           docu_log) {
+           docu_log,
+           settings) {
     trigger_patient_info_new <- reactiveVal(0)
     patient_info_new <- reactive({
       req(patientId())
