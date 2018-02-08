@@ -182,6 +182,13 @@ frontdesk <-
     Sys.setenv(docuSign_username = getOption("docuSign_username"))
     Sys.setenv(docuSign_password = getOption("docuSign_password"))
     Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
+    if (getOption("CannaData_state") %in% c("CO","OR", "MD")) {
+      Sys.setenv(
+        "metrc_software_key" = getOption("metrc_software_key"),
+        "metrc_state" = getOption("metrc_state"),
+        "metrc_demo" = getOption("metrc_demo")
+      )
+    }
     # # login on launch
     docu_log <- docuSignr::docu_login(demo = TRUE)
     
@@ -213,9 +220,14 @@ frontdesk <-
             )
           )
           return()
+        } else {
+          Sys.setenv("metrc_user_key" = budtenderId$apiKey)
         }
+      } else {
+        budtenderId = list(idbudtender = 1, apiKey = getOption("metrc_user_key"))
+        Sys.setenv("metrc_user_key" = budtenderId$apiKey)
       }
-      
+      settings <- q_s_settings(pool)
       output$user_name <- renderUI({
         req(user)
         tagList(
@@ -266,7 +278,8 @@ frontdesk <-
             trigger_patients,
             max_points,
             base_url,
-            msg_service_sid
+            msg_service_sid,
+            settings
           )
       }
       
@@ -463,7 +476,7 @@ frontdesk <-
       observeEvent(input$read_barcode, {
         req(input$read_barcode)
         # PDF417
-        if (state != "OR-R" && any(input$read_barcode$id %in% patients()$id & input$read_barcode$state %in% patients()$state)) {
+        if (state != "OR" && any(input$read_barcode$id %in% patients()$id & input$read_barcode$state %in% patients()$state)) {
           status <-
             patients()$verified[patients()$id == input$read_barcode$id & patients()$state == input$read_barcode$state]
           if (status %in% 1:2) {
@@ -504,8 +517,8 @@ frontdesk <-
               )
             ),
             footer = tagList(
-              if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0)) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
-                        if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0) actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
+              if (isTRUE(settings$recreational == 1)) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+                        if (isTRUE(settings$medical == 1)) actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
                 )
           ))
         }

@@ -119,7 +119,8 @@ patientInfo <-
            trigger_patients,
            max_points,
            base_url,
-           msg_service_sid) {
+           msg_service_sid,
+           settings) {
     trigger_patient_info_returning <- reactiveVal(0)
     patient_info_returning <- reactive({
       req(patientId())
@@ -162,13 +163,10 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (getOption("CannaData_state") %in% c("CO-R","CO-M","OR-R")) {
-          if (isTruthy(patient_info_returning()$expirationDate)) {
-          getOption("metrc_medical_facilityNumber")
+        i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (isTruthy(patient_info_returning()$expirationDate)) {
+          settings$medicalFacilityNumber
         } else {
-          getOption("metrc_recreational_facilityNumber")
-        }} else {
-          1
+          settings$recreationalFacilityNumber
         })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
@@ -212,14 +210,11 @@ patientInfo <-
           ))
         ))
       } else {
-        i_f_let_in(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (getOption("CannaData_state") %in% c("CO-R","CO-M","OR-R")) {
-          if (isTruthy(patient_info_returning()$expirationDate)) {
-            getOption("metrc_medical_facilityNumber")
-          } else {
-            getOption("metrc_recreational_facilityNumber")
-          }} else {
-            1
-          })
+        i_f_let_in(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (isTruthy(patient_info_returning()$expirationDate)) {
+          settings$medicalFacilityNumber
+        } else {
+          settings$recreationalFacilityNumber
+        })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
         reload(reload() + 1)
@@ -2092,14 +2087,14 @@ queue <-
         ),
         footer =
           tagList(
-            if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0)
+            if (nchar(getOption("metrc_medical_facilityNumber"))>0)
             parsleyr::submit_form(
           session$ns("queue_med"),
           label = "Add Medical",
           class = "btn btn-info add-queue-btn",
           formId = session$ns("queue_form")
         ),
-        if ( isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
+        if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
         parsleyr::submit_form(
           session$ns("queue_rec"),
           label = "Add Recreational",
@@ -2114,7 +2109,7 @@ queue <-
     
     observeEvent(input$queue_rec, {
       req(input$queue_name)
-      if (state == "CO-R") {
+      if (state == "CO") {
         req(input$queue_id)
         ### check if already in db
         ### if not add them then to db then to queue
@@ -2181,14 +2176,14 @@ queue <-
         ),
         footer = 
           tagList(
-            if (getOption("CannaData_state") == "CA-M" || nchar(getOption("metrc_medical_facilityNumber"))>0)
+            if (isTRUE(settings$medical == 1))
               parsleyr::submit_form(
                 session$ns("store_med"),
                 label = "Add Medical",
                 class = "btn btn-info add-queue-btn",
                 formId = session$ns("store_form")
               ),
-            if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
+            if (isTRUE(settings$recreational == 1))
               parsleyr::submit_form(
                 session$ns("store_rec"),
                 label = "Add Recreational",
@@ -2318,7 +2313,7 @@ queue <-
                         recreational = ~ if_else(as.logical(recreational), "R", "M"),
                         letIn = ~ row_number(),
                         remove = ~ row_number(),
-                        info = ~ if (state == "OR-R") {
+                        info = ~ if (state == "OR") {
                           NA_integer_
                           } else {
                             if_else(is.na(idpatient), NA_integer_, row_number())
@@ -2389,7 +2384,7 @@ columnDefs = list(
   }'
 )
          )),
-list(targets = 4, visible = state != "OR-R",
+list(targets = 4, visible = state != "OR",
      render = JS(
        paste0(
          'function(data, type, row, meta) {
@@ -2472,7 +2467,7 @@ selection = 'none')
              width = "14%"),
         list(targets = 3:4,
              width = "27%"),
-        list(targets = 3, visible = state != "OR-R",
+        list(targets = 3, visible = state != "OR",
              render = JS(paste0(
                'function(data, type, row, meta) {
                return data ? "<button row = \'" + data + "\' class = \'btn btn-info let-in-btn index-btn\' onclick = \'CannaFrontdesk.button(this, \\"',
