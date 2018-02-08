@@ -1292,8 +1292,11 @@ newPatientUI <- function(id) {
                               `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
                             ),
                             tags$script(
-                              paste0("$('#",ns("date"),"').parent('div').addClass('shiny-date-input');")
+                              paste0("$('#",ns("endDate"),"').parent('div').addClass('shiny-date-input');")
                             ),
+                            tags$script(
+                              paste0("$('#",ns("startDate"),"').parent('div').addClass('shiny-date-input');")
+                            )
                             input(
                               ns("endDate"),
                               "text", `data-date-language` ="en", `data-date-week-start` =0,
