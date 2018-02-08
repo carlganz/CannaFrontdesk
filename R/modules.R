@@ -375,26 +375,26 @@ patientInfo <-
         input(
           session$ns("address"),
           placeholder = "Address",
-          label_width = 4,
+          label_width = 4, required = FALSE,
           value = patient_info_returning()$address
         ),
         input(
           session$ns("city"),
           placeholder = "City",
-          label_width = 4,
+          label_width = 4,required = FALSE,
           value = patient_info_returning()$city
         ),
         input(
           session$ns("state"),
           placeholder = "State",
           label_width = 4,
-          maxlength = 2,
+          maxlength = 2,required = FALSE,
           `data-parsley-length` = "[2,2]",
           value = patient_info_returning()$state
         ),
         input(
           session$ns("zip"),
-          type = "tel",
+          type = "tel",required = FALSE,
           placeholder = "ZIP",
           label = "ZIP",
           label_width = 4,
@@ -453,20 +453,17 @@ patientInfo <-
         patientId(),
         input$name,
         input$name2,
-        input$address,
         input$id,
-        input$city,
-        input$zip,
-        input$state,
         input$birthday
       )
       
       # phone and zip are legit
       # zip
-      req(nchar(input$zip) == 5,!is.na(as.integer(input$zip)))
+      if (isTruthy(input$zip)) req(nchar(input$zip) == 5,!is.na(as.integer(input$zip)))
       
       # phone
       # convert to number
+      if (isTruthy(input$phone)) {
       phone <- as.numeric(gsub("[ ()]", "", input$phone))
       # remove leading 1?
       req(nchar(phone) %in% 10:11,!is.na(phone))
@@ -474,11 +471,15 @@ patientInfo <-
       if (substr(phone, 1, 1) == "1") {
         phone <- substr(phone, 2, nchar(phone))
       }
+      } else {
+        phone = NA_character_
+      }
       
       # ID # is legit
       req(is_californiaId(input$id))
-      
+      if (isTruthy(input$state)) {
       req(nchar(input$state) == 2)
+      }
       # make sure date is date
       req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$birthday))
       u_f_edit_info(
@@ -605,8 +606,8 @@ patientInfo <-
       # req(nchar(input$update_recId) == 15,!is.na(as.numeric(input$update_recId)))
       
       ####### update patient Metrc ###############
-      if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
-        metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+      if (getOption("CannaData_state") %in% c("CO", "OR", "MD")) {
+        metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                             input$plants, input$smokable, Sys.Date())
       }
       
@@ -1292,11 +1293,8 @@ newPatientUI <- function(id) {
                               `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
                             ),
                             tags$script(
-                              paste0("$('#",ns("endDate"),"').parent('div').addClass('shiny-date-input');")
-                            ),
-                            tags$script(
                               paste0("$('#",ns("startDate"),"').parent('div').addClass('shiny-date-input');")
-                            )
+                            ),
                             input(
                               ns("endDate"),
                               "text", `data-date-language` ="en", `data-date-week-start` =0,
@@ -1306,6 +1304,9 @@ newPatientUI <- function(id) {
                               placeholder = "Exp Date (MM/DD/YYYY)",
                               label = "Exp Date",
                               `data-parsley-pattern` = "/^(0?[1-9]|1[012])[\\/\\-](0?[1-9]|[12][0-9]|3[01])[\\/\\-]\\d{4}$/", label_width = 4
+                            ),
+                            tags$script(
+                              paste0("$('#",ns("endDate"),"').parent('div').addClass('shiny-date-input');")
                             ),
                             input(
                               ns("recId"),
@@ -1537,7 +1538,8 @@ newPatient <-
       )
       
       # validate date
-      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$date))
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$endDate))
+      req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$", input$startDate))
       
       # validate recId
       # req(nchar(input$recId) == 15,!is.na(as.numeric(input$recId)))
@@ -1596,8 +1598,8 @@ newPatient <-
             }
           )
           ######### Add Patient to Metrc ################
-          if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
-            metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+          if (getOption("CannaData_state") %in% c("CO","MD","OR")) {
+            metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                                 input$plants, input$smokable, Sys.Date())
           }
 
@@ -1676,8 +1678,8 @@ newPatient <-
           }
         )
         ######### Add Patient to Metrc ################
-        if (nchar(getOption("metrc_medical_facilityNumber")) > 0) {
-          metrc_post_patients(getOption("metrc_medical_facilityNumber"), input$recId, input$startDate, input$endDate,
+        if (getOption("CannaData_state") %in% c("OR","CO","MD")) {
+          metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                               input$plants, input$smokable, Sys.Date())
         }
         
@@ -1976,7 +1978,8 @@ queue <-
            online,
            state,
            patients,
-           trigger_new) {
+           trigger_new,
+           settings) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
@@ -2090,14 +2093,14 @@ queue <-
         ),
         footer =
           tagList(
-            if (nchar(getOption("metrc_medical_facilityNumber"))>0)
+            if (isTRUE(settings$medical == 1))
             parsleyr::submit_form(
           session$ns("queue_med"),
           label = "Add Medical",
           class = "btn btn-info add-queue-btn",
           formId = session$ns("queue_form")
         ),
-        if (isTRUE(nchar(getOption("metrc_recreational_facilityNumber"))>0))
+        if (isTRUE(settings$recreational == 1))
         parsleyr::submit_form(
           session$ns("queue_rec"),
           label = "Add Recreational",
@@ -2112,7 +2115,7 @@ queue <-
     
     observeEvent(input$queue_rec, {
       req(input$queue_name)
-      if (state == "CO") {
+      if (state != "OR") {
         req(input$queue_id)
         ### check if already in db
         ### if not add them then to db then to queue
@@ -2120,13 +2123,14 @@ queue <-
           id <- patients() %>% filter_(~id == input$queue_id) %>% slice(1) %>% pull("idpatient")
         } else {
           con <- pool::poolCheckout(pool)
-          i_f_new_patient(con, input$queue_id, NA, input$queue_name, NA_character_, NA, NA, NA, NA, NA, NA, 3)
+          i_f_new_patient(con, input$queue_id, NA,firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
+                          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]], NA, NA, NA, NA, NA, NA, 3)
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
-        i_f_add_queue(pool, id, input$queue_id %in% patients()$id, facilityNumber = getOption("metrc_recreational_facilityNumber"))
+        i_f_add_queue(pool, id, input$queue_id %in% patients()$id, facilityNumber = settings$recreationalFacilityNumber)
       } else {
-        i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = getOption("metrc_recreational_facilityNumber"))
+        i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = settings$recreationalFacilityNumber)
       }
       trigger(trigger() + 1)
       trigger_new(trigger_new() + 1)
@@ -2137,7 +2141,7 @@ queue <-
       req(input$queue_name)
       req(input$queue_id)
       if (input$queue_id %in% patients()$id) {
-        i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
+        i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = settings$medicalFacilityNumber)
         trigger(trigger() + 1)
       } else {
         new_row <- data.frame(
@@ -2151,7 +2155,6 @@ queue <-
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
         id <- last_insert_id(con)
         pool::poolReturn(con)
-        # i_f_add_queue(pool, id, TRUE, facilityNumber = getOption("metrc_medical_facilityNumber"))
         trigger(trigger() + 1)
         trigger_new(trigger_new() + 1)
         reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
@@ -2216,6 +2219,7 @@ queue <-
         # i_f_let_in(pool, id, TRUE)
         trigger(trigger() + 1)
         trigger_patients(trigger_patients() + 1)
+        trigger_new(trigger_new() + 1)
         reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
         removeModal()
         # trigger_new(trigger_new() + 1)
@@ -2230,14 +2234,17 @@ queue <-
         id <- patients() %>% filter_(~id == input$store_id) %>% slice(1) %>% pull("idpatient")
       } else {
         con <- pool::poolCheckout(pool)
-        i_f_new_patient(con, input$queue_id, NA, input$queue_name, NA_character_, NA, NA, NA, NA, NA, NA, 3)
+        i_f_new_patient(con, id = input$store_id, firstName = stringr::str_split(input$store_name, " ", 2)[[c(1, 1)]],
+                        lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
+                        NA, NA, NA, NA, NA, NA, NA, verified = 3)
         id <- last_insert_id(con)
         pool::poolReturn(con)
       }
-      i_f_let_in(pool, id, !input$store_id %in% patients()$id)
+      i_f_let_in(pool, id, !input$store_id %in% patients()$id, facilityNumber = settings$recreationalFacilityNumber)
 
       trigger(trigger() + 1)
       trigger_patients(trigger_patients() + 1)
+      trigger_new(trigger_new() + 1)
       removeModal()
     })
     

@@ -381,7 +381,8 @@ frontdesk <-
           online,
           state,
           patients,
-          trigger_new
+          trigger_new,
+          settings
         )
       trigger_patients <- reactiveVal(0)
       if (state != "OR-R") {
