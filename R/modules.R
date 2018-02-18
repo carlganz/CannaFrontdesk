@@ -1366,7 +1366,8 @@ newPatient <-
     
     observe({
       req(input$startDate)
-      updateDateInput(session, "endDate", value = as.Date(input$startDate) + 365)
+      date <- paste0(substr(input$startDate, 1, 6), as.numeric(substr(input$startDate, 7, 11)) + 1)
+      updateTextInput(session, "endDate", value = date)
     })
     
     observeEvent(input$edit_basic_info, {
