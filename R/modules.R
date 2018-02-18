@@ -1131,13 +1131,10 @@ patientInfo <-
     output$id_image_out <- renderUI({
       if (isTruthy(patientId()) &&
           isTruthy(patient_info_returning()$photoPath)) {
+
+        display <- system(sprintf("aws s3 presign s3://%s/%s", bucket, patient_info_returning()$photoPath), intern = TRUE)
         tags$img(
-          src = paste0(
-            "https://s3-us-west-2.amazonaws.com/",
-            bucket,
-            "/",
-            patient_info_returning()$photoPath
-          ),
+          src = display,
           height = "100%",
           class = "hoverZoomLink",
           width = "100%"
@@ -1154,12 +1151,7 @@ patientInfo <-
       if (isTruthy(patientId()) &&
           isTruthy(patient_info_returning()$medicalPath)) {
         tags$img(
-          src = paste0(
-            "https://s3-us-west-2.amazonaws.com/",
-            bucket,
-            "/",
-            patient_info_returning()$medicalPath
-          ),
+          src = system(sprintf("aws s3 presign s3://%s/%s", bucket, patient_info_returning()$medicalPath)),
           height = "100%",
           class = "hoverZoomLink",
           width = "100%"
@@ -1370,6 +1362,11 @@ newPatient <-
       req(patientId())
       trigger_patient_info_new()
       q_f_patient_info(pool, patientId(), new = TRUE)
+    })
+    
+    observe({
+      req(input$startDate)
+      updateDateInput(session, "endDate", value = as.Date(input$startDate) + 365)
     })
     
     observeEvent(input$edit_basic_info, {
