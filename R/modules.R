@@ -988,7 +988,8 @@ patientInfo <-
           textDeal = ~ if_else(textDeal == 1, "YES", "NO"),
           birthday = ~ paste0(format(as.Date(birthday), "%m/%d/%Y"), " (", age, " years old)"),
           recommender = ~ if_else(recommender=="", NA_character_, recommender),
-          idExpiration = ~format(as.Date(idExpiration), "%m/%d/%Y")
+          idExpiration = ~format(as.Date(idExpiration), "%m/%d/%Y"),
+          phone = ~ paste0("(", substring(phone, 1, 3), ") ", substring(phone, 4, 6), "-", substring(phone, 7))
         ) %>%
         select_(
           # Name = ~ name,
@@ -2740,6 +2741,7 @@ onlineOrder <- function(input, output, session, pool, transactionId, order_info,
   output$patient_info <- DT::renderDataTable({
     req(order_info())
     order_info() %>% 
+      mutate_(phone = ~ paste0("(", substring(phone, 1, 3), ") ", substring(phone, 4, 6), "-", substring(phone, 7))) %>%
       select_(Name = ~name, Phone = ~phone, Email = ~email) %>% slice(1) %>%
       t()
   }, rownames = TRUE, class = "table dt-row", selection = 'none', 
