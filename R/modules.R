@@ -943,10 +943,9 @@ patientInfo <-
     output$name <- renderUI({
       if (isTruthy(patientId())) {
         h1(
-          paste(
-            patient_info_returning()$firstName,
-            patient_info_returning()$lastName
-          )
+          
+            patient_info_returning()$name
+          
         )
       } else {
         h1("Please select patient")
@@ -1789,8 +1788,7 @@ newPatient <-
     output$name <- renderUI({
       if (isTruthy(patientId())) {
         h1(paste(
-          patient_info_new()$firstName,
-          patient_info_new()$lastName
+          patient_info_new()$name
         ))
       } else {
         h1("Select incomplete profile or create new profile")
