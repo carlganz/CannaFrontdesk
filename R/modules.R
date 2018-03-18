@@ -563,14 +563,14 @@ patientInfo <-
       ),
       input(
         session$ns("plants"),
-        type = "tel",
+        type = "tel", value = 6,
         placeholder = "Max Plants",
         value = patient_info_returning()$plants,
         label_width = 4
       ),
       input(
         session$ns("smokable"),
-        type = "tel",
+        type = "tel", value = 2,
         placeholder = "Max Smokable",
         value = patient_info_returning()$smokable,
         label_width = 4
@@ -1151,7 +1151,7 @@ patientInfo <-
       if (isTruthy(patientId()) &&
           isTruthy(patient_info_returning()$medicalPath)) {
         tags$img(
-          src = system(sprintf("aws s3 presign s3://%s/%s", bucket, patient_info_returning()$medicalPath)),
+          src = system(sprintf("aws s3 presign s3://%s/%s", bucket, patient_info_returning()$medicalPath), intern = TRUE),
           height = "100%",
           class = "hoverZoomLink",
           width = "100%"
@@ -1309,8 +1309,8 @@ newPatientUI <- function(id) {
                               "text",
                               placeholder = "Rec #", label_width = 4
                             ),
-                            input(ns("plants"), placeholder = "Max Plants", type = "number", label_width = 4, required = TRUE),
-                            input(ns("smokable"), placeholder = "Max Smokable", type = "number", label_width = 4, required = TRUE),
+                            input(ns("plants"), placeholder = "Max Plants", type = "number", label_width = 4, required = TRUE, value = 6),
+                            input(ns("smokable"), placeholder = "Max Smokable", type = "number", label_width = 4, required = TRUE, value = 2),
                             tags$script(
                               paste0(
                                 "var expDate=new Cleave('#",
@@ -3053,7 +3053,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
       DBI::dbRollback(con)
       showModal(
         modalDialog(
-          easyClose = TRUE,
+          easyClose = TRUE, fade = FALSE,
           tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
@@ -3065,7 +3065,7 @@ edited_item <- callModule(add_to_cart, "edit_online", pool, {
       DBI::dbCommit(con)
       showModal(
         modalDialog(
-          easyClose = TRUE,
+          easyClose = TRUE, fade = FALSE,
           tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           tags$script(
             "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
