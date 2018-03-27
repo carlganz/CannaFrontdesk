@@ -120,7 +120,7 @@ patientInfo <-
            max_points,
            base_url,
            msg_service_sid,
-           settings) {
+           facility) {
     trigger_patient_info_returning <- reactiveVal(0)
     patient_info_returning <- reactive({
       req(patientId())
@@ -164,9 +164,9 @@ patientInfo <-
         ))
       } else {
         i_f_add_queue(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (isTruthy(patient_info_returning()$expirationDate)) {
-          settings$medicalFacilityNumber
+          facility()$medicalFacilityNumber
         } else {
-          settings$recreationalFacilityNumber
+          facility()$recreationalFacilityNumber
         })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
@@ -211,9 +211,9 @@ patientInfo <-
         ))
       } else {
         i_f_let_in(pool, patientId(), new = nrow(patient_history())==0, facilityNumber = if (isTruthy(patient_info_returning()$expirationDate)) {
-          settings$medicalFacilityNumber
+          facility()$medicalFacilityNumber
         } else {
-          settings$recreationalFacilityNumber
+          facility()$recreationalFacilityNumber
         })
         trigger_queue(trigger_queue() + 1)
         trigger_patients(trigger_patients() + 1)
@@ -261,7 +261,7 @@ patientInfo <-
       d_f_patient(pool, patientId())
       ### metrc delete
       if (getOption("CannaData_state") %in% c("CO", "MD", "OR")) {
-        # metrc_delete_patient(settings$medicalFacilityNumber, )
+        # metrc_delete_patient(facility()$medicalFacilityNumber, )
       }
       # trigger reload of selectize
       trigger_new(trigger_new() + 1)
@@ -611,7 +611,7 @@ patientInfo <-
       
       ####### update patient Metrc ###############
       if (getOption("CannaData_state") %in% c("CO", "OR", "MD")) {
-        metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
+        metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                             input$plants, input$smokable, Sys.Date())
       }
       
@@ -1356,7 +1356,7 @@ newPatient <-
            msg_service_sid,
            base_url,
            docu_log,
-           settings) {
+           facility) {
     trigger_patient_info_new <- reactiveVal(0)
     patient_info_new <- reactive({
       req(patientId())
@@ -1602,7 +1602,7 @@ newPatient <-
           )
           ######### Add Patient to Metrc ################
           if (getOption("CannaData_state") %in% c("CO","MD","OR")) {
-            metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
+            metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                                 input$plants, input$smokable, Sys.Date())
           }
 
@@ -1682,7 +1682,7 @@ newPatient <-
         )
         ######### Add Patient to Metrc ################
         if (getOption("CannaData_state") %in% c("OR","CO","MD")) {
-          metrc_post_patients(settings$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
+          metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
                               input$plants, input$smokable, Sys.Date())
         }
         
@@ -1981,7 +1981,7 @@ queue <-
            state,
            patients,
            trigger_new,
-           settings) {
+           facility) {
     # queue
     trigger_queue <- reactiveVal(0)
     queue_store <- reactive({
@@ -2095,14 +2095,14 @@ queue <-
         ),
         footer =
           tagList(
-            if (isTRUE(settings$medical == 1))
+            if (isTRUE(facility()$medical == 1))
             parsleyr::submit_form(
           session$ns("queue_med"),
           label = "Add Medical",
           class = "btn btn-info add-queue-btn",
           formId = session$ns("queue_form")
         ),
-        if (isTRUE(settings$recreational == 1))
+        if (isTRUE(facility()$recreational == 1))
         parsleyr::submit_form(
           session$ns("queue_rec"),
           label = "Add Recreational",
@@ -2130,9 +2130,9 @@ queue <-
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
-        i_f_add_queue(pool, id, input$queue_id %in% patients()$id, facilityNumber = settings$recreationalFacilityNumber)
+        i_f_add_queue(pool, id, input$queue_id %in% patients()$id, facilityNumber = facility()$recreationalFacilityNumber)
       } else {
-        i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = settings$recreationalFacilityNumber)
+        i_f_add_queue(pool, NA, FALSE, input$queue_name, facilityNumber = facility()$recreationalFacilityNumber)
       }
       trigger(trigger() + 1)
       trigger_new(trigger_new() + 1)
@@ -2143,7 +2143,7 @@ queue <-
       req(input$queue_name)
       req(input$queue_id)
       if (input$queue_id %in% patients()$id) {
-        i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = settings$medicalFacilityNumber)
+        i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = facility()$medicalFacilityNumber)
         trigger(trigger() + 1)
       } else {
         new_row <- data.frame(
@@ -2184,14 +2184,14 @@ queue <-
         ),
         footer = 
           tagList(
-            if (isTRUE(settings$medical == 1))
+            if (isTRUE(facility()$medical == 1))
               parsleyr::submit_form(
                 session$ns("store_med"),
                 label = "Add Medical",
                 class = "btn btn-info add-queue-btn",
                 formId = session$ns("store_form")
               ),
-            if (isTRUE(settings$recreational == 1))
+            if (isTRUE(facility()$recreational == 1))
               parsleyr::submit_form(
                 session$ns("store_rec"),
                 label = "Add Recreational",
@@ -2242,7 +2242,7 @@ queue <-
         id <- last_insert_id(con)
         pool::poolReturn(con)
       }
-      i_f_let_in(pool, id, !input$store_id %in% patients()$id, facilityNumber = settings$recreationalFacilityNumber)
+      i_f_let_in(pool, id, !input$store_id %in% patients()$id, facilityNumber = facility()$recreationalFacilityNumber)
 
       trigger(trigger() + 1)
       trigger_patients(trigger_patients() + 1)

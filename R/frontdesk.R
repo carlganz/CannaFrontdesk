@@ -65,7 +65,10 @@ frontdesk <-
       redirect_uri <- APP_URL
       # save state in session global variable
       state <- paste0(sample(c(LETTERS, 0:9), 12, replace =TRUE), collapse = "")
-      
+      idfacility <- parseQueryString(req$QUERY_STRING)$idfacility
+      if (length(idfacility) == 1) {
+        redirect_uri <- paste0(redirect_uri, "?idfacility=", idfacility)
+      }
       list(url = sprintf(url_template,
                          utils::URLencode(scope, reserved = TRUE, repeated = TRUE),
                          utils::URLencode(base64enc::base64encode(charToRaw(state))),
@@ -228,14 +231,50 @@ frontdesk <-
         Sys.setenv("metrc_user_key" = budtenderId$apiKey)
       }
       settings <- q_s_settings(pool)
-      output$user_name <- renderUI({
-        req(user)
-        tagList(
-          p(class = "navbar-text",
-            user$email
+      facility <- reactiveVal()
+      employee_facilities <- q_s_employee_facilities(pool, budtenderId$idbudtender) %>%
+        filter_(~retail == 1)
+      if (nrow(employee_facilities) == 0) {
+        showModal(
+          modalDialog(
+            tags$script("$('.modal-content').addClass('table-container');"),
+            h1("You do not have access to a retail facility."),
+            footer = tags$button(onclick = paste0("location.href='", base_url, "settings/","';"), "Settings", class = "btn btn-info add-queue-btn")
           )
         )
+        return()
+      } else if (isTruthy(params$idfacility) && params$idfacility %in% employee_facilities$idfacility) {
+        facility(employee_facilities[employee_facilities$idfacility == params$idfacility,])
+      } else if (isTruthy(params$idfacility) && !params$idfacility %in% employee_facilities$idfacility) {
+        showModal(
+          modalDialog(
+            tags$script("$('.modal-content').addClass('table-container');"),
+            h1("You do not have access to this facility."),
+            footer = tags$button(onclick = paste0("location.href='", base_url, "settings/","';"), "Settings", class = "btn btn-info add-queue-btn")
+          )
+        )
+        return()
+      } else if (nrow(employee_facilities) == 1) {
+        facility(employee_facilities)
+      } else {
+        showModal(
+          modalDialog(
+            tags$script("$('.modal-content').addClass('table-container');"),
+            h1("Select Retail Facility", style = "margin-bottom:15px"),
+            selectizeInput("retailer", NULL, choices = structure(isolate(employee_facilities())$idfacility, names = isolate(employee_facilities())$name),
+                           options = list(onInitialize = I('function() {this.setValue("");}'))),
+            footer =  actionButton("select_register", "Submit", class = "btn-success btn-add")
+          )
+        )
+        
+        observe({
+          if (isTruthy(input$retailer)) {
+            register(employee_facilities[employee_facilities$idfacility == input$retailer, ])
+          } else {
+            return()
+          }
       })
+      }
     
       if (interactive()) {
         session$onSessionEnded(stopApp)
@@ -279,7 +318,7 @@ frontdesk <-
             max_points,
             base_url,
             msg_service_sid,
-            settings
+            facility
           )
       }
       
@@ -306,7 +345,7 @@ frontdesk <-
           msg_service_sid,
           base_url,
           docu_log,
-          settings
+          facility
         )
       }
       
@@ -383,7 +422,7 @@ frontdesk <-
           state,
           patients,
           trigger_new,
-          settings
+          facility
         )
       trigger_patients <- reactiveVal(0)
       if (state != "OR-R") {
@@ -519,8 +558,8 @@ frontdesk <-
               )
             ),
             footer = tagList(
-              if (isTRUE(settings$recreational == 1)) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
-                        if (isTRUE(settings$medical == 1)) actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
+              if (isTRUE(facility()$recreational == 1)) actionButton("addRec", "Recreational", class = "btn btn-info add-queue-btn"),
+                        if (isTRUE(facility()$medical == 1)) actionButton("addMed", "Medical", class = "btn btn-info add-queue-btn")        
                 )
           ))
         }
