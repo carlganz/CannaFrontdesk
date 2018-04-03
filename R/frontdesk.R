@@ -480,10 +480,6 @@ frontdesk <-
             mutate_(selectGrp = ~ "online", label = ~name)
         ) %>% 
           mutate_(valueFld = ~if_else(selectGrp == "patient", paste0("P", idpatient), paste0("T", idtransaction)))
-        if (!is.null(reload_patient()$selected)) {
-          x <- bind_rows(x[x$valueFld ==  paste0(if (reload_patient()$type == "patient") "P" else "T", reload_patient()$selected),],
-                       x[!(x$valueFld ==  paste0(if (reload_patient()$type == "patient") "P" else "T", reload_patient()$selected)),])
-        }
         
         updateSelectizeInput(
           session,
