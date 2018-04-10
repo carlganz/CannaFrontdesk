@@ -57,6 +57,32 @@ CannaFrontdesk = function() {
           en: 'The year of birth is incorrect'
         }
       });
+      
+      window.Parsley.addValidator("age", {
+        requirementType: 'string',
+        validateString: function(value, requirement) {
+          var min = parseInt(requirement);
+          var mydate = value.split("/").map(parseFloat);
+          var birthdate = new Date(mydate[2], mydate[0] - 1, mydate[1]);
+          var today = new Date(Date.now());
+          if ((today.getYear()-birthdate.getYear()) > min) {
+            return true;
+          } else if ((today.getYear()-birthdate.getYear()) < min) {
+            return false;
+          } else if ((today.getMonth()-birthdate.getMonth()) > 0) {
+            return true;
+          } else if ((today.getMonth()-birthdate.getMonth()) < 0) {
+            return false;
+          } else if ((today.getDay()-birthdate.getDay()) >= 0) {
+            return true;
+          } else {
+            return false;
+          }          
+        },
+        messages: {
+          en: 'Customer must be 21 years old or older.'
+        }
+      });
 
     },
     read_barcode: function() {

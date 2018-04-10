@@ -2105,8 +2105,14 @@ queue <-
 
            tagList(tags$br(),
            textInput(session$ns("queue_id"), "ID #")),
+           tags$br(),
+           textInput(session$ns("queue_birthday"), "Birthday"),
             tags$script(
-              '$("#frontdesk-queue_id, #frontdesk-queue_name").attr("required", true)'
+              '$("#frontdesk-queue_id, #frontdesk-queue_name, #frontdesk-queue_birthday").attr("required", true);',
+              'var CannaBirthday = new Cleave("#frontdesk-queue_birthday", {
+        date: true,
+        datePattern: ["m", "d", "Y"]
+      });$("#frontdesk-queue_birthday").attr("data-parsley-age","21");'
             ))
         ),
         footer =
@@ -2116,6 +2122,7 @@ queue <-
           session$ns("queue_med"),
           label = "Add Medical",
           class = "btn btn-info add-queue-btn",
+          onclick = I('$("#frontdesk-queue_birthday").attr("data-parsley-age","18");'),
           formId = session$ns("queue_form")
         ),
         if (isTRUE(facility()$recreational == 1))
@@ -2123,6 +2130,7 @@ queue <-
           session$ns("queue_rec"),
           label = "Add Recreational",
           class = "btn btn-info add-queue-btn",
+          onclick = I('$("#frontdesk-queue_birthday").attr("data-parsley-age","21");'),
           formId = session$ns("queue_form")
         )
       )
@@ -2132,7 +2140,7 @@ queue <-
     
     
     observeEvent(input$queue_rec, {
-      req(input$queue_name)
+      req(input$queue_name, input$queue_birthday, floor(as.numeric(difftime(Sys.Date(), as.Date(input$queue_birthday)))/365) >= 21)
       if (state != "OR") {
         req(input$queue_id, nchar(input$queue_id) %in% 8:9)
         ### check if already in db
@@ -2142,7 +2150,7 @@ queue <-
         } else {
           con <- pool::poolCheckout(pool)
           i_f_new_patient(con, input$queue_id, NA,firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
-                          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]], NA, NA, NA, NA, NA, NA, 3)
+                          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]], NA, input$queue_birthday, NA, NA, NA, NA, 3)
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
@@ -2156,7 +2164,7 @@ queue <-
     })
     
     observeEvent(input$queue_med, {
-      req(input$queue_name)
+      req(input$queue_name, floor(as.numeric(difftime(Sys.Date(), as.Date(input$queue_birthday)))/365) >= 18)
       req(input$queue_id)
       if (input$queue_id %in% patients()$id) {
         i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = facility()$idfacility)
@@ -2167,7 +2175,7 @@ queue <-
           lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]],
           id = input$queue_id,
           addDate = mySql_date(Sys.Date()),
-          verified = 1, birthday = NA
+          verified = 1, birthday = input$queue_birthday
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
@@ -2193,9 +2201,15 @@ queue <-
         tagList(textInput(session$ns("store_name"), "Name"),
               tagList(tags$br(),
                       textInput(session$ns("store_id"), "ID #"),
+                      tags$br(),
+                      textInput(session$ns("store_birthday"), "Birthday"),
                       ### add birthday #####
                       tags$script(
-                        '$("#frontdesk-store_id, #frontdesk-store_name").attr("required", true)'
+                        '$("#frontdesk-store_id, #frontdesk-store_name, #frontdesk-store_birthday").attr("required", true)',
+                        'var CannaBirthday = new Cleave("#frontdesk-store_birthday", {
+        date: true,
+        datePattern: ["m", "d", "Y"]
+      });$("#frontdesk-store_birthday").attr("data-parsley-age","21");'
                       ))
             )       
         ),
@@ -2206,6 +2220,7 @@ queue <-
                 session$ns("store_med"),
                 label = "Add Medical",
                 class = "btn btn-info add-queue-btn",
+                onclick = I('$("#frontdesk-store_birthday").attr("data-parsley-age","18");'),
                 formId = session$ns("store_form")
               ),
             if (isTRUE(facility()$recreational == 1))
@@ -2213,13 +2228,15 @@ queue <-
                 session$ns("store_rec"),
                 label = "Add Recreational",
                 class = "btn btn-info add-queue-btn",
+                onclick = I('$("#frontdesk-store_birthday").attr("data-parsley-age","21");'),
                 formId = session$ns("store_form")
               )
           )))
     })
     
     observeEvent(input$store_med, {
-      req(input$store_name,input$store_id, nchar(input$store_id) %in% 8:9)
+      req(input$store_name,input$store_id, nchar(input$store_id) %in% 8:9, input$store_birthday,
+          floor(as.numeric(difftime(Sys.Date(), as.Date(input$store_birthday)))/365) >= 18)
       if (input$store_id %in% patients()$id) {
         i_f_let_in(pool, patients()$idpatient[patients()$id == input$store_name], FALSE)
         trigger(trigger() + 1)
@@ -2229,7 +2246,7 @@ queue <-
           lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
           id = input$store_id,
           addDate = mySql_date(Sys.Date()),
-          verified = 1, birthday = NA
+          verified = 1, birthday = input$store_birthday
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
@@ -2248,14 +2265,14 @@ queue <-
     observeEvent(input$store_rec, {
       req(input$store_name)
       req(input$store_id)
-      
+      req(input$store_birthday, floor(as.numeric(difftime(Sys.Date(), as.Date(input$store_birthday)))/365) >= 21)
       if (input$store_id %in% patients()$id) {
         id <- patients() %>% filter_(~id == input$store_id) %>% slice(1) %>% pull("idpatient")
       } else {
         con <- pool::poolCheckout(pool)
         i_f_new_patient(con, id = input$store_id, firstName = stringr::str_split(input$store_name, " ", 2)[[c(1, 1)]],
                         lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
-                        NA, NA, NA, NA, NA, NA, NA, verified = 3)
+                        NA, input$store_birthday, NA, NA, NA, NA, NA, verified = 3)
         id <- last_insert_id(con)
         pool::poolReturn(con)
       }
