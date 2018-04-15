@@ -193,7 +193,7 @@ frontdesk <-
       )
     }
     # # login on launch
-    docu_log <- docuSignr::docu_login(demo = TRUE)
+    # docu_log <- docuSignr::docu_login(demo = TRUE)
     
     server <- function(input, output, session) {
       params <- parseQueryString(isolate(session$clientData$url_search))
