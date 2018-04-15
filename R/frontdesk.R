@@ -614,7 +614,7 @@ frontdesk <-
           input$read_barcode$city,
           substr(input$read_barcode$zip, 1, 5),
           input$read_barcode$state,
-          verified = 1
+          verified = 2
         )
         id <- last_insert_id(con)
         pool::poolReturn(con)

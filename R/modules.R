@@ -569,21 +569,23 @@ patientInfo <-
         placeholder = "Medicard Card #",
         value = patient_info_returning()$recId,
         label_width = 4
-      ),
-      input(
-        session$ns("plants"),
-        type = "tel", value = 6,
-        placeholder = "Max Plants",
-        value = patient_info_returning()$plants,
-        label_width = 4
-      ),
-      input(
-        session$ns("smokable"),
-        type = "tel", value = 2,
-        placeholder = "Max Smokable",
-        value = patient_info_returning()$smokable,
-        label_width = 4
-      ),
+      ),div(
+      shinyWidgets::radioGroupButtons(session$ns("recType"), "Rec Type", c("Doctor's Rec", "MMIC"), 
+                                      selected = if (patient_info_returning()$MMIC == 1) "MMIC" else "Doctor's Rec")),
+      # input(
+      #   session$ns("plants"),
+      #   type = "tel", value = 6,
+      #   placeholder = "Max Plants",
+      #   value = patient_info_returning()$plants,
+      #   label_width = 4
+      # ),
+      # input(
+      #   session$ns("smokable"),
+      #   type = "tel", value = 2,
+      #   placeholder = "Max Smokable",
+      #   value = patient_info_returning()$smokable,
+      #   label_width = 4
+      # ),
       input(
         session$ns("medicalCondition"),
         placeholder = "Condition",
@@ -614,9 +616,10 @@ patientInfo <-
           input$startDate,
           input$expirationDate,
           input$physician,
-          input$recId,
-          input$plants,
-          input$smokable)
+          input$recId#,
+          # input$plants,
+          # input$smokable
+          )
       
       # validate date
       req(grepl("^[0-9]{2}/[0-9]{2}/[0-9]{4}$",
@@ -637,7 +640,7 @@ patientInfo <-
         effectiveDate = input$startDate,
         physician = input$physician,
         medicalCondition = input$medicalCondition,
-        recId = input$recId, input$plants, input$smokable
+        recId = input$recId, NA, NA, isTRUE(input$recType == "MMIC")
       )
       
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
@@ -905,7 +908,7 @@ patientInfo <-
           }
         )
         
-        u_f_medId(pool, patientId(), medicalS3)
+        u_f_medId(pool, patientId(), medicalS3, isTRUE(input$recType == "MMIC"))
       }
       trigger_patient_info_returning(trigger_patient_info_returning() + 1)
       removeModal()
@@ -1325,8 +1328,10 @@ newPatientUI <- function(id) {
                               "text",
                               placeholder = "Rec #", label_width = 4
                             ),
-                            input(ns("plants"), placeholder = "Max Plants", type = "number", label_width = 4, required = TRUE, value = 6),
-                            input(ns("smokable"), placeholder = "Max Smokable", type = "number", label_width = 4, required = TRUE, value = 2),
+                            div(style = "margin-left:15px;",
+                              shinyWidgets::radioGroupButtons(ns("recType"), "Rec Type", c("Doctor's Rec", "MMIC"))),
+                            # input(ns("plants"), placeholder = "Max Plants", type = "number", label_width = 4, required = TRUE, value = 6),
+                            # input(ns("smokable"), placeholder = "Max Smokable", type = "number", label_width = 4, required = TRUE, value = 2),
                             tags$script(
                               paste0(
                                 "var expDate=new Cleave('#",
@@ -1548,11 +1553,11 @@ newPatient <-
         patientId(),
         input$startDate,
         input$endDate,
-        input$plants,
-        input$smokable,
-        input$recId,
-        input$medicalPath,
-        input$photoIdPath,
+        # input$plants,
+        # input$smokable,
+        input$recId, input$recType,
+        # input$medicalPath,
+        # input$photoIdPath,
         input$physician
       )
       
@@ -1564,14 +1569,14 @@ newPatient <-
       # req(nchar(input$recId) == 15,!is.na(as.numeric(input$recId)))
       
       # file input is file
-      req(
-        is.data.frame(input$medicalPath),
-        nrow(input$medicalPath) == 1,
-        file.exists(input$medicalPath$datapath),
-        is.data.frame(input$photoIdPath),
-        nrow(input$photoIdPath) == 1,
-        file.exists(input$photoIdPath$datapath)
-      )
+      # req(
+      #   is.data.frame(input$medicalPath),
+      #   nrow(input$medicalPath) == 1,
+      #   file.exists(input$medicalPath$datapath),
+      #   is.data.frame(input$photoIdPath),
+      #   nrow(input$photoIdPath) == 1,
+      #   file.exists(input$photoIdPath$datapath)
+      # )
       
       trigger_patient_info_new(trigger_patient_info_new() + 1)
       if (patient_info_new()$verified == 1) {
@@ -1582,121 +1587,129 @@ newPatient <-
           ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
           h1("Patient has not finished signup form yet. Please wait...")
         ))
-      } else if (is.na(patient_info_new()$docuSigned) ||
-                 patient_info_new()$docuSigned == 0) {
-        docuStatus <- docu_envelope_status(base_url = docu_log[1, 3], envelope_id = patient_info_new()$envelopeId)
-        if (docuStatus == "completed") {
-          u_docuSign(pool, patientId = patientId())
-          id <- patientId()
-
-          medicalS3 <-
-            paste0(
-              paste("medical", id, Sys.Date(), sep = "_"),
-              ".",
-              tools::file_ext(input$medicalPath$datapath)
-            )
-
-          photoS3 <-
-            paste0(
-              paste("photo", id, Sys.Date(), sep = "_"),
-              ".",
-              tools::file_ext(input$photoIdPath$datapath)
-            )
-
-          tryCatch(
-            aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
-            warning = function(w) {
-              stop("S3 failed \n", w)
-            }
-          )
-
-          tryCatch(
-            aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
-            warning = function(w) {
-              stop("S3 failed", w)
-            }
-          )
-          ######### Add Patient to Metrc ################
-          if (getOption("CannaData_state") %in% c("CO","MD","OR")) {
-            # metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
-            #                     input$plants, input$smokable, Sys.Date())
-          }
-
-          # add patient
-          u_f_new_patient(pool,
-                          id,
-                          input$endDate,
-                          input$startDate,
-                          input$physician,
-                          photoS3,
-                          medicalS3,
-                          input$recId,
-                          input$plants,
-                          input$smokable)
-
-          ### add to queue?
-          lapply(c("date", "physician", "recId"), function(x) {
-            updateTextInput(session, x, value = "")
-          })
-
-          trigger_files(trigger_files() + 1)
-          trigger_new(trigger_new() + 1)
-          trigger_returning(trigger_returning() + 1)
-          trigger_patients(trigger_patients() + 1)
-          session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
-          session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
-          session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
-          ### go to patient info page with new patient there
-          reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
-          showModal(modalDialog(
-            easyClose = TRUE,
-            tags$script(
-              "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-            ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-            h1("New patient has been added")
-          ))
-        } else {
-        showModal(modalDialog(
-          easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
-          tags$script(
-            "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
-          ),
-          h1(
-            "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
-          )
-        ))
-        }
+      # } else if (is.na(patient_info_new()$docuSigned) ||
+      #            patient_info_new()$docuSigned == 0) {
+      #   docuStatus <- docu_envelope_status(base_url = docu_log[1, 3], envelope_id = patient_info_new()$envelopeId)
+      #   if (docuStatus == "completed") {
+      #     u_docuSign(pool, patientId = patientId())
+      #     id <- patientId()
+      #     
+      #     medicalS3 <- if (file.exists(input$medicalPath$datapath))
+      #       paste0(
+      #         paste("medical", id, Sys.Date(), sep = "_"),
+      #         ".",
+      #         tools::file_ext(input$medicalPath$datapath)
+      #       ) else NA_character_
+      # 
+      #     photoS3 <- if (file.exists(input$photoPath$datapath))
+      #       paste0(
+      #         paste("photo", id, Sys.Date(), sep = "_"),
+      #         ".",
+      #         tools::file_ext(input$photoIdPath$datapath)
+      #       ) else NA_character_
+      # 
+      #     if (!is.na(medicalS3)) {
+      #     tryCatch(
+      #       aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
+      #       warning = function(w) {
+      #         stop("S3 failed \n", w)
+      #       }
+      #     )
+      #     }
+      #     if (!is.na(photoS3)) {
+      #     tryCatch(
+      #       aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
+      #       warning = function(w) {
+      #         stop("S3 failed", w)
+      #       }
+      #     )
+      #     }
+      #     ######### Add Patient to Metrc ################
+      #     if (getOption("CannaData_state") %in% c("CO","MD","OR")) {
+      #       # metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
+      #       #                     input$plants, input$smokable, Sys.Date())
+      #     }
+      # 
+      #     # add patient
+      #     u_f_new_patient(pool,
+      #                     id,
+      #                     input$endDate,
+      #                     input$startDate,
+      #                     input$physician,
+      #                     photoS3,
+      #                     medicalS3,
+      #                     input$recId,
+      #                     NA,
+      #                     NA)
+      # 
+      #     ### add to queue?
+      #     lapply(c("date", "physician", "recId"), function(x) {
+      #       updateTextInput(session, x, value = "")
+      #     })
+      # 
+      #     trigger_files(trigger_files() + 1)
+      #     trigger_new(trigger_new() + 1)
+      #     trigger_returning(trigger_returning() + 1)
+      #     trigger_patients(trigger_patients() + 1)
+      #     session$sendCustomMessage("reset_file_input", list(id = session$ns("medicalPath")))
+      #     session$sendCustomMessage("reset_file_input", list(id = session$ns("photoIdPath")))
+      #     session$sendCustomMessage("reset_parsley", list(id = session$ns("newPatient")))
+      #     ### go to patient info page with new patient there
+      #     reload_patient(list(selected = id, time = Sys.time(), type = "patient"))
+      #     showModal(modalDialog(
+      #       easyClose = TRUE,
+      #       tags$script(
+      #         "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+      #       ), tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+      #       h1("New patient has been added")
+      #     ))
+      #   } else {
+      #   showModal(modalDialog(
+      #     easyClose = TRUE, tags$span(icon("times", class = "close-modal"), `data-dismiss` = "modal"),
+      #     tags$script(
+      #       "$('.modal-content').addClass('table-container');$('.modal-body').css('overflow','auto');"
+      #     ),
+      #     h1(
+      #       "Patient finished signup form but did not complete docuSign.\nPlease have patient sign."
+      #     )
+      #   ))
+      #   }
       } else {
         # upload images to S3
         id <- patientId()
         
-        medicalS3 <-
+        
+        medicalS3 <- if (isTruthy(input$medicalPath$datapath))
           paste0(
             paste("medical", id, Sys.Date(), sep = "_"),
             ".",
             tools::file_ext(input$medicalPath$datapath)
-          )
+          ) else NA_character_
         
-        photoS3 <-
+        photoS3 <- if (isTruthy(input$photoIdPath$datapath))
           paste0(
             paste("photo", id, Sys.Date(), sep = "_"),
             ".",
             tools::file_ext(input$photoIdPath$datapath)
-          )
+          ) else NA_character_
         
+        if (!is.na(medicalS3)) {
         tryCatch(
           aws.s3::put_object(input$medicalPath$datapath, medicalS3, bucket),
           warning = function(w) {
             stop("S3 failed \n", w)
           }
         )
+        }
         
+        if (!is.na(photoS3)) {
         tryCatch(
           aws.s3::put_object(input$photoIdPath$datapath, photoS3, bucket),
           warning = function(w) {
             stop("S3 failed", w)
           }
         )
+        }
         ######### Add Patient to Metrc ################
         if (getOption("CannaData_state") %in% c("OR","CO","MD")) {
           # metrc_post_patients(facility()$medicalFacilityNumber, input$recId, input$startDate, input$endDate,
@@ -1713,8 +1726,8 @@ newPatient <-
                         photoS3,
                         medicalS3,
                         input$recId,
-                        input$plants,
-                        input$smokable)
+                        NA,#input$plants,
+                        NA)
         
         ### add to queue?
         lapply(c("date", "physician", "recId"), function(x) {
@@ -1772,10 +1785,10 @@ newPatient <-
       req(input$text_phone)
       
       url <- httr::modify_url(
-        url = paste0(base_url, "signup/"),
+        url = paste0(base_url, "reward/"),
         query = list(
           idpatient = patientId(),
-          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), gsub("\n  ", "\n", getOption("canna_key")))
+          idpatiente = jwt_encode_sig(jwt_claim(idpatient = patientId()), key = gsub("\n  ", "\n", getOption("canna_key")))
         )
       )
       
@@ -1857,22 +1870,21 @@ newPatient <-
           tags$label(
             `for` = session$ns("photoIdPath"),
             class = "control-label control-label-left col-sm-4",
-            "Photo ID",
-            span(class = "req", "*")
+            "Photo ID"
           ),
           col(7,
               shiny::fileInput(
                 session$ns("photoIdPath"), NULL, width = "100%"
-              ),
-              tags$script(HTML(
-                '$("#new_patient-photoIdPath").on("change", function(value) {
-                if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
-                setTimeout(function() {
-                $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
-                }, 1)
-                }
-                });'
-              )
+              )#,
+              # tags$script(HTML(
+              #   '$("#new_patient-photoIdPath").on("change", function(value) {
+              #   if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
+              #   setTimeout(function() {
+              #   $("#new_patient-photoIdPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+              #   }, 1)
+              #   }
+              #   });'
+              # )
                 )
                 )),
         div(
@@ -1880,41 +1892,40 @@ newPatient <-
           tags$label(
             `for` = session$ns("photoIdPath"),
             class = "control-label control-label-left col-sm-4",
-            "Rec",
-            span(class = "req", "*")
+            "Rec"
           ),
           col(7,
               shiny::fileInput(
                 session$ns("medicalPath"), NULL, width = "100%"
-              ),
-              tags$script(HTML(
-                '$("#new_patient-medicalPath").on("change", function(value) {
-                if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
-                setTimeout(function() {
-                $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
-                }, 1)
-                }
-                });'
-              )
+              )#,
+              # tags$script(HTML(
+              #   '$("#new_patient-medicalPath").on("change", function(value) {
+              #   if ($(this).parents(\'.input-group\').find(\'.parsley-error\').length > 0) {
+              #   setTimeout(function() {
+              #   $("#new_patient-medicalPath").parents(\'.input-group\').find(\'.parsley-error\').parsley().validate();
+              #   }, 1)
+              #   }
+              #   });'
+              # )
                 )
-                ),
-          tags$script(
-            paste0(
-              "$('#",
-              session$ns("photoIdPath"),
-              "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
-              //   $('#",
-              session$ns("photoIdPath"),
-              "').attr('','');\n",
-              "$('#",
-              session$ns("medicalPath"),
-              "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
-              //  $('#",
-              session$ns("medicalPath"),
-              "').attr('','');"
-              )
-              )
-                )))
+                )#,
+          # tags$script(
+          #   paste0(
+          #     "$('#",
+          #     session$ns("photoIdPath"),
+          #     "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
+          #     //   $('#",
+          #     session$ns("photoIdPath"),
+          #     "').attr('','');\n",
+          #     "$('#",
+          #     session$ns("medicalPath"),
+          #     "').closest(\".input-group\").children(\"input\").prop(\"required\", true);
+          #     //  $('#",
+          #     session$ns("medicalPath"),
+          #     "').attr('','');"
+          #     )
+          #     )
+                )
                 })
     
     output$new_id_image <- renderImage({
@@ -2140,7 +2151,7 @@ queue <-
     
     
     observeEvent(input$queue_rec, {
-      req(input$queue_name, input$queue_birthday, floor(as.numeric(difftime(Sys.Date(), as.Date(input$queue_birthday)))/365) >= 21)
+      req(input$queue_name, input$queue_birthday, floor(as.numeric(difftime(Sys.Date(), anytime::anytime(input$queue_birthday)))/365) >= 21)
       if (state != "OR") {
         req(input$queue_id, nchar(input$queue_id) %in% 8:9)
         ### check if already in db
@@ -2149,8 +2160,9 @@ queue <-
           id <- patients() %>% filter_(~id == input$queue_id) %>% slice(1) %>% pull("idpatient")
         } else {
           con <- pool::poolCheckout(pool)
+          lName <- if (length(stringr::str_split(input$queue_name, " ", 2)[[1]]) == 2) stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]] else NA_character_
           i_f_new_patient(con, input$queue_id, NA,firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
-                          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]], NA, input$queue_birthday, NA, NA, NA, NA, 3)
+                          lastName = lName, NA, input$queue_birthday, NA, NA, NA, NA, 3)
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
@@ -2170,12 +2182,13 @@ queue <-
         i_f_add_queue(pool, patients()$idpatient[patients()$id == input$queue_id], TRUE, facilityNumber = facility()$idfacility)
         trigger(trigger() + 1)
       } else {
+        lName <- if (length(stringr::str_split(input$queue_name, " ", 2)[[1]]) == 2) stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]] else NA_character_
         new_row <- data.frame(
           firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
-          lastName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]],
+          lastName = lName,
           id = input$queue_id,
           addDate = mySql_date(Sys.Date()),
-          verified = 1, birthday = input$queue_birthday
+          verified = 2, birthday = mySql_date(input$queue_birthday)
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
@@ -2246,7 +2259,7 @@ queue <-
           lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
           id = input$store_id,
           addDate = mySql_date(Sys.Date()),
-          verified = 1, birthday = input$store_birthday
+          verified = 2, birthday = mySql_date(input$store_birthday)
         )
         con <- pool::poolCheckout(pool)
         DBI::dbWriteTable(con, "patient", new_row, append = TRUE, rownames = FALSE)
