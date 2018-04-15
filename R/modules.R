@@ -1979,6 +1979,7 @@ queueUI <- function(id) {
   
   tagList(div(
     class = "content",
+    downloadButton(ns("closeout"), "Closeout", class = "btn btn-info add-queue-btn"),
     col(12,
         box(h1("Online Sales"),
         DT::dataTableOutput(ns("online")))),
@@ -2307,6 +2308,15 @@ queue <-
                       select_(Name = ~name, Phone = ~phone, Status = ~status, Time = ~timeIn, Total = ~revenue, ` ` = ~index), rownames = TRUE, outputId = "online")
       reloadData(online_proxy, resetPaging = FALSE)
     })
+    
+    output$closeout <- downloadHandler(
+      filename= function() {
+        paste0('closeout-', Sys.Date(), ".pdf")
+      },
+      content = function(file) {
+        CannaStyle::render_closeout(file = file)
+      }
+    )
     
     output$online <- DT::renderDataTable({
       isolate(online()) %>% select_(~-idtransaction, ~-email) %>% 
