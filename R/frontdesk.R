@@ -182,9 +182,9 @@ frontdesk <-
                                                "text/plain"))
   
     msg_service_sid = tw_msg_service_list()[[1]]$sid
-    Sys.setenv(docuSign_username = getOption("docuSign_username"))
-    Sys.setenv(docuSign_password = getOption("docuSign_password"))
-    Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
+    # Sys.setenv(docuSign_username = getOption("docuSign_username"))
+    # Sys.setenv(docuSign_password = getOption("docuSign_password"))
+    # Sys.setenv(docuSign_integrator_key = getOption("docuSign_integrator_key"))
     if (getOption("CannaData_state") %in% c("CO","OR", "MD")) {
       Sys.setenv(
         "metrc_software_key" = getOption("metrc_software_key"),
