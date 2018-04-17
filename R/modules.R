@@ -1979,7 +1979,7 @@ queueUI <- function(id) {
   
   tagList(div(
     class = "content",
-    downloadButton(ns("closeout"), "Closeout", class = "btn btn-info add-queue-btn"),
+   # downloadButton(ns("closeout"), "Closeout", class = "btn btn-info add-queue-btn"),
     col(12,
         box(h1("Online Sales"),
         DT::dataTableOutput(ns("online")))),
@@ -2163,7 +2163,7 @@ queue <-
           con <- pool::poolCheckout(pool)
           lName <- if (length(stringr::str_split(input$queue_name, " ", 2)[[1]]) == 2) stringr::str_split(input$queue_name, " ", 2)[[c(1, 2)]] else NA_character_
           i_f_new_patient(con, input$queue_id, NA,firstName = stringr::str_split(input$queue_name, " ", 2)[[c(1, 1)]],
-                          lastName = lName, NA, input$queue_birthday, NA, NA, NA, NA, 3)
+                          lastName = lName, NA, birthday = mySql_date(input$queue_birthday), NA, NA, NA, NA, 3)
           id <- last_insert_id(con)
           pool::poolReturn(con)
         }
@@ -2217,7 +2217,6 @@ queue <-
                       textInput(session$ns("store_id"), "ID #"),
                       tags$br(),
                       textInput(session$ns("store_birthday"), "Birthday"),
-                      ### add birthday #####
                       tags$script(
                         '$("#frontdesk-store_id, #frontdesk-store_name, #frontdesk-store_birthday").attr("required", true)',
                         'var CannaBirthday = new Cleave("#frontdesk-store_birthday", {
@@ -2286,7 +2285,7 @@ queue <-
         con <- pool::poolCheckout(pool)
         i_f_new_patient(con, id = input$store_id, firstName = stringr::str_split(input$store_name, " ", 2)[[c(1, 1)]],
                         lastName = if (length(stringr::str_split(input$store_name, " ", 2)[[1]]) == 1) "" else stringr::str_split(input$store_name, " ", 2)[[c(1, 2)]],
-                        NA, input$store_birthday, NA, NA, NA, NA, NA, verified = 3)
+                        NA, birthday =  mySql_date(input$store_birthday), NA, NA, NA, NA, NA, verified = 3)
         id <- last_insert_id(con)
         pool::poolReturn(con)
       }
